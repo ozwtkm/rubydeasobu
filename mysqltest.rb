@@ -19,7 +19,7 @@ end
 print <<EOM
 <html>
 <head>
-        <meta http-equiv="Content-type" content="text/html; charset=euc-jp">
+        <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
 </head>
 <body>
 <h1>TEST SQL Ç”ÇßÅ[Çﬁ</h1>
