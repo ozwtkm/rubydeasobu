@@ -9,12 +9,6 @@ print "Hello World<br><br>"
 
 sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
 
-=begin
-sql.query("select * from test").each do |row|
-  p row
-end
-=end
-
 # Ç”ÇßÅ[ÇﬁÅB
 print <<EOM
 <html>
