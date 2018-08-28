@@ -40,32 +40,42 @@ if input.request_method == "POST" then
 	passwd = input["passwd"]
 
 	# ユーザIDを重複チェック
+	# DB側でunique制約しないとレースコンディションの可能性あり
 	statement = sql.prepare("select COUNT(*) from users2 where name = ?")
-	exist_count = statement.execute(username)
+	exist_count_tmp = statement.execute(username)
+	exist_count_tmp.each do |row|
+		row.each do |key,value|
+			$exist_count = value
+		end
+	end
 	
-	p exist_count
+	p sql.query("select * from users2")
 	
-	if exist_count != 0 then
+	p $exist_count
+	
+	if $exist_count != 0 then
 	
 		print "キャラ被りｗ"
 		
-		
 	else 
 	
-	# saltを生成
-	salt = SecureRandom.hex(10) + "aaaaburiburi"
-	
-	# saltとパスワードを連結してハッシュ値生成
-	pw_hash = Digest::SHA1.hexdigest(passwd+salt)
-	
-	# ぶっこむ
-	statement = sql.prepare("insert into users2(name,salt,passwd) values(?,?,?)")
-	statement.execute(username, salt, pw_hash)
+		# saltを生成
+		salt = SecureRandom.hex(10) + "aaaaburiburi"
+		
+		# saltとパスワードを連結してハッシュ値生成
+		pw_hash = Digest::SHA1.hexdigest(passwd+salt)
+		
+		# ぶっこむ
+		statement = sql.prepare("insert into users2(name,salt,passwd) values(?,?,?)")
+		statement.execute(username, salt, pw_hash)
 
-	print "<h2>ユーザ一覧</h2>"
-	
-	res = sql.query("select * from users2")
-		p row
+		print "<h2>ユーザ一覧</h2>"
+		
+		res = sql.query("select * from users2")
+		res.each do|row|
+			p row
+		end
+		
 	end
 
 else
