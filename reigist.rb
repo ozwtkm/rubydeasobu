@@ -40,7 +40,8 @@ if input.request_method == "POST" then
 	passwd = input["passwd"]
 
 	# ユーザIDを重複チェック
-	# DB側でunique制約しないとレースコンディションの可能性あり
+	## DB側でunique制約しないとレースコンディションの可能性あり
+	## ちゃんと作るならIDとパスの仕様検証もちゃんと書く必要あり
 	statement = sql.prepare("select COUNT(*) from users2 where name = ?")
 	exist_count_tmp = statement.execute(username)
 	exist_count_tmp.each do |row|
@@ -48,10 +49,6 @@ if input.request_method == "POST" then
 			$exist_count = value
 		end
 	end
-	
-	p sql.query("select * from users2")
-	
-	p $exist_count
 	
 	if $exist_count != 0 then
 	
@@ -74,13 +71,14 @@ if input.request_method == "POST" then
 		res = sql.query("select * from users2")
 		res.each do|row|
 			p row
+			print "<br>"
 		end
 		
 	end
 
 else
 
-	p "GETだね"
+	print "GETだね"
 	
 end
 
