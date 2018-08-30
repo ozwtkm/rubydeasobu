@@ -5,8 +5,11 @@ require 'cgi'
 require 'mysql2'
 require 'digest/sha1'
 require 'securerandom'
+require 'cgi/session'
 
-print "Content-Type: text/html; charset=UTF-8\n\n"
+input = CGI.new
+session = CGI::Session.new(input)
+print input.header({"charset" => "UTF-8",})
 
 sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
 
@@ -30,8 +33,6 @@ print <<EOM
 </body>
 </html>
 EOM
-
-input = CGI.new
 
 if input.request_method == "POST" then
 
@@ -65,8 +66,14 @@ if input.request_method == "POST" then
 		print "出直して来いよな（訳：IDまたはパスワードがちがいます"
 	
 	else
-	
-		print "ログインしたよ"
+
+		print "ログインしたよ<br><br>"
+		
+		## ここセッションＩＤ更新したいがされない
+		session = CGI::Session.new(input,{"new_session"=>true})
+		session['name'] = username
+		## stored XSS
+		print "ようこそ" + session['name'] + "さん"
 	
 	end
 	
