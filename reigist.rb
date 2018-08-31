@@ -6,7 +6,7 @@ require 'mysql2'
 require 'digest/sha1'
 require 'securerandom'
 
-print "Content-Type: text/html; charset=UTF-8\n\n"
+print "Content-Type: text/html; charset=UTF-8\r\n\r\n"
 
 sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
 
