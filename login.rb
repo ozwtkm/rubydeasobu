@@ -61,6 +61,7 @@ if input.request_method == "POST" then
 	end
 
 	# 2以上になることはない担保はDB側のカラム設計で
+	## グローバル変数絶対殺す
 	if $exist_count != 1 then 
 	
 		print "出直して来いよな（訳：IDまたはパスワードがちがいます"
@@ -72,8 +73,7 @@ if input.request_method == "POST" then
 		## ここセッションＩＤ更新したいがされない
 		session = CGI::Session.new(input,{"new_session"=>true})
 		session['name'] = username
-		## stored XSS
-		print "ようこそ" + session['name'] + "さん"
+		print "ようこそ" + CGI.escapeHTML(session['name']) + "さん"
 	
 	end
 	
