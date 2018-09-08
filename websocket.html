@@ -9,6 +9,18 @@ $(function(){
         ws.send($('#message').val());
     });
 
+/*
+	ws.onopen = function() {
+        debug("connected...");
+        ws.send("hello server");
+        ws.send("hello again");	
+    };
+		
+	ws.onclose = function(event) {
+        debug("Closed - code: " + event.code + ", reason: " + event.reason + ", wasClean: " + event.wasClean);
+    };
+*/
+	
     ws.onmessage = function(event){
         var message_li = $('<li>').text(event.data);
         $("#msg-area").append(message_li);
