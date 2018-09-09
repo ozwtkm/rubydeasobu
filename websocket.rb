@@ -1,5 +1,7 @@
 require 'em-websocket'
 
+connections = []
+
 EM.run {
   EM::WebSocket.run(:host => "0.0.0.0", :port => 8882) do |ws|
     ws.onopen { |handshake|
@@ -10,13 +12,18 @@ EM.run {
 
       # Publish message to the client
       ws.send "Hello Client, you connected to #{handshake.path}"
+	  
+	  connections << ws
     }
 
     ws.onclose { puts "Connection closed" }
 
     ws.onmessage { |msg|
       puts "Recieved message: #{msg}"
-      ws.send "Pong: #{msg}"
+	  
+	  connections.each{|conn|
+		conn.send(msg)
+	  }
     }
   end
 }
