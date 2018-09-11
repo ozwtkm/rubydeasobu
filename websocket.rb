@@ -1,4 +1,5 @@
 require 'em-websocket'
+# require 'cgi/session'
 
 connections = []
 
@@ -23,6 +24,7 @@ EM.run {
 	  
 	  connections.each{|conn|
 		conn.send(msg)
+		# conn.send(session['name'])
 	  }
     }
   end
