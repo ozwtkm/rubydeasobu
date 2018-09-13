@@ -65,6 +65,8 @@ if input.request_method == "POST" then
 	if $exist_count != 1 then 
 	
 		print "出直して来いよな（訳：IDまたはパスワードがちがいます"
+		
+		$exist_count = nil
 	
 	else
 
@@ -74,6 +76,8 @@ if input.request_method == "POST" then
 		session = CGI::Session.new(input,{"new_session"=>true})
 		session['name'] = username
 		print "ようこそ" + CGI.escapeHTML(session['name']) + "さん"
+		
+		$exist_count = nil
 	
 	end
 	
