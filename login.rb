@@ -7,39 +7,50 @@ require 'digest/sha1'
 require 'securerandom'
 require 'cgi/session'
 
-input = CGI.new
-session = CGI::Session.new(input)
-print input.header({"charset" => "UTF-8",})
+def view(input,view_buffer)
 
-sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
+ print input.header({"charset" => "UTF-8",})
 
-print "<a href =matome.html>‚à‚Ç‚é</a><br><br>"
+ print "<a href =matome.html>ã‚‚ã©ã‚‹</a><br><br>"
 
-# ‚Ó‚§[‚ŞB
+# ãµã‰ãƒ¼ã‚€ã€‚
 print <<EOM
 <html>
 <head>
         <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
 </head>
 <body>
-<h1>ƒƒOƒCƒ“‚·‚é‚¼‚¢</h1>
+<h1>ãƒ­ã‚°ã‚¤ãƒ³ã™ã‚‹ãã„</h1>
 <form action="" method="post">
-	ƒ†[ƒUID<br>
-	<input type="text" name="name" value=""><br>
-	ƒpƒXƒ[ƒh(text‘®«‚È‚Ì‚Í’ƒ–Ú‚Á‹C)<br>
-	<input type="text" name="passwd" value=""><br>
-	<input type="submit" value="ƒƒOƒCƒ“"><br>
+        ãƒ¦ãƒ¼ã‚¶ID<br>
+        <input type="text" name="name" value=""><br>
+        ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰(textå±æ€§ãªã®ã¯èŒ¶ç›®ã£æ°—)<br>
+        <input type="text" name="passwd" value=""><br>
+        <input type="submit" value="ãƒ­ã‚°ã‚¤ãƒ³"><br>
 </form>
 </body>
 </html>
 EOM
 
-if input.request_method == "POST" then
+print view_buffer
+
+end
+
+
+
+
+input = CGI.new
+
+sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
+
+view_buffer = ""
+
+if  input.request_method == "POST" then
 
 	username = input["name"]
 	passwd = input["passwd"]
 
-	# ƒƒOƒCƒ“‰Â”\‚©ƒ`ƒFƒbƒN
+	# ãƒ­ã‚°ã‚¤ãƒ³å¯èƒ½ã‹ãƒã‚§ãƒƒã‚¯
 	
 	statement = statement = sql.prepare("select salt from users2 where name = ?")
 	salt_tmp = statement.execute(username)
@@ -50,7 +61,6 @@ if input.request_method == "POST" then
 	end
 	
 	pw_hash = Digest::SHA1.hexdigest(passwd+$salt)
-	p pw_hash
 	
 	statement = sql.prepare("select COUNT(*) from users2 where name = ? and passwd = ?")
 	exist_count_tmp = statement.execute(username, pw_hash)
@@ -60,31 +70,38 @@ if input.request_method == "POST" then
 		end
 	end
 
-	# 2ˆÈã‚É‚È‚é‚±‚Æ‚Í‚È‚¢’S•Û‚ÍDB‘¤‚ÌƒJƒ‰ƒ€İŒv‚Å
-	## ƒOƒ[ƒoƒ‹•Ï”â‘ÎE‚·
+	# 2ä»¥ä¸Šã«ãªã‚‹ã“ã¨ã¯ãªã„æ‹…ä¿ã¯DBå´ã®ã‚«ãƒ©ãƒ è¨­è¨ˆã§
+	## ã‚°ãƒ­ãƒ¼ãƒãƒ«å¤‰æ•°çµ¶å¯¾æ®ºã™
 	if $exist_count != 1 then 
 	
-		print "o’¼‚µ‚Ä—ˆ‚¢‚æ‚Èi–óFID‚Ü‚½‚ÍƒpƒXƒ[ƒh‚ª‚¿‚ª‚¢‚Ü‚·"
+		view_buffer += "å‡ºç›´ã—ã¦æ¥ã„ã‚ˆãªï¼ˆè¨³ï¼šIDã¾ãŸã¯ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰ãŒã¡ãŒã„ã¾ã™"
 		
 		$exist_count = nil
 	
 	else
 
-		print "ƒƒOƒCƒ“‚µ‚½‚æ<br><br>"
+		view_buffer +=  "ãƒ­ã‚°ã‚¤ãƒ³ã—ãŸã‚ˆ<br><br>"
 		
-		## ‚±‚±ƒZƒbƒVƒ‡ƒ“‚h‚cXV‚µ‚½‚¢‚ª‚³‚ê‚È‚¢
+		## ã“ã“ã‚»ãƒƒã‚·ãƒ§ãƒ³ï¼©ï¼¤æ›´æ–°ã—ãŸã„ãŒã•ã‚Œãªã„
 		session = CGI::Session.new(input,{"new_session"=>true})
 		session['name'] = username
-		print "‚æ‚¤‚±‚»" + CGI.escapeHTML(session['name']) + "‚³‚ñ"
+		view_buffer += "ã‚ˆã†ã“ã" + CGI.escapeHTML(session['name']) + "ã•ã‚“"
 		
-		$exist_count = nil
+                session.close	        
 	
+		$exist_count = nil
+
+               view_buffer += "<a href=sessiontest.rb>sessiontest</a>"
+
+               view_buffer += session.to_s
+
 	end
 	
 else
 
-	print "<br><br>GET‚¾‚Ë"
+	view_buffer += "<br><br>GETã ã­"
 	
 end
 
 
+view(input,view_buffer)
