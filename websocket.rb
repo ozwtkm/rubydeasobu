@@ -1,10 +1,21 @@
+#!/usr/bin/ruby -Ku
+# -*- coding: utf-8 -*-
+
 require 'em-websocket'
+require 'cgi'
+require 'cgi/session'
+
 
 connections = []
 
 EM.run {
-  EM::WebSocket.run(:host => "0.0.0.0", :port => 8882) do |ws|
-    ws.onopen { |handshake|
+  EM::WebSocket.run(:host => "127.0.0.1", :port => 8882) do |ws|
+     ws.onopen { |handshake|
+
+      p ENV
+
+      exit
+
       puts "WebSocket connection open"
 
       # Access properties on the EM::WebSocket::Handshake object, e.g.
@@ -23,9 +34,10 @@ EM.run {
 	  
 	  connections.each{|conn|
 		conn.send(msg)
+		conn.send(session['name'])
 	  }
     }
   end
 }
 
-# 参考そーす：https://github.com/igrigorik/em-websocket
+# 蜿り�縺昴�ｼ縺呻ｼ喇ttps://github.com/igrigorik/em-websocket

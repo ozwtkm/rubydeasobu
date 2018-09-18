@@ -14,7 +14,7 @@
     }
 	
     var Socket = WebSocket;
-    var ws = new Socket("ws://192.168.119.128:8882");
+    var ws = new Socket("ws://192.168.119.128:81/unko/");
 	
     ws.onclose = function(event) {
       debug("Closed - code: " + event.code + ", reason: " + event.reason + ", wasClean: " + event.wasClean);

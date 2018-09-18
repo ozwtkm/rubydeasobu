@@ -4,23 +4,29 @@
 require 'cgi'
 require 'mysql2'
 
-print "Content-Type: text/html; charset=UTF-8\r\n\r\n"
+print "Content-Type: text/html; charset=UTF-8\n\n"
 print "Hello World<br><br>"
 
 sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
 
-# ‚Ó‚§[‚ŞB
+=begin
+sql.query("select * from test").each do |row|
+  p row
+end
+=end
+
+# ãµã‰ãƒ¼ã‚€ã€‚
 print <<EOM
 <html>
 <head>
         <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
 </head>
 <body>
-<h1>TEST SQL ‚Ó‚§[‚Ş</h1>
+<h1>TEST SQL ãµã‰ãƒ¼ã‚€</h1>
 	<form action="" method="post">
-	INSERT INTO test(name) values(™);<br>
+	INSERT INTO test(name) values(â˜†);<br>
 	<input type="text" name="name" value="">
-	<input type="submit" value="Às">
+	<input type="submit" value="å®Ÿè¡Œ">
 </form>
 </body>
 </html>
@@ -30,7 +36,7 @@ input = CGI.new
 
 if input.request_method == "POST" then
 
-	# POST‚³‚ê‚½’l‚ğinsert‚·‚éB
+	# POSTã•ã‚ŒãŸå€¤ã‚’insertã™ã‚‹ã€‚
 
 	insert_name = input["name"]
 
@@ -47,6 +53,6 @@ if input.request_method == "POST" then
 	
 else
 
-	p "GET‚¾‚Ë"
+	p "GETã ã­"
 	
 end

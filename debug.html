@@ -8,8 +8,8 @@
           p.appendChild(document.createTextNode(string));
           element.appendChild(p);
         }
-        var Socket = "MozWebSocket" in window ? MozWebSocket : WebSocket;
-        var ws = new Socket("ws://192.168.119.128:8882/testruby");
+        var Socket = WebSocket;
+        var ws = new Socket("ws://192.168.119.128:8882");
         ws.onmessage = function(evt) { debug("Received: " + evt.data); };
         ws.onclose = function(event) {
           debug("Closed - code: " + event.code + ", reason: " + event.reason + ", wasClean: " + event.wasClean);

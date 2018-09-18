@@ -6,7 +6,7 @@ module WEBrick::HTTPServlet
 end
 
 # httpサーバー
-s = HTTPServer.new(:BindAddress => '127.0.0.1', :DocumentRoot => '/var/www/html/testruby/', :Port => 8082 )
+s = HTTPServer.new(:DocumentRoot => '/var/www/html/testruby/', :Port => 8882 )
 
 
 # サーブレット
