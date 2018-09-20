@@ -7,11 +7,11 @@ require 'cgi/session'
 
 ENV['REQUEST_METHOD'] = 'GET'
 
-cgi = CGI.new
-session = CGI::Session.new(cgi, {'new_session' => true})
-sessionid = session.session_id
-session['name'] = "buriburi"
-session.close
+#cgi = CGI.new
+#session = CGI::Session.new(cgi, {'new_session' => true})
+#sessionid = session.session_id
+#session['name'] = "buriburi"
+#session.close
 
 #p sessionid
 
@@ -33,11 +33,12 @@ EM.run {
 	 cgi.cookies['_session_id'] = sessionid
 	 
 	 session = CGI::Session.new(cgi, {'new_session' => false})
-	  
+	 
 	  #p sessionid
 	  #p session
 	  puts session['name'] + "　ga yattekitamitai"
 	  #p ENV
+	  #ws.data = session['name']
 	  
       puts "WebSocket connection open"
 
@@ -48,6 +49,11 @@ EM.run {
       ws.send "Hello #{session['name']} , you connected to #{handshake.path}"
 	  
 	  connections << ws
+	  p ws
+	  p ws.instance_variables
+	  p ws.instance_variable_get(:@handler)
+	  p @handler
+	  #p ws.data.class
 	  
 	  connections.each{|conn|
 		 conn.send("#{session['name']} 参戦！！")
