@@ -1,4 +1,4 @@
-#!/usr/bin/ruby -Ku
+﻿#!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
 
 require 'em-websocket'
@@ -49,23 +49,26 @@ EM.run {
       ws.send "Hello #{session['name']} , you connected to #{handshake.path}"
 	  
 	  connections << ws
-	  p ws
-	  p ws.instance_variables
-	  p ws.instance_variable_get(:@handler)
-	  p @handler
-	  #p ws.data.class
+      ws.receive_data(session['name'])
+	  # p ws.class
+	  #p "                                     "
+	  #p ws.instance_variable_get(:@handler).instance_variable_get(:@data)
+	  #p "                                     "	  
+
+	  p connections
 	  
 	  connections.each{|conn|
-		 conn.send("#{session['name']} 参戦！！")
+		 conn.send("#{ws.instance_variable_get(:@handler).instance_variable_get(:@data)} 参戦！！")
 	  }
     }
 
 
 
     ws.onmessage { |msg|
-      #puts "Recieved message: #{msg}"
+      puts "Recieved message: #{msg}"
+	  p connection
 
-#		 cgi = CGI.new
+		# cgi = CGI.new
 #     c = handshake.headers_downcased['cookie']
 #	 sessionkeyvalue = c.split('=')
 #	 h = {}
@@ -78,11 +81,13 @@ EM.run {
 
 	  
 	  connections.each{|conn|
-		conn.send("#{session['name']} Said : #{msg}")
+		conn.send("#{ws.instance_variable_get(:@handler).instance_variable_get(:@data)} Said : #{msg}")
 	  }
     }
 	
 	ws.onclose {
+	
+	p "close"
 	
 #		 cgi = CGI.new
 #     c = handshake.headers_downcased['cookie']
@@ -96,9 +101,9 @@ EM.run {
 #	 session = CGI::Session.new(cgi, {'new_session' => false})
 #	
 	
-		puts session['name'] + "　ga kaecchattamitai"
+		puts ws.instance_variable_get(:@handler).instance_variable_get(:@data) + "　ga kaecchattamitai"
 		connections.each{|conn|
-			conn.send("#{session['name']} が　尻尾を巻いて逃げ出しました")
+			conn.send("#{ws.instance_variable_get(:@handler).instance_variable_get(:@data)}ga sippowomaite nigedashita")
 		}
 	}
 	
