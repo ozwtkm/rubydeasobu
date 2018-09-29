@@ -34,27 +34,15 @@ EM.run {
 	 
 	 session = CGI::Session.new(cgi, {'new_session' => false})
 	 
-	  #p sessionid
-	  #p session
 	  puts session['name'] + "　ga yattekitamitai"
-	  #p ENV
-	  #ws.data = session['name']
 	  
       puts "WebSocket connection open"
 
-      # Access properties on the EM::WebSocket::Handshake object, e.g.
-      # path, query_string, origin, headers
-
-      # Publish message to the client
       ws.send "Hello #{session['name']} , you connected to #{handshake.path}"
 	  
 	  connections << ws
-      ws.receive_data(session['name'])
-	  # p ws.class
-	  #p "                                     "
-	  #p ws.instance_variable_get(:@handler).instance_variable_get(:@data)
-	  #p "                                     "	  
-
+      ws.receive_data(session['name'])                                
+	  
 	  p connections
 	  
 	  connections.each{|conn|
@@ -66,18 +54,8 @@ EM.run {
 
     ws.onmessage { |msg|
       puts "Recieved message: #{msg}"
-	  p connection
+	  p connections
 
-		# cgi = CGI.new
-#     c = handshake.headers_downcased['cookie']
-#	 sessionkeyvalue = c.split('=')
-#	 h = {}
-#	 h[sessionkeyvalue[0]] = sessionkeyvalue[1]
-#	 
-#	 sessionid = h['_session_id']
-#	 cgi.cookies['_session_id'] = sessionid
-#	 
-#	 session = CGI::Session.new(cgi, {'new_session' => false})
 
 	  
 	  connections.each{|conn|
@@ -101,7 +79,7 @@ EM.run {
 #	 session = CGI::Session.new(cgi, {'new_session' => false})
 #	
 	
-		puts ws.instance_variable_get(:@handler).instance_variable_get(:@data) + "　ga kaecchattamitai"
+		puts "#{ws.instance_variable_get(:@handler).instance_variable_get(:@data)} ga kaecchattamitai"
 		connections.each{|conn|
 			conn.send("#{ws.instance_variable_get(:@handler).instance_variable_get(:@data)}ga sippowomaite nigedashita")
 		}
