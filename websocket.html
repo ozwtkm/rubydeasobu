@@ -33,11 +33,11 @@
       ws.send($('#message').val());
     });
 	
+	$("#logout").on('click', function(){
+      ws.close();
+    });
+	
   };
-  
-  function logout() {
-	ws.close();
-  }
   
   
 </script>
@@ -50,7 +50,7 @@
 
 <input type="text" id="message" />
 <input type="button" id="send" value="send"/><br>
-<input type="button" value="退出" onclick="logout()">
+<input type="button" value="退出" id="logout">
 <ul id="msg-area" />
 
 </body>

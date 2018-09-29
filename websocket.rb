@@ -41,15 +41,19 @@ EM.run {
       ws.send "Hello #{session['name']} , you connected to #{handshake.path}"
 	  
 	  connections << ws
-      ws.receive_data(session['name'])                                
+      #ws.receive_data(session['name'])                                
+	  ws.onping{|username|
+		username = session['name']
+	  }
+	  
+	  p ws.trigger_on_ping("unko")
 	  
 	  p connections
 	  
 	  connections.each{|conn|
-		 conn.send("#{ws.instance_variable_get(:@handler).instance_variable_get(:@data)} 参戦！！")
+		 conn.send("#{ws.trigger_on_ping("unko")} 参戦！！")
 	  }
     }
-
 
 
     ws.onmessage { |msg|
@@ -59,7 +63,7 @@ EM.run {
 
 	  
 	  connections.each{|conn|
-		conn.send("#{ws.instance_variable_get(:@handler).instance_variable_get(:@data)} Said : #{msg}")
+		conn.send("#{ws.trigger_on_ping("unko")} Said : #{msg}")
 	  }
     }
 	
@@ -67,21 +71,9 @@ EM.run {
 	
 	p "close"
 	
-#		 cgi = CGI.new
-#     c = handshake.headers_downcased['cookie']
-#	 sessionkeyvalue = c.split('=')
-#	 h = {}
-#	 h[sessionkeyvalue[0]] = sessionkeyvalue[1]
-#	 
-#	 sessionid = h['_session_id']
-#	 cgi.cookies['_session_id'] = sessionid
-#	 
-#	 session = CGI::Session.new(cgi, {'new_session' => false})
-#	
-	
-		puts "#{ws.instance_variable_get(:@handler).instance_variable_get(:@data)} ga kaecchattamitai"
+		puts "#{ws.trigger_on_ping("unko")} ga kaecchattamitai"
 		connections.each{|conn|
-			conn.send("#{ws.instance_variable_get(:@handler).instance_variable_get(:@data)}ga sippowomaite nigedashita")
+			conn.send("#{ws.trigger_on_ping("unko")}が尻尾を巻いて逃げ出した")
 		}
 	}
 	
