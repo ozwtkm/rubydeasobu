@@ -5,12 +5,15 @@ require 'em-websocket'
 require 'cgi'
 require 'cgi/session'
 
-class EventMachine::WebSocket::Connection
-  attr_accessor :username
+# セッション変数をwebsocketのインスタンスに渡すためにem-websocketをいじる
+module Ex_connection
+ refine EventMachine::WebSocket::Connection do
+   attr_accessor :username
   
-  def set_username(name)
-    @username = name
-  end
+   def set_username(name)
+     @username = name
+   end
+ end
 end
 
 ENV['REQUEST_METHOD'] = 'GET'
@@ -28,6 +31,7 @@ ENV['REQUEST_METHOD'] = 'GET'
 connections = []
 
 EM.run {
+  using Ex_connection
   EM::WebSocket.run(:host => "127.0.0.1", :port => 8882) do |ws|
      ws.onopen { |handshake|
 
@@ -49,7 +53,6 @@ EM.run {
       ws.send "Hello #{session['name']} , you connected to #{handshake.path}"
 	  
 	  connections << ws  
-      p ws.class	  
       ws.set_username(session['name'])
 	  
 	  p connections
