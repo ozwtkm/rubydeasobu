@@ -6,33 +6,39 @@ require 'mysql2'
 require 'digest/sha1'
 require 'securerandom'
 require 'cgi/session'
+require 'stringio'
+require 'pry'
 
+
+# cookieを正しく更新するためにロジックと出力を分離する必要がある。
+# 以下の関数は出力部分をまとめたもの。
+## stringioを使ってview_bufferに無理やり出力を突っ込まなくてすむようにする
 def view(input,view_buffer)
 
- print input.header({"charset" => "UTF-8",})
+	print input.header({"charset" => "UTF-8",})
 
- print "<a href =matome.html>もどる</a><br><br>"
+	print "<a href =matome.html>もどる</a><br><br>"
 
-# ふぉーむ。
-print <<EOM
-<html>
-<head>
+	# ふぉーむ。
+	print <<EOM
+	<html>
+	<head>
         <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
-</head>
-<body>
-<h1>ログインするぞい</h1>
-<form action="" method="post">
-        ユーザID<br>
-        <input type="text" name="name" value=""><br>
-        パスワード(text属性なのは茶目っ気)<br>
-        <input type="text" name="passwd" value=""><br>
-        <input type="submit" value="ログイン"><br>
-</form>
-</body>
-</html>
+	</head>
+	<body>
+	<h1>ログインするぞい</h1>
+	<form action="" method="post">
+			ユーザID<br>
+			<input type="text" name="name" value=""><br>
+			パスワード(text属性なのは茶目っ気)<br>
+			<input type="text" name="passwd" value=""><br>
+			<input type="submit" value="ログイン"><br>
+	</form>
+	</body>
+	</html>
 EOM
 
-print view_buffer
+	print view_buffer
 
 end
 
@@ -52,32 +58,39 @@ if  input.request_method == "POST" then
 
 	# ログイン可能かチェック
 	
-	statement = statement = sql.prepare("select salt from users2 where name = ?")
+	statement = sql.prepare("select salt from users2 where name = ?")
+	
 	salt_tmp = statement.execute(username)
+	
+	
+	salt = nil
 	salt_tmp.each do |row|
 		row.each do |key,value|
-			$salt = value
+			salt = value
 		end
 	end
 	
-	pw_hash = Digest::SHA1.hexdigest(passwd+$salt)
+	# view_buffer += salt
+	
+	pw_hash = Digest::SHA1.hexdigest(passwd+salt)
 	
 	statement = sql.prepare("select COUNT(*) from users2 where name = ? and passwd = ?")
+
+	exist_count = nil
+	
 	exist_count_tmp = statement.execute(username, pw_hash)
 	exist_count_tmp.each do |row|
 		row.each do |key,value|
-			$exist_count = value
+			exist_count = value
 		end
 	end
 
 	# 2以上になることはない担保はDB側のカラム設計で
-	## グローバル変数絶対殺す
-	if $exist_count != 1 then 
+
+	if exist_count != 1 then 
 	
 		view_buffer += "出直して来いよな（訳：IDまたはパスワードがちがいます"
 		
-		$exist_count = nil
-	
 	else
 
 		view_buffer +=  "ログインしたよ<br><br>"
@@ -88,10 +101,8 @@ if  input.request_method == "POST" then
 		view_buffer += "ようこそ" + CGI.escapeHTML(session['name']) + "さん"
 		
                 session.close	        
-	
-		$exist_count = nil
-
-               view_buffer += "<a href=sessiontest.rb>sessiontest</a>"
+				
+               view_buffer += "<a href=sessiontest.rb>sessiontest</a><br><a href=websocket.html>websocketクライアント</a>"
 
                view_buffer += session.to_s
 
@@ -103,5 +114,5 @@ else
 	
 end
 
-
+# 出力。
 view(input,view_buffer)
