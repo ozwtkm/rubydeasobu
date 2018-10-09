@@ -13,7 +13,10 @@ require 'pry'
 # cookieを正しく更新するためにロジックと出力を分離する必要がある。
 # 以下の関数は出力部分をまとめたもの。
 ## stringioを使ってview_bufferに無理やり出力を突っ込まなくてすむようにする
-def view(input,view_buffer)
+
+
+
+def common_view(input)
 
 	print input.header({"charset" => "UTF-8",})
 
@@ -38,18 +41,14 @@ def view(input,view_buffer)
 	</html>
 EOM
 
-	print view_buffer
-
 end
 
-
-
-
 input = CGI.new
+$stdout = StringIO.new
 
 sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
 
-view_buffer = ""
+#view_buffer = ""
 
 if  input.request_method == "POST" then
 
@@ -59,7 +58,6 @@ if  input.request_method == "POST" then
 	# ログイン可能かチェック
 	
 	statement = sql.prepare("select salt from users2 where name = ?")
-	
 	salt_tmp = statement.execute(username)
 	
 	
@@ -72,13 +70,17 @@ if  input.request_method == "POST" then
 	
 	# view_buffer += salt
 	
-	pw_hash = Digest::SHA1.hexdigest(passwd+salt)
+	# ユーザIDからsalt取れなかった場合passwd + saltで500になる
+	pw_hash = ""
+	if salt != nil then
+	 pw_hash = Digest::SHA1.hexdigest(passwd+salt)
+    end
 	
 	statement = sql.prepare("select COUNT(*) from users2 where name = ? and passwd = ?")
-
+    exist_count_tmp = statement.execute(username, pw_hash)
+	
 	exist_count = nil
 	
-	exist_count_tmp = statement.execute(username, pw_hash)
 	exist_count_tmp.each do |row|
 		row.each do |key,value|
 			exist_count = value
@@ -89,30 +91,53 @@ if  input.request_method == "POST" then
 
 	if exist_count != 1 then 
 	
-		view_buffer += "出直して来いよな（訳：IDまたはパスワードがちがいます"
+		# view_buffer += "出直して来いよな（訳：IDまたはパスワードがちがいます"
+		common_view(input)
+		print  "出直して来いよな（訳：IDまたはパスワードがちがいます"
+		
+		result = $stdout.string
+		$stdout = STDOUT
+		puts result
 		
 	else
 
-		view_buffer +=  "ログインしたよ<br><br>"
+		#view_buffer +=  "ログインしたよ<br><br>"
+		
 		
 		## ここセッションＩＤ更新したいがされない
 		session = CGI::Session.new(input,{"new_session"=>true})
 		session['name'] = username
-		view_buffer += "ようこそ" + CGI.escapeHTML(session['name']) + "さん"
+		#view_buffer += "ようこそ" + CGI.escapeHTML(session['name']) + "さん"
 		
                 session.close	        
 				
-               view_buffer += "<a href=sessiontest.rb>sessiontest</a><br><a href=websocket.html>websocketクライアント</a>"
-
-               view_buffer += session.to_s
-
+               #view_buffer += "<a href=sessiontest.rb>sessiontest</a><br><a href=websocket.html>websocketクライアント</a>"
+               #view_buffer += session.to_s
+			   
+			   common_view(input)
+			   print "ログインしたよ<br><br>"
+			   print "<a href=sessiontest.rb>sessiontest</a><br><a href=websocket.html>websocketクライアント</a>"
+			   
+			   	result = $stdout.string
+				$stdout = STDOUT
+				puts result
+			   
+			   
 	end
 	
 else
 
-	view_buffer += "<br><br>GETだね"
+	#view_buffer += "<br><br>GETだね"
+	
+	common_view(input)
+	print "<br><br>GETだね"
+
+	
+	result = $stdout.string
+	$stdout = STDOUT
+	puts result
 	
 end
 
 # 出力。
-view(input,view_buffer)
+#view(input,view_buffer)
