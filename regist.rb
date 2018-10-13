@@ -50,7 +50,6 @@ end
 
 def view_body(view_buffer)
 
-	view_form()
 	print view_buffer
 
 end
@@ -169,6 +168,7 @@ end
 
 
 regist.view_header()
+regist.view_form()
 regist.view_body(view_buffer)
 regist.view_footer()
 
