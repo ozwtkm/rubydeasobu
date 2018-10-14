@@ -12,12 +12,12 @@ class Base
 def view_header()
 
 	print <<EOM
-	    Content-Type: text/html; charset=UTF-8\r\n\r\n
-		<html>
-		<head>
-		<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
-		</head>
-		<body>
+Content-Type: text/html; charset=UTF-8\r\n\r\n
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
 EOM
 		
 end
@@ -34,14 +34,14 @@ end
 def view_form()
 
 	print <<EOM
-		<h1>会員登録するぞい</h1>
-		<form action="" method="post">
-		ユーザID<br>
-		<input type="text" name="name" value=""><br>
-		パスワード(text属性なのは茶目っ気)<br>
-		<input type="text" name="passwd" value=""><br>
-		<input type="submit" value="登録するぞい"><br>
-		</form>
+<h1>会員登録するぞい</h1>
+<form action="" method="post">
+ユーザID<br>
+<input type="text" name="name" value=""><br>
+パスワード(text属性なのは茶目っ気)<br>
+<input type="text" name="passwd" value=""><br>
+<input type="submit" value="登録するぞい"><br>
+</form>
 
 EOM
 
@@ -57,7 +57,7 @@ end
 
 def validate_special_character(input)
 
-		if input.match(/[0-9a-zA-Z_@-]*/) == nil
+		if input.match(/\A[a-zA-Z0-9_@]+\z/) == nil
 	
 			return false
 		
@@ -84,11 +84,15 @@ def check_id_duplication(sql, username, passwd)
 	# DB側でunique制約しないとレースコンディションの可能性あり
 	statement = sql.prepare("select COUNT(*) from users2 where name = ?")
 	exist_count_tmp = statement.execute(username)
+	
+	exist_count = nil
+	
 	exist_count_tmp.each do |row|
 		row.each do |key,value|
 			exist_count = value
 		end
 	end
+	
 	
 	if exist_count != 0 then
 		
@@ -138,16 +142,16 @@ if cgi.request_method == "POST" then
 	# 入力値がすべてvalidate_special_characterをtrueとしたときのみ登録処理に進みたい。
 	# なんかここ気に食わない
 	validate_result = true
-	[username,passwd].each do |row|
-		if !regist.validate_special_character(row) then
-			view_buffer += "#{row}に特殊文字入れるな<br>"
-			validate_result　= false
+	{:username => username, :passwd => passwd}.each do |key,value|
+		if !regist.validate_special_character(value) then
+			view_buffer += "#{key}は[a-zA-Z0-9@_]だけで構成してね<br>"
+			validate_result = false
 		end
 	end
 	
 	
-	# 登録処理。
-	if validate_result then 
+	# 登録処理。	
+	if validate_result then
 		if !regist.check_id_duplication(sql, username, passwd)
 	
 			view_buffer += "キャラ被りｗ"
@@ -155,14 +159,14 @@ if cgi.request_method == "POST" then
 		else 
 	
 			regist.regist(sql, username, passwd)
-			view_buffer += "#{username}を登録しといたぞ。"
+			view_buffer += CGI.escapeHTML(username) + "を登録しといたぞ。"
 		
 		end
 	end
 			
 else
 
-	view_buffer += "このフォームから登録してね～～"
+	view_buffer += "このフォームから登録してね～～<br>"
 	
 end
 
