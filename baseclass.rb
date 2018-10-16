@@ -1,4 +1,4 @@
-class Base
+ï»¿class Base
 
 def view_header()
 
@@ -16,25 +16,37 @@ end
 
 def view_footer()
 	
-	print "<a href =matome.html>‚à‚Ç‚é</a><br><br>"
+	print "<a href =matome.html>ã‚‚ã©ã‚‹</a><br><br>"
 	print "</body>"
 	
 end
 
 
-def view_form()
+def view_form(kind_form)
 
-	print <<EOM
-<h1>‰ïˆõ“o˜^‚·‚é‚¼‚¢</h1>
+	case kind_form
+	when "regist" then
+	
+		print <<EOM
+<h1>ä¼šå“¡ç™»éŒ²ã™ã‚‹ãã„</h1>
 <form action="" method="post">
-ƒ†[ƒUID<br>
+ãƒ¦ãƒ¼ã‚¶ID<br>
 <input type="text" name="name" value=""><br>
-ƒpƒXƒ[ƒh(text‘®«‚È‚Ì‚Í’ƒ–Ú‚Á‹C)<br>
+ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰(textå±æ€§ãªã®ã¯èŒ¶ç›®ã£æ°—)<br>
 <input type="text" name="passwd" value=""><br>
-<input type="submit" value="“o˜^‚·‚é‚¼‚¢"><br>
+<input type="submit" value="ç™»éŒ²ã™ã‚‹ãã„"><br>
 </form>
-
 EOM
+
+	when "login" then
+
+		print ""
+		
+	else
+	
+		print ""
+	
+	end
 
 end
 
@@ -42,6 +54,16 @@ end
 def view_body(view_buffer)
 
 	print view_buffer
+
+end
+
+
+def view(view_buffer , kind_form = false)
+
+	view_header()
+	view_form(kind_form)
+	view_body(view_buffer)
+	view_footer()
 
 end
 

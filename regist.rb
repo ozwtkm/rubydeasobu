@@ -106,8 +106,6 @@ else
 end
 
 
-regist.view_header()
-regist.view_form()
-regist.view_body(view_buffer)
-regist.view_footer()
+regist.view(view_buffer, "regist")
+
 
