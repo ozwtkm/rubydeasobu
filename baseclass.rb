@@ -21,48 +21,26 @@ def view_footer()
 	
 end
 
+# オーバーライドする前提
+def view_form()
 
-def view_form(kind_form)
-
-	case kind_form
-	when "regist" then
-	
-		print <<EOM
-<h1>会員登録するぞい</h1>
-<form action="" method="post">
-ユーザID<br>
-<input type="text" name="name" value=""><br>
-パスワード(text属性なのは茶目っ気)<br>
-<input type="text" name="passwd" value=""><br>
-<input type="submit" value="登録するぞい"><br>
-</form>
-EOM
-
-	when "login" then
-
-		print ""
-		
-	else
-	
-		print ""
-	
-	end
+	print ""
 
 end
 
 
-def view_body(view_buffer)
+# オーバーライドする前提
+def view_body()
 
-	print view_buffer
+	view_form()
 
 end
 
 
-def view(view_buffer , kind_form = false)
+def view()
 
 	view_header()
-	view_form(kind_form)
-	view_body(view_buffer)
+	view_body()
 	view_footer()
 
 end
