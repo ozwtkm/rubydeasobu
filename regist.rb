@@ -57,6 +57,31 @@ def regist(sql, username, passwd)
 end
 
 
+# オーバーライド
+def view_form()
+
+			print <<EOM
+<h1>会員登録するぞい</h1>
+<form action="" method="post">
+ユーザID<br>
+<input type="text" name="name" value=""><br>
+パスワード(text属性なのは茶目っ気)<br>
+<input type="text" name="passwd" value=""><br>
+<input type="submit" value="登録するぞい"><br>
+</form>
+EOM
+
+end
+
+
+# オーバーライド
+def view_body()
+
+	view_form()
+
+end
+
+
 end
 
 
@@ -70,33 +95,22 @@ view_buffer = ""
 # メイン処理
 if cgi.request_method == "POST" then
 
-	# POSTされた値をinsertする。
+	# 何はともあれまずは入力値検証
+	regist.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
+
 	username = cgi["name"]
 	passwd = cgi["passwd"]
-
-	# 入力値がすべてvalidate_special_characterをtrueとしたときのみ登録処理に進みたい。
-	# なんかここ気に食わない
-	validate_result = true
-	{:username => username, :passwd => passwd}.each do |key,value|
-		if !regist.validate_special_character(value) then
-			view_buffer += "#{key}は[a-zA-Z0-9@_]だけで構成してね<br>"
-			validate_result = false
-		end
-	end
-	
 	
 	# 登録処理。	
-	if validate_result then
-		if !regist.check_id_duplication(sql, username, passwd)
+	if !regist.check_id_duplication(sql, username, passwd)
 	
-			view_buffer += "キャラ被りｗ"
+		view_buffer += "キャラ被りｗ"
 		
-		else 
+	else 
 	
-			regist.regist(sql, username, passwd)
-			view_buffer += CGI.escapeHTML(username) + "を登録しといたぞ。"
+		regist.regist(sql, username, passwd)
+		view_buffer += CGI.escapeHTML(username) + "を登録しといたぞ。"
 		
-		end
 	end
 			
 else
@@ -106,6 +120,6 @@ else
 end
 
 
-regist.view(view_buffer, "regist")
+regist.view()
 
 

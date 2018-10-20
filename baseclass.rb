@@ -46,17 +46,30 @@ def view()
 end
 
 
-def validate_special_character(input)
+def validate_special_character(input_hash)
 
-		if input.match(/\A[a-zA-Z0-9_@]+\z/) == nil
-	
-			return false
+falselist = []
+input_hash.each do |key, value| 
+
+	if value.match(/\A[a-zA-Z0-9_@]+\z/) == nil then
 		
-		else
-	
-			return true
-	
+		falselist << key 
+		
+	end
+		
+end
+
+	if falselist != [] then
+			
+		falselist.each do |row|
+			
+			print "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ<br>"
+			
 		end
+			
+		exit!
+			
+	end
 	
 end
 
