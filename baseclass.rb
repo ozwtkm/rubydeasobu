@@ -30,17 +30,18 @@ end
 
 
 # オーバーライドする前提
-def view_body()
+def view_body(status={})
 
 	view_form()
+	# オーバーライドでここにstatusによるview分岐を書く
 
 end
 
 
-def view()
+def view(status={})
 
 	view_header()
-	view_body()
+	view_body(status)
 	view_footer()
 
 end
@@ -60,13 +61,13 @@ input_hash.each do |key, value|
 end
 
 	if falselist != [] then
-			
+	
 		falselist.each do |row|
 			
 			print "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ<br>"
 			
 		end
-			
+
 		exit!
 			
 	end

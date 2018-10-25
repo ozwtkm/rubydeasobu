@@ -75,9 +75,33 @@ end
 
 
 # オーバーライド
-def view_body()
+def view_body(status={})
 
-	view_form()
+	super #superっていってもview_form()だけ。
+
+	case status[:method]
+	when "GET" then
+	
+		print "GETだね"
+		
+	when "POST" then
+
+		case status[:result]
+		when "id_duplicate" then
+		
+			print "キャラかぶってるで"
+		
+		when "success" then
+	
+			print CGI.escapeHTML(status[:username]) + "を登録しといたぞ"
+	
+		end
+	
+	else
+	
+		print "意味不明なメソッド"
+	
+	end
 
 end
 
@@ -90,13 +114,15 @@ cgi = CGI.new
 sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
 regist = Regist.new
 
-view_buffer = ""
+view_status = {:method => "" , :result => "" , :username => ""}
 
 # メイン処理
 if cgi.request_method == "POST" then
 
 	# 何はともあれまずは入力値検証
 	regist.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
+	
+	view_status[:method] = "POST"
 
 	username = cgi["name"]
 	passwd = cgi["passwd"]
@@ -104,22 +130,24 @@ if cgi.request_method == "POST" then
 	# 登録処理。	
 	if !regist.check_id_duplication(sql, username, passwd)
 	
-		view_buffer += "キャラ被りｗ"
+		view_status[:result] = "id_duplicate"
 		
 	else 
 	
 		regist.regist(sql, username, passwd)
-		view_buffer += CGI.escapeHTML(username) + "を登録しといたぞ。"
+		# view_buffer += CGI.escapeHTML(username) + "を登録しといたぞ。"
+		view_status[:result] = "success"
+		view_status[:username] = username
 		
 	end
 			
 else
 
-	view_buffer += "このフォームから登録してね～～<br>"
+	view_status[:method] = "GET"
 	
 end
 
 
-regist.view()
+regist.view(view_status)
 
 
