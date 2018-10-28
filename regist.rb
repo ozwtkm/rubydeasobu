@@ -79,30 +79,44 @@ def view_body(status={})
 
 	super #superっていってもview_form()だけ。
 
-	case status[:method]
-	when "GET" then
+	METHOD_GET = 0
+	METHOD_POST = 1
+	RESULT_ID_DUPLICATE = 1
+	RESULT_SUCCESS = 1
 	
-		print "GETだね"
+	
+	
+	@view_buffer = ""
+	case status[:method]
+	when METHOD_GET then
+	
+		@view_buffer += "GETだね"
 		
-	when "POST" then
+	when METHOD_POST then
 
 		case status[:result]
-		when "id_duplicate" then
+		when RESULT_ID_DUPLICATE then
 		
-			print "キャラかぶってるで"
+			@view_buffer += "キャラかぶってるで"
 		
-		when "success" then
+		when RESULT_SUCCESS then
 	
-			print CGI.escapeHTML(status[:username]) + "を登録しといたぞ"
+			@view_buffer += status[:username] + "を登録しといたぞ"
 	
+		else
+		
+			@view_buffer += "よくわからんけどうまくいかへんわ"
+			
 		end
 	
 	else
 	
-		print "意味不明なメソッド"
+		@view_buffer += "意味不明なメソッド"
 	
 	end
 
+	print CGI.escapeHTML(@view_buffer)
+	
 end
 
 
@@ -122,7 +136,7 @@ if cgi.request_method == "POST" then
 	# 何はともあれまずは入力値検証
 	regist.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
 	
-	view_status[:method] = "POST"
+	view_status[:method] = 0
 
 	username = cgi["name"]
 	passwd = cgi["passwd"]
@@ -130,20 +144,20 @@ if cgi.request_method == "POST" then
 	# 登録処理。	
 	if !regist.check_id_duplication(sql, username, passwd)
 	
-		view_status[:result] = "id_duplicate"
+		view_status[:result] = 0
 		
 	else 
 	
 		regist.regist(sql, username, passwd)
 		# view_buffer += CGI.escapeHTML(username) + "を登録しといたぞ。"
-		view_status[:result] = "success"
+		view_status[:result] = 1
 		view_status[:username] = username
 		
 	end
 			
 else
 
-	view_status[:method] = "GET"
+	view_status[:method] = 1
 	
 end
 
