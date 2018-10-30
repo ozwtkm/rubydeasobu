@@ -12,6 +12,11 @@ require './baseclass'
 
 class Regist < Base
 
+METHOD_GET = 0
+METHOD_POST = 1
+RESULT_ID_DUPLICATE = 1
+RESULT_SUCCESS = 1
+
 
 def check_id_duplication(sql, username, passwd)
 
@@ -79,10 +84,7 @@ def view_body(status={})
 
 	super #superっていってもview_form()だけ。
 
-	METHOD_GET = 0
-	METHOD_POST = 1
-	RESULT_ID_DUPLICATE = 1
-	RESULT_SUCCESS = 1
+
 	
 	
 	
@@ -136,7 +138,7 @@ if cgi.request_method == "POST" then
 	# 何はともあれまずは入力値検証
 	regist.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
 	
-	view_status[:method] = 0
+	view_status[:method] = 1
 
 	username = cgi["name"]
 	passwd = cgi["passwd"]
@@ -157,7 +159,7 @@ if cgi.request_method == "POST" then
 			
 else
 
-	view_status[:method] = 1
+	view_status[:method] =  0
 	
 end
 
