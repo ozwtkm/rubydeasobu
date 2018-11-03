@@ -1,5 +1,8 @@
 ﻿class Base
 
+METHOD_GET = 0
+METHOD_POST = 1
+
 def view_header()
 
 	print <<EOM
@@ -58,8 +61,9 @@ input_hash.each do |key, value|
 		
 	end
 		
-end
+end	
 
+	catch(:unko) do
 	if falselist != [] then
 	
 		falselist.each do |row|
@@ -70,6 +74,7 @@ end
 
 		exit!
 			
+	end
 	end
 	
 end

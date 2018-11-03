@@ -12,8 +12,6 @@ require './baseclass'
 
 class Regist < Base
 
-METHOD_GET = 0
-METHOD_POST = 1
 RESULT_ID_DUPLICATE = 0
 RESULT_SUCCESS = 1
 
