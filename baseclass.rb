@@ -2,6 +2,7 @@
 
 METHOD_GET = 0
 METHOD_POST = 1
+RESULT_SPECIAL_CHARACTER_ERROR = 0
 
 def view_header()
 
@@ -52,29 +53,23 @@ end
 
 def validate_special_character(input_hash)
 
-falselist = []
+attr_accessor :falselist
+
+@falselist = []
 input_hash.each do |key, value| 
 
 	if value.match(/\A[a-zA-Z0-9_@]+\z/) == nil then
 		
-		falselist << key 
+		@falselist << key 
 		
 	end
 		
 end	
 
-	catch(:unko) do
-	if falselist != [] then
+	if @falselist != [] then
 	
-		falselist.each do |row|
+		raise
 			
-			print "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ<br>"
-			
-		end
-
-		exit!
-			
-	end
 	end
 	
 end

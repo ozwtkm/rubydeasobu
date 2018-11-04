@@ -12,8 +12,8 @@ require './baseclass'
 
 class Regist < Base
 
-RESULT_ID_DUPLICATE = 0
-RESULT_SUCCESS = 1
+RESULT_ID_DUPLICATE = 1
+RESULT_SUCCESS = 2
 
 
 def check_id_duplication(sql, username, passwd)
@@ -81,10 +81,6 @@ end
 def view_body(status={})
 
 	super #superっていってもview_form()だけ。
-
-
-	
-	
 	
 	@view_buffer = ""
 	case status[:method]
@@ -95,6 +91,12 @@ def view_body(status={})
 	when METHOD_POST then
 
 		case status[:result]
+		when RESULT_SPECIAL_CHARACTER_ERROR then
+		
+			status[:specialcharacter_list].each do |row|
+				@view_buffer += row
+			end
+		
 		when RESULT_ID_DUPLICATE then
 		
 			@view_buffer += "キャラかぶってるで"
@@ -128,20 +130,31 @@ cgi = CGI.new
 sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
 regist = Regist.new
 
-view_status = {:method => "" , :result => "" , :username => ""}
+view_status = {:method => "" , :result => "" , :username => "", :specialcharacter_list => ""}
 
 # メイン処理
 if cgi.request_method == "POST" then
-
-	# 何はともあれまずは入力値検証
-	regist.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
 	
 	view_status[:method] = Regist::METHOD_POST
+
+
+	# 何はともあれまずは入力値検証
+	begin
+	
+		regist.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
+		
+	rescue
+	
+		view_status[:result] = Regist::RESULT_SPECIAL_CHARACTER_ERROR
+		view_status[:specialcharacter_list] = regist.falselist
+		regist.view(view_status)
+		
+	end
 
 	username = cgi["name"]
 	passwd = cgi["passwd"]
 	
-	# 登録処理。	
+	# 登録処理。
 	if !regist.check_id_duplication(sql, username, passwd)
 	
 		view_status[:result] = Regist::RESULT_ID_DUPLICATE
@@ -149,7 +162,6 @@ if cgi.request_method == "POST" then
 	else 
 	
 		regist.regist(sql, username, passwd)
-		# view_buffer += CGI.escapeHTML(username) + "を登録しといたぞ。"
 		view_status[:result] = Regist::RESULT_SUCCESS
 		view_status[:username] = username
 		
