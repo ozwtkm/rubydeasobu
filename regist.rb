@@ -12,8 +12,9 @@ require './baseclass'
 
 class Regist < Base
 
-RESULT_ID_DUPLICATE = 1
-RESULT_SUCCESS = 2
+RESULT_ID_DUPLICATE = RESULT_SPECIAL_CHARACTER_ERROR + 1
+RESULT_SUCCESS = RESULT_SPECIAL_CHARACTER_ERROR + 2
+
 
 
 def check_id_duplication(sql, username, passwd)
@@ -94,7 +95,7 @@ def view_body(status={})
 		when RESULT_SPECIAL_CHARACTER_ERROR then
 		
 			status[:specialcharacter_list].each do |row|
-				@view_buffer += row
+				@view_buffer += "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ<br>"
 			end
 		
 		when RESULT_ID_DUPLICATE then
