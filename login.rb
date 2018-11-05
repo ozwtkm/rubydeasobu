@@ -8,58 +8,21 @@ require 'securerandom'
 require 'cgi/session'
 require 'stringio'
 require 'pry'
+require './baseclass'
+
+	
+class Login < Base
+
+RESULT_LOGIN_FAILED = RESULT_SPECIAL_CHARACTER_ERROR + 1
+RESULT_LOGIN_SUCCESS = RESULT_SPECIAL_CHARACTER_ERROR + 2
 
 
-# cookieを正しく更新するためにロジックと出力を分離する必要がある。
-# 以下の関数は出力部分をまとめたもの。
-## stringioを使ってview_bufferに無理やり出力を突っ込まなくてすむようにする
-
-
-
-def common_view(input)
-
-	print input.header({"charset" => "UTF-8",})
-
-	print "<a href =matome.html>もどる</a><br><br>"
-
-	# ふぉーむ。
-	print <<EOM
-	<html>
-	<head>
-        <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
-	</head>
-	<body>
-	<h1>ログインするぞい</h1>
-	<form action="" method="post">
-			ユーザID<br>
-			<input type="text" name="name" value=""><br>
-			パスワード(text属性なのは茶目っ気)<br>
-			<input type="text" name="passwd" value=""><br>
-			<input type="submit" value="ログイン"><br>
-	</form>
-	</body>
-	</html>
-EOM
-
-end
-
-input = CGI.new
-$stdout = StringIO.new
-
-sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
-
-#view_buffer = ""
-
-if  input.request_method == "POST" then
-
-	username = input["name"]
-	passwd = input["passwd"]
-
-	# ログイン可能かチェック
+def check_ID_PW(sql, username, passwd)
+	
+	#ログイン可能な入力組み合わせかチェックする。（入力値組に合致するレコードの個数を返す）
 	
 	statement = sql.prepare("select salt from users2 where name = ?")
 	salt_tmp = statement.execute(username)
-	
 	
 	salt = nil
 	salt_tmp.each do |row|
@@ -68,76 +31,148 @@ if  input.request_method == "POST" then
 		end
 	end
 	
-	# view_buffer += salt
-	
-	# ユーザIDからsalt取れなかった場合passwd + saltで500になる
-	pw_hash = ""
+	# ユーザIDからsalt取れなかった場合passwd + saltが500になる
+	pw_hash = nil
 	if salt != nil then
-	 pw_hash = Digest::SHA1.hexdigest(passwd+salt)
+		pw_hash = Digest::SHA1.hexdigest(passwd + salt)
     end
 	
 	statement = sql.prepare("select COUNT(*) from users2 where name = ? and passwd = ?")
     exist_count_tmp = statement.execute(username, pw_hash)
 	
 	exist_count = nil
-	
 	exist_count_tmp.each do |row|
 		row.each do |key,value|
 			exist_count = value
 		end
 	end
 
-	# 2以上になることはない担保はDB側のカラム設計で
-
-	if exist_count != 1 then 
+	return exist_count
 	
-		# view_buffer += "出直して来いよな（訳：IDまたはパスワードがちがいます"
-		common_view(input)
-		print  "出直して来いよな（訳：IDまたはパスワードがちがいます"
+end
+
+end
+
+
+def login(username)
+
+	# セッションにログイン情報を持たせるよ
+	session = CGI::Session.new(input,{"new_session" => true})
+	session['name'] = username
+    session.close
+
+end
+
+
+# オーバーライド
+def view_form()
+
+			print <<EOM
+<h1>会員登録するぞい</h1>
+<form action="" method="post">
+ユーザID<br>
+<input type="text" name="name" value=""><br>
+パスワード(text属性なのは茶目っ気)<br>
+<input type="text" name="passwd" value=""><br>
+<input type="submit" value="登録するぞい"><br>
+</form>
+EOM
+
+end
+
+
+# オーバーライド
+def view_body(status={})
+
+	super
+	
+	@view_buffer = ""
+	
+	case status[:method]
+	when METHOD_GET then
+	
+		@view_buffer += "GETだね"
 		
-		result = $stdout.string
-		$stdout = STDOUT
-		puts result
+	when METHOD_POST then
+
+		case status[:result]
+		when RESULT_SPECIAL_CHARACTER_ERROR then
+		
+			status[:specialcharacter_list].each do |row|
+				@view_buffer += "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ<br>"
+			end
+		
+		when RESULT_LOGIN_FAILED then
+		
+			@view_buffer += "IDかパスワードが違う"
+		
+		when RESULT_LOGIN_SUCCESS then
+	
+			@view_buffer += "#{status[:username]}でログインしたった"
+	
+		else
+		
+			@view_buffer += "よくわからんけどうまくいかへんわ"
+			
+		end
+	
+	else
+	
+		@view_buffer += "意味不明なメソッド"
+	
+	end
+
+	print CGI.escapeHTML(@view_buffer)
+
+end
+
+
+cgi = CGI.new
+sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
+login = Login.new
+
+view_status = {:method => "" , :result => "" , :username => "", :specialcharacter_list => ""}
+
+
+# メイン処理だよ！
+if  cgi.request_method == "POST" then
+
+	view_status[:method] = Login::METHOD_POST
+	
+	# 何はともあれまずは入力値検証
+	begin
+	
+		login.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
+		
+	rescue
+	
+		view_status[:result] = Login::RESULT_SPECIAL_CHARACTER_ERROR
+		view_status[:specialcharacter_list] = Login.falselist
+		login.view(view_status)
+		
+	end
+
+	username = cgi["name"]
+	passwd = cgi["passwd"]
+
+	# 2以上になることはない担保はDB側のカラム設計でやるよ
+	if login.check_ID_PW(sql, username, passwd) != 1 then 
+	
+		view_status[:result] = Login::RESULT_LOGIN_FAILED
 		
 	else
 
-		#view_buffer +=  "ログインしたよ<br><br>"
+		login.login(username)
 		
+		view_status[:result] = Login::RESULT_LOGIN_SUCCESS
 		
-		## ここセッションＩＤ更新したいがされない
-		session = CGI::Session.new(input,{"new_session"=>true})
-		session['name'] = username
-		#view_buffer += "ようこそ" + CGI.escapeHTML(session['name']) + "さん"
-		
-                session.close	        
-				
-               #view_buffer += "<a href=sessiontest.rb>sessiontest</a><br><a href=websocket.html>websocketクライアント</a>"
-               #view_buffer += session.to_s
-			   
-			   common_view(input)
-			   print "ログインしたよ<br><br>"
-			   print "<a href=sessiontest.rb>sessiontest</a><br><a href=websocket.html>websocketクライアント</a>"
-			   
-			   	result = $stdout.string
-				$stdout = STDOUT
-				puts result
-			   
-			   
 	end
 	
 else
 
-	#view_buffer += "<br><br>GETだね"
-	
-	common_view(input)
-	print "<br><br>GETだね"
-
-	
-	result = $stdout.string
-	$stdout = STDOUT
-	puts result
+	view_status[:method] = Login::METHOD_GET
 	
 end
 
-# 出力。
-#view(input,view_buffer)
+
+login.view(view_status)
