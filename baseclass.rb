@@ -65,15 +65,16 @@ input_hash.each do |key, value|
 		
 end	
 
-	if special_character_error.falselist != [] then
+if special_character_error.falselist != [] then
 	
-		raise special_character_error, special_character_error.falselist
+	raise special_character_error, special_character_error.falselist
 			
-	end
+end
+	
+return true
 	
 end
 
-	return true
 
 end
 
