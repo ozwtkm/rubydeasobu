@@ -5,7 +5,7 @@ require 'cgi'
 require 'mysql2'
 require 'digest/sha1'
 require 'securerandom'
-require './baseclass'
+require_relative './baseclass'
 
 
 
@@ -14,7 +14,6 @@ class Regist < Base
 
 RESULT_ID_DUPLICATE = RESULT_SPECIAL_CHARACTER_ERROR + 1
 RESULT_SUCCESS = RESULT_SPECIAL_CHARACTER_ERROR + 2
-
 
 
 def check_id_duplication(sql, username, passwd)
@@ -138,16 +137,15 @@ if cgi.request_method == "POST" then
 	
 	view_status[:method] = Regist::METHOD_POST
 
-
 	# 何はともあれまずは入力値検証
 	begin
 	
 		regist.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
 		
-	rescue
+	rescue => e
 	
 		view_status[:result] = Regist::RESULT_SPECIAL_CHARACTER_ERROR
-		view_status[:specialcharacter_list] = regist.falselist
+		view_status[:specialcharacter_list] = e.falselist
 		regist.view(view_status)
 		
 	end

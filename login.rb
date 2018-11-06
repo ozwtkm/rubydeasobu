@@ -8,7 +8,7 @@ require 'securerandom'
 require 'cgi/session'
 require 'stringio'
 require 'pry'
-require './baseclass'
+require_relative './baseclass'
 
 	
 class Login < Base
@@ -48,8 +48,6 @@ def check_ID_PW(sql, username, passwd)
 	end
 
 	return exist_count
-	
-end
 
 end
 
@@ -68,13 +66,13 @@ end
 def view_form()
 
 			print <<EOM
-<h1>会員登録するぞい</h1>
+<h1>ログインするぞい</h1>
 <form action="" method="post">
 ユーザID<br>
 <input type="text" name="name" value=""><br>
 パスワード(text属性なのは茶目っ気)<br>
 <input type="text" name="passwd" value=""><br>
-<input type="submit" value="登録するぞい"><br>
+<input type="submit" value="ログインするぞい"><br>
 </form>
 EOM
 
@@ -126,12 +124,14 @@ def view_body(status={})
 
 end
 
+end
+
 
 cgi = CGI.new
 sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
 login = Login.new
 
-view_status = {:method => "" , :result => "" , :username => "", :specialcharacter_list => ""}
+view_status = {:method => "" , :result => "" , :username => ""　, :specialcharacter_list => ""}
 
 
 # メイン処理だよ！
@@ -144,10 +144,10 @@ if  cgi.request_method == "POST" then
 	
 		login.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
 		
-	rescue
+	rescue => e
 	
 		view_status[:result] = Login::RESULT_SPECIAL_CHARACTER_ERROR
-		view_status[:specialcharacter_list] = Login.falselist
+		view_status[:specialcharacter_list] = e.falselist
 		login.view(view_status)
 		
 	end
