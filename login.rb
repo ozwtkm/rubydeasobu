@@ -140,6 +140,7 @@ if  cgi.request_method == "POST" then
 	view_status[:method] = Login::METHOD_POST
 	
 	# 何はともあれまずは入力値検証
+	special_character_check = false
 	begin
 	
 		login.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
@@ -148,24 +149,25 @@ if  cgi.request_method == "POST" then
 	
 		view_status[:result] = Login::RESULT_SPECIAL_CHARACTER_ERROR
 		view_status[:specialcharacter_list] = e.falselist
-		login.view(view_status)
 		
 	end
 
-	username = cgi["name"]
-	passwd = cgi["passwd"]
+	if special_character_check then
+		username = cgi["name"]
+		passwd = cgi["passwd"]
 
-	# 2以上になることはない担保はDB側のカラム設計でやるよ
-	if login.check_ID_PW(sql, username, passwd) != 1 then 
+		# 2以上になることはない担保はDB側のカラム設計でやるよ
+		if login.check_ID_PW(sql, username, passwd) != 1 then 
 	
-		view_status[:result] = Login::RESULT_LOGIN_FAILED
+			view_status[:result] = Login::RESULT_LOGIN_FAILED
 		
-	else
+		else
 
-		login.login(username)
+			login.login(username)
 		
-		view_status[:result] = Login::RESULT_LOGIN_SUCCESS
+			view_status[:result] = Login::RESULT_LOGIN_SUCCESS
 		
+		end
 	end
 	
 else

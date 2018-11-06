@@ -138,32 +138,34 @@ if cgi.request_method == "POST" then
 	view_status[:method] = Regist::METHOD_POST
 
 	# 何はともあれまずは入力値検証
+	special_character_check = false
 	begin
-	
-		regist.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
+		
+		special_character_check = regist.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
 		
 	rescue => e
 	
 		view_status[:result] = Regist::RESULT_SPECIAL_CHARACTER_ERROR
 		view_status[:specialcharacter_list] = e.falselist
-		regist.view(view_status)
 		
 	end
 
-	username = cgi["name"]
-	passwd = cgi["passwd"]
+	if special_character_check then
+		username = cgi["name"]
+		passwd = cgi["passwd"]
 	
-	# 登録処理。
-	if !regist.check_id_duplication(sql, username, passwd)
+		# 登録処理。
+		if !regist.check_id_duplication(sql, username, passwd)
 	
-		view_status[:result] = Regist::RESULT_ID_DUPLICATE
+			view_status[:result] = Regist::RESULT_ID_DUPLICATE
 		
-	else 
+		else 
 	
-		regist.regist(sql, username, passwd)
-		view_status[:result] = Regist::RESULT_SUCCESS
-		view_status[:username] = username
+			regist.regist(sql, username, passwd)
+			view_status[:result] = Regist::RESULT_SUCCESS
+			view_status[:username] = username
 		
+		end
 	end
 			
 else
