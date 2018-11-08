@@ -1,34 +1,39 @@
-﻿class Base
+﻿require 'cgi'
+
+
+class Base
 
 METHOD_GET = 0
 METHOD_POST = 1
 RESULT_SPECIAL_CHARACTER_ERROR = 0
 
+@view_buffer = ""
+
+
 def view_header()
 
-	print <<EOM
-Content-Type: text/html; charset=UTF-8\r\n\r\n
+	@view_buffer += 'Content-Type: text/html; charset=UTF-8\r\n\r\n
 <html>
 <head>
 <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
 </head>
-<body>
-EOM
+<body>'
+
 		
 end
 
 
 def view_footer()
 	
-	print "<a href =matome.html>もどる</a><br><br>"
-	print "</body>"
+	@view_buffer += '<a href =matome.html>もどる</a><br><br>
+</body>'
 	
 end
 
 # オーバーライドする前提
 def view_form()
 
-	print ""
+	@view_buffer += ""
 
 end
 
@@ -38,6 +43,8 @@ def view_body(status={})
 
 	view_form()
 	# オーバーライドでここにstatusによるview分岐を書く
+	
+	@view_buffer += ""
 
 end
 
@@ -47,7 +54,9 @@ def view(status={})
 	view_header()
 	view_body(status)
 	view_footer()
-
+	
+	print CGI.escapeHTML(@view_buffer)
+	
 end
 
 

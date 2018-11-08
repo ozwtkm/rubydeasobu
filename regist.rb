@@ -63,16 +63,14 @@ end
 # オーバーライド
 def view_form()
 
-			print <<EOM
-<h1>会員登録するぞい</h1>
+	@view_buffer+= '<h1>会員登録するぞい</h1>
 <form action="" method="post">
 ユーザID<br>
 <input type="text" name="name" value=""><br>
 パスワード(text属性なのは茶目っ気)<br>
 <input type="text" name="passwd" value=""><br>
 <input type="submit" value="登録するぞい"><br>
-</form>
-EOM
+</form>'
 
 end
 
@@ -82,7 +80,6 @@ def view_body(status={})
 
 	super #superっていってもview_form()だけ。
 	
-	@view_buffer = ""
 	case status[:method]
 	when METHOD_GET then
 	
@@ -116,8 +113,6 @@ def view_body(status={})
 		@view_buffer += "意味不明なメソッド"
 	
 	end
-
-	print CGI.escapeHTML(@view_buffer)
 	
 end
 
@@ -134,7 +129,7 @@ regist = Regist.new
 def control(cgi, sql, regist, view_status = {:method => "" , :result => "" , :username => "", :specialcharacter_list => ""})
 	if cgi.request_method == "POST" then
 		
-		view_status[:method] = Regist::METHOD_POST
+		view_status[:method] = Base::METHOD_POST
 
 		# 何はともあれまずは入力値検証
 		begin
@@ -168,7 +163,7 @@ def control(cgi, sql, regist, view_status = {:method => "" , :result => "" , :us
 				
 	else
 
-		view_status[:method] =  Regist::METHOD_GET
+		view_status[:method] =  Base::METHOD_GET
 		
 	end
 
