@@ -131,50 +131,51 @@ cgi = CGI.new
 sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
 login = Login.new
 
-view_status = {:method => "" , :result => "" , :username => ""　, :specialcharacter_list => ""}
-
-
 # メイン処理だよ！
-if  cgi.request_method == "POST" then
+def control(cgi, sql, login, view_status = {:method => "" , :result => "" , :username => ""　, :specialcharacter_list => ""})
+	if  cgi.request_method == "POST" then
 
-	view_status[:method] = Login::METHOD_POST
-	
-	# 何はともあれまずは入力値検証
-	special_character_check = false
-	begin
-	
-		login.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
+		view_status[:method] = Login::METHOD_POST
 		
-	rescue => e
-	
-		view_status[:result] = Login::RESULT_SPECIAL_CHARACTER_ERROR
-		view_status[:specialcharacter_list] = e.falselist
+		# 何はともあれまずは入力値検証
+		begin
 		
-	end
-
-	if special_character_check then
-		username = cgi["name"]
-		passwd = cgi["passwd"]
-
-		# 2以上になることはない担保はDB側のカラム設計でやるよ
-		if login.check_ID_PW(sql, username, passwd) != 1 then 
-	
-			view_status[:result] = Login::RESULT_LOGIN_FAILED
+			login.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
+			
+		rescue => e
 		
-		else
-
-			login.login(username)
-		
-			view_status[:result] = Login::RESULT_LOGIN_SUCCESS
-		
+			view_status[:result] = Login::RESULT_SPECIAL_CHARACTER_ERROR
+			view_status[:specialcharacter_list] = e.falselist
+			
+			return view_status
+			
 		end
-	end
-	
-else
 
-	view_status[:method] = Login::METHOD_GET
+			username = cgi["name"]
+			passwd = cgi["passwd"]
+
+			# 2以上になることはない担保はDB側のカラム設計でやるよ
+			if login.check_ID_PW(sql, username, passwd) != 1 then 
+		
+				view_status[:result] = Login::RESULT_LOGIN_FAILED
+			
+			else
+
+				login.login(username)
+			
+				view_status[:result] = Login::RESULT_LOGIN_SUCCESS
+			
+			end
+		
+	else
+
+		view_status[:method] = Login::METHOD_GET
+		
+	end
+
+	return view_status
 	
 end
 
-
-login.view(view_status)
+result = control(cgi, sql, login)
+login.view(result)

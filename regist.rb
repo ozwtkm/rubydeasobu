@@ -130,51 +130,51 @@ cgi = CGI.new
 sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
 regist = Regist.new
 
-view_status = {:method => "" , :result => "" , :username => "", :specialcharacter_list => ""}
-
 # メイン処理
-if cgi.request_method == "POST" then
-	
-	view_status[:method] = Regist::METHOD_POST
+def control(cgi, sql, regist, view_status = {:method => "" , :result => "" , :username => "", :specialcharacter_list => ""})
+	if cgi.request_method == "POST" then
+		
+		view_status[:method] = Regist::METHOD_POST
 
-	# 何はともあれまずは入力値検証
-	special_character_check = false
-	begin
+		# 何はともあれまずは入力値検証
+		begin
+			
+			regist.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
+			
+		rescue => e
 		
-		special_character_check = regist.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
-		
-	rescue => e
-	
-		view_status[:result] = Regist::RESULT_SPECIAL_CHARACTER_ERROR
-		view_status[:specialcharacter_list] = e.falselist
-		
-	end
+			view_status[:result] = Regist::RESULT_SPECIAL_CHARACTER_ERROR
+			view_status[:specialcharacter_list] = e.falselist
+			
+			return view_status
+			
+		end
 
-	if special_character_check then
 		username = cgi["name"]
 		passwd = cgi["passwd"]
-	
+		
 		# 登録処理。
 		if !regist.check_id_duplication(sql, username, passwd)
-	
-			view_status[:result] = Regist::RESULT_ID_DUPLICATE
 		
+			view_status[:result] = Regist::RESULT_ID_DUPLICATE
+			
 		else 
-	
+		
 			regist.regist(sql, username, passwd)
 			view_status[:result] = Regist::RESULT_SUCCESS
 			view_status[:username] = username
-		
-		end
-	end
-			
-else
 
-	view_status[:method] =  Regist::METHOD_GET
-	
+		end
+				
+	else
+
+		view_status[:method] =  Regist::METHOD_GET
+		
+	end
+
+	return view_status
+
 end
 
-
-regist.view(view_status)
-
-
+result = control(cgi, sql, regist)
+regist.view(result)
