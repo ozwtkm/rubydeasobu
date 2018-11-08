@@ -53,21 +53,20 @@ end
 
 def validate_special_character(input_hash)
 
-special_character_error = Special_character_error.new
-
+falselist = []
 input_hash.each do |key, value| 
 
 	if value.match(/\A[a-zA-Z0-9_@]+\z/) == nil then
 		
-		special_character_error.falselist << key 
+		falselist << key
 		
 	end
 		
 end	
 
-if special_character_error.falselist != [] then
+if falselist != [] then
 	
-	raise special_character_error, special_character_error.falselist
+	raise Special_character_error.new(falselist)
 			
 end
 	
@@ -82,8 +81,11 @@ end
 
 class Special_character_error < StandardError
 
-attr_accessor :falselist
-@falselist = []
+attr_reader :falselist
+
+def initialize(list)
+	@falselist = list
+end
 
 end
 
