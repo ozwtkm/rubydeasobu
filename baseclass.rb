@@ -1,4 +1,4 @@
-﻿require 'cgi'
+﻿
 
 
 class Base
@@ -55,7 +55,7 @@ def view(status={})
 	view_body(status)
 	view_footer()
 	
-	print CGI.escapeHTML(@view_buffer)
+	print @view_buffer
 	
 end
 

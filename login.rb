@@ -102,7 +102,7 @@ def view_body(status={})
 		
 		when RESULT_LOGIN_SUCCESS then
 	
-			@view_buffer += "#{status[:username]}でログインしたった"
+			@view_buffer += CGI.escapeHTML(status[:username]) + "でログインしたった"
 	
 		else
 		

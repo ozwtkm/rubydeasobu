@@ -100,7 +100,7 @@ def view_body(status={})
 		
 		when RESULT_SUCCESS then
 	
-			@view_buffer += status[:username] + "を登録しといたぞ"
+			@view_buffer += CGI.escapeHTML(status[:username]) + "を登録しといたぞ"
 	
 		else
 		
