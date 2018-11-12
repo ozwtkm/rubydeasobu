@@ -52,39 +52,42 @@ def check_ID_PW(sql, username, passwd)
 end
 
 
-def login(username)
+def login(cgi, username)
 
 	# セッションにログイン情報を持たせるよ
-	session = CGI::Session.new(input,{"new_session" => true})
+	session = CGI::Session.new(cgi,{"new_session" => true})
 	session['name'] = username
     session.close
 
+	return session
+	
 end
 
 
 # オーバーライド
 def view_form()
 
-	@view_buffer += '<h1>ログインするぞい</h1>
+	@view_buffer += <<-EOS
+<h1>ログインするぞい</h1>
 <form action="" method="post">
 ユーザID<br>
 <input type="text" name="name" value=""><br>
 パスワード(text属性なのは茶目っ気)<br>
 <input type="text" name="passwd" value=""><br>
 <input type="submit" value="ログインするぞい"><br>
-</form>'
+</form>
+	EOS
 
 end
 
 
 # オーバーライド
 def view_body(status={})
-
-	super
 	
 	case status[:method]
 	when METHOD_GET then
 	
+		super
 		@view_buffer += "GETだね"
 		
 	when METHOD_POST then
@@ -92,26 +95,42 @@ def view_body(status={})
 		case status[:result]
 		when RESULT_SPECIAL_CHARACTER_ERROR then
 		
+			super
 			status[:specialcharacter_list].each do |row|
 				@view_buffer += "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ<br>"
 			end
 		
 		when RESULT_LOGIN_FAILED then
-		
+			
+			super
 			@view_buffer += "IDかパスワードが違う"
 		
 		when RESULT_LOGIN_SUCCESS then
-	
+			
+			@view_buffer += <<-EOS
+Set-cookie: session_id = #{status[:sessionid]}
+
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+			EOS
+			
+			view_form()
+			
 			@view_buffer += CGI.escapeHTML(status[:username]) + "でログインしたった"
 	
 		else
 		
+			super
 			@view_buffer += "よくわからんけどうまくいかへんわ"
 			
 		end
 	
 	else
 	
+		super
 		@view_buffer += "意味不明なメソッド"
 	
 	end
@@ -127,7 +146,7 @@ sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'local
 login = Login.new
 
 # メイン処理だよ！
-def control(cgi, sql, login, view_status = {:method => "" , :result => "" , :username => ""　, :specialcharacter_list => ""})
+def control(cgi, sql, login, view_status = {:method => "",:result => "",:username => "",:specialcharacter_list => "",:sessionid => ""})
 	if  cgi.request_method == "POST" then
 
 		view_status[:method] = Base::METHOD_POST
@@ -156,8 +175,10 @@ def control(cgi, sql, login, view_status = {:method => "" , :result => "" , :use
 			
 			else
 
-				login.login(username)
+				session = login.login(cgi, username)
 			
+				view_status[:sessionid] = session.instance_variable_get(:@session_id)
+				view_status[:username] = session.instance_variable_get(:@data)["name"]
 				view_status[:result] = Login::RESULT_LOGIN_SUCCESS
 			
 			end

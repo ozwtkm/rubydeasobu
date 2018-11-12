@@ -15,7 +15,7 @@ end
 def view_header()
 
 	@view_buffer += <<-EOS
-Content-Type: text/html; charset=UTF-8\n
+Content-Type: text/html; charset=UTF-8
 	EOS
 
 end
@@ -41,7 +41,7 @@ end
 # オーバーライドする前提
 def view_body(status={})
 
-	@view_buffer += <<-EOS
+	@view_buffer += <<-EOS	
 \r\n\r\n<html>
 <head>
 <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
