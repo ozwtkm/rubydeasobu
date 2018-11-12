@@ -85,7 +85,7 @@ def view_body(status={})
 	case status[:method]
 	when METHOD_GET then
 	
-		@view_buffer += ""
+		@view_buffer += add_new_line("")
 		
 	when METHOD_POST then
 
@@ -93,26 +93,26 @@ def view_body(status={})
 		when RESULT_SPECIAL_CHARACTER_ERROR then
 		
 			status[:specialcharacter_list].each do |row|
-				@view_buffer += "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ<br>"
+				@view_buffer += add_new_line("#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ")
 			end
 		
 		when RESULT_ID_DUPLICATE then
 		
-			@view_buffer += "キャラかぶってるで<br>"
+			@view_buffer += add_new_line("キャラかぶってるで")
 		
 		when RESULT_SUCCESS then
 	
-			@view_buffer += CGI.escapeHTML(status[:username]) + "を登録しといたぞ<br>"
+			@view_buffer += add_new_line(CGI.escapeHTML(status[:username]) + "を登録しといたぞ")
 	
 		else
 		
-			@view_buffer += "よくわからんけどうまくいかへんわ<br>"
+			@view_buffer += add_new_line("よくわからんけどうまくいかへんわ")
 			
 		end
 	
 	else
 	
-		@view_buffer += "意味不明なメソッド<br>"
+		@view_buffer += add_new_line("意味不明なメソッド")
 	
 	end
 	

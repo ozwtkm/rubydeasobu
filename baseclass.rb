@@ -41,7 +41,7 @@ end
 # オーバーライドする前提
 def view_body(status={})
 
-	@view_buffer += <<-EOS	
+	@view_buffer += <<-EOS
 \r\n\r\n<html>
 <head>
 <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
@@ -53,8 +53,7 @@ def view_body(status={})
 	# オーバーライドでここにstatusによるview分岐を書く
 
 end
-
-
+	
 def view(status={})
 
 	view_header()
@@ -90,7 +89,15 @@ return true
 end
 
 
+def add_new_line(message)
+
+return message + "<br>\r\n"
+
 end
+
+
+end
+
 
 
 

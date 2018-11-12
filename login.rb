@@ -88,7 +88,7 @@ def view_body(status={})
 	when METHOD_GET then
 	
 		super
-		@view_buffer += "GETだね"
+		@view_buffer += add_new_line("")
 		
 	when METHOD_POST then
 
@@ -97,13 +97,13 @@ def view_body(status={})
 		
 			super
 			status[:specialcharacter_list].each do |row|
-				@view_buffer += "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ<br>"
+				@view_buffer += add_new_line("#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ")
 			end
 		
 		when RESULT_LOGIN_FAILED then
 			
 			super
-			@view_buffer += "IDかパスワードが違う"
+			@view_buffer += add_new_line("IDかパスワードが違う")
 		
 		when RESULT_LOGIN_SUCCESS then
 			
@@ -119,19 +119,19 @@ Set-cookie: session_id = #{status[:sessionid]}
 			
 			view_form()
 			
-			@view_buffer += CGI.escapeHTML(status[:username]) + "でログインしたった"
+			@view_buffer += add_new_line(CGI.escapeHTML(status[:username]) + "でログインしたった")
 	
 		else
 		
 			super
-			@view_buffer += "よくわからんけどうまくいかへんわ"
+			@view_buffer += add_new_line("よくわからんけどうまくいかへんわ")
 			
 		end
 	
 	else
 	
 		super
-		@view_buffer += "意味不明なメソッド"
+		@view_buffer += add_new_line("意味不明なメソッド")
 	
 	end
 
