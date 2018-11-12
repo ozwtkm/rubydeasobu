@@ -63,14 +63,16 @@ end
 # オーバーライド
 def view_form()
 
-	@view_buffer+= '<h1>会員登録するぞい</h1>
+	@view_buffer += <<-EOS
+<h1>会員登録するぞい</h1>
 <form action="" method="post">
 ユーザID<br>
 <input type="text" name="name" value=""><br>
 パスワード(text属性なのは茶目っ気)<br>
 <input type="text" name="passwd" value=""><br>
 <input type="submit" value="登録するぞい"><br>
-</form>'
+</form>
+	EOS
 
 end
 
@@ -78,12 +80,12 @@ end
 # オーバーライド
 def view_body(status={})
 
-	super #superっていってもview_form()だけ。
+	super 
 	
 	case status[:method]
 	when METHOD_GET then
 	
-		@view_buffer += "GETだね"
+		@view_buffer += ""
 		
 	when METHOD_POST then
 
@@ -96,21 +98,21 @@ def view_body(status={})
 		
 		when RESULT_ID_DUPLICATE then
 		
-			@view_buffer += "キャラかぶってるで"
+			@view_buffer += "キャラかぶってるで<br>"
 		
 		when RESULT_SUCCESS then
 	
-			@view_buffer += CGI.escapeHTML(status[:username]) + "を登録しといたぞ"
+			@view_buffer += CGI.escapeHTML(status[:username]) + "を登録しといたぞ<br>"
 	
 		else
 		
-			@view_buffer += "よくわからんけどうまくいかへんわ"
+			@view_buffer += "よくわからんけどうまくいかへんわ<br>"
 			
 		end
 	
 	else
 	
-		@view_buffer += "意味不明なメソッド"
+		@view_buffer += "意味不明なメソッド<br>"
 	
 	end
 	

@@ -7,26 +7,26 @@ METHOD_GET = 0
 METHOD_POST = 1
 RESULT_SPECIAL_CHARACTER_ERROR = 0
 
-@view_buffer = ""
+def initialize()
+	@view_buffer = ""
+end
 
 
 def view_header()
 
-	@view_buffer += 'Content-Type: text/html; charset=UTF-8\r\n\r\n
-<html>
-<head>
-<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
-</head>
-<body>'
+	@view_buffer += <<-EOS
+Content-Type: text/html; charset=UTF-8\n
+	EOS
 
-		
 end
 
 
 def view_footer()
 	
-	@view_buffer += '<a href =matome.html>もどる</a><br><br>
-</body>'
+	@view_buffer += <<-EOS
+<a href =matome.html>もどる</a><br><br>
+</body>
+	EOS
 	
 end
 
@@ -41,10 +41,16 @@ end
 # オーバーライドする前提
 def view_body(status={})
 
+	@view_buffer += <<-EOS
+\r\n\r\n<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+	EOS
+
 	view_form()
 	# オーバーライドでここにstatusによるview分岐を書く
-	
-	@view_buffer += ""
 
 end
 
