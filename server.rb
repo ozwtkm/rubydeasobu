@@ -1,6 +1,7 @@
 require 'webrick'
 require 'optparse'
 include WEBrick
+# require_relative 'route.rb'
 
 module WEBrick::HTTPServlet
   FileHandler.add_handler('rb', CGIHandler)
@@ -37,20 +38,33 @@ s = HTTPServer.new(:BindAddress => '127.0.0.1', :DocumentRoot => '/var/www/html/
 
 
 # サーブレット
-class HelloServlet < HTTPServlet::AbstractServlet
+class HelloServlet < WEBrick::HTTPServlet::CGIHandler
   def do_GET(req, res)
-    res['Content-Type'] = "text/html"
-    res.body = "<html><body>hello world.</body></html>"
+  
   end
 end
 
 # サーブレットをマウント
-s.mount("/hello", HelloServlet)
+#s.mount("/hello", HelloServlet)
+
+routes = Hash.new
+
+eval(File.open('./route.rb').read).each {|key, value|
+  routes[key] = value
+}
 
 s.mount_proc('/') do |req, res|
-	res.body = req.path
+	
+	path = req.path.split("/")
+	path.delete("")
+	route_path = routes.select{|key, value|key == path[0]}
+	
+	a = WEBrick::HTTPServlet::CGIHandler.new(s, "./#{route_path.values[0]}")
+	a.do_GET(req,res)
+	
 end
 
+# s.mount('/', WEBrick::HTTPServlet::CGIHandler, './regist.rb')
 
 
 # Ctrl + C で停止するようにトラップを仕込む。
