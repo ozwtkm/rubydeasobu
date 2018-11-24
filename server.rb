@@ -1,7 +1,6 @@
 require 'webrick'
 require 'optparse'
 include WEBrick
-# require_relative 'route.rb'
 
 module WEBrick::HTTPServlet
   FileHandler.add_handler('rb', CGIHandler)
@@ -57,9 +56,9 @@ s.mount_proc('/') do |req, res|
 	
 	path = req.path.split("/")
 	path.delete("")
-	route_path = routes.select{|key, value|key == path[0]}
-	
-	a = WEBrick::HTTPServlet::CGIHandler.new(s, "./#{route_path.values[0]}")
+	path = path[0].to_s
+	route_path = routes[path]
+	a = WEBrick::HTTPServlet::CGIHandler.new(s, "./#{route_path}")
 	a.do_GET(req,res)
 	
 end
