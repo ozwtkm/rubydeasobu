@@ -1,6 +1,7 @@
 require 'webrick'
 require 'optparse'
 include WEBrick
+require_relative './route'
 
 module WEBrick::HTTPServlet
   FileHandler.add_handler('rb', CGIHandler)
@@ -46,11 +47,11 @@ end
 # サーブレットをマウント
 #s.mount("/hello", HelloServlet)
 
-routes = Hash.new
+routes = Routes::ROUTES
 
-eval(File.open('./route.rb').read).each {|key, value|
-  routes[key] = value
-}
+#eval(File.open('./route.rb').read).each {|key, value|
+#  routes[key] = value
+# }
 
 s.mount_proc('/') do |req, res|
 	
