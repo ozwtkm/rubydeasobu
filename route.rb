@@ -5,8 +5,8 @@
 class Routes
 
 ROUTES = {
-	"regist" => "regist.rb",
-	"login" => "login.rb"
+	"/regist" => "regist.rb",
+	"/login" => "login.rb"
 }
 
 end
