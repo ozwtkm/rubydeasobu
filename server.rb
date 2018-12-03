@@ -17,8 +17,15 @@ routes = Routes::ROUTES
 s.mount_proc('/') do |req, res|
 	
 	route_path = routes[req.path]
-	srv = WEBrick::HTTPServlet::CGIHandler.new(s, "./#{route_path}")
-	srv.do_GET(req,res)
+	
+	if route_path == nil then
+		res.content_type = "text/html"
+		res.status = 404
+		res.body = "404<br><br>#{req.path}なんかねーよ" #ここXSS
+	else
+		srv = WEBrick::HTTPServlet::CGIHandler.new(s, "./#{route_path}")
+		srv.do_GET(req,res)
+	end
 	
 end
 
