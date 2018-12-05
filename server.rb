@@ -1,7 +1,9 @@
 require 'webrick'
 require 'optparse'
+require 'cgi'
 include WEBrick
 require_relative './route'
+
 
 module WEBrick::HTTPServlet
   FileHandler.add_handler('rb', CGIHandler)
@@ -21,7 +23,7 @@ s.mount_proc('/') do |req, res|
 	if route_path == nil then
 		res.content_type = "text/html"
 		res.status = 404
-		res.body = "404<br><br>#{req.path}なんかねーよ" #ここXSS
+		res.body = "404<br><br>" + CGI.escapeHTML(req.path) + "なんかねーよ"
 	else
 		srv = WEBrick::HTTPServlet::CGIHandler.new(s, "./#{route_path}")
 		srv.do_GET(req,res)
