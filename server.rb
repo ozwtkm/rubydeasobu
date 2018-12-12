@@ -26,7 +26,16 @@ s.mount_proc('/') do |req, res|
 		res.body = "404<br><br>" + CGI.escapeHTML(req.path) + "なんかねーよ"
 	else
 		srv = WEBrick::HTTPServlet::CGIHandler.new(s, "./#{route_path}")
-		srv.do_GET(req,res)
+		
+		if req.request_method === "GET" then
+			srv.do_GET(req,res)
+		elsif req.request_method == "POST" then
+			srv.do_POST(req,res)
+		else
+			res.status = 405
+			res.body = "そのmethodだめ"
+		end
+	
 	end
 	
 end
