@@ -22,8 +22,7 @@ RESULT_LOGIN_SUCCESS = RESULT_SPECIAL_CHARACTER_ERROR + 2
 
 def get_handler()
 
-	create_instance()
-	view()
+	view({:method => Base::METHOD_GET})
 	
 end
 
@@ -32,11 +31,14 @@ end
 
 def post_handler()
 
+	create_instance()
+
 end
 
 
 def create_instance()
 
+	ARGV.replace(["abc=001&def=002"]) # オフラインモード回避。
 	@cgi = CGI.new
 	@sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
 
@@ -165,24 +167,30 @@ end
 # オーバーライド
 def view_body(status={})
 	
+	case status[:method]
+	when METHOD_GET then
+	
 		super
 		
+	when METHOD_POST then
+
 		case status[:result]
 		when RESULT_SPECIAL_CHARACTER_ERROR then
 		
+			super
 			status[:specialcharacter_list].each do |row|
 				@res.body += add_new_line("#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ")
 			end
 		
 		when RESULT_LOGIN_FAILED then
 			
+			super
 			@res.body += add_new_line("IDかパスワードが違う")
 		
 		when RESULT_LOGIN_SUCCESS then
 			
 			@res.body += <<-EOS
 Set-cookie: session_id = #{status[:sessionid]}
-
 <html>
 <head>
 <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
@@ -196,11 +204,17 @@ Set-cookie: session_id = #{status[:sessionid]}
 	
 		else
 		
+			super
 			@res.body += add_new_line("よくわからんけどうまくいかへんわ")
 			
 		end
 	
+	else
 	
+		super
+		@res.body += add_new_line("意味不明なメソッド")
+	
+	end
 
 end
 
