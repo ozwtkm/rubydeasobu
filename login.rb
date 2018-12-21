@@ -13,8 +13,89 @@ require_relative './baseclass'
 	
 class Login < Base
 
+
 RESULT_LOGIN_FAILED = RESULT_SPECIAL_CHARACTER_ERROR + 1
 RESULT_LOGIN_SUCCESS = RESULT_SPECIAL_CHARACTER_ERROR + 2
+
+
+
+
+def get_handler()
+
+	create_instance()
+	view()
+	
+end
+
+
+
+
+def post_handler()
+
+end
+
+
+def create_instance()
+
+	@cgi = CGI.new
+	@sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
+
+end
+
+
+def control(cgi, sql, login, view_status = {:method => "",:result => "",:username => "",:specialcharacter_list => "",:sessionid => ""})
+	if  cgi.request_method == "POST" then
+
+		view_status[:method] = Base::METHOD_POST
+		
+		# 何はともあれまずは入力値検証
+		begin
+		
+			login.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
+			
+		rescue => e
+		
+			view_status[:result] = Login::RESULT_SPECIAL_CHARACTER_ERROR
+			view_status[:specialcharacter_list] = e.falselist
+			
+			return view_status
+			
+		end
+
+			username = cgi["name"]
+			passwd = cgi["passwd"]
+
+			# 2以上になることはない担保はDB側のカラム設計でやるよ
+			if login.check_ID_PW(sql, username, passwd) != 1 then 
+		
+				view_status[:result] = Login::RESULT_LOGIN_FAILED
+			
+			else
+
+				session = login.login(cgi, username)
+			
+				view_status[:sessionid] = session.instance_variable_get(:@session_id)
+				view_status[:username] = session.instance_variable_get(:@data)["name"]
+				view_status[:result] = Login::RESULT_LOGIN_SUCCESS
+			
+			end
+		
+	else
+
+		view_status[:method] = Base::METHOD_GET
+		
+	end
+
+	return view_status
+	
+end
+
+
+
+
+
+
+
 
 
 def check_ID_PW(sql, username, passwd)
@@ -67,7 +148,7 @@ end
 # オーバーライド
 def view_form()
 
-	@view_buffer += <<-EOS
+	@res.body += <<-EOS
 <h1>ログインするぞい</h1>
 <form action="" method="post">
 ユーザID<br>
@@ -84,30 +165,22 @@ end
 # オーバーライド
 def view_body(status={})
 	
-	case status[:method]
-	when METHOD_GET then
-	
 		super
-		@view_buffer += add_new_line("")
 		
-	when METHOD_POST then
-
 		case status[:result]
 		when RESULT_SPECIAL_CHARACTER_ERROR then
 		
-			super
 			status[:specialcharacter_list].each do |row|
-				@view_buffer += add_new_line("#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ")
+				@res.body += add_new_line("#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ")
 			end
 		
 		when RESULT_LOGIN_FAILED then
 			
-			super
-			@view_buffer += add_new_line("IDかパスワードが違う")
+			@res.body += add_new_line("IDかパスワードが違う")
 		
 		when RESULT_LOGIN_SUCCESS then
 			
-			@view_buffer += <<-EOS
+			@res.body += <<-EOS
 Set-cookie: session_id = #{status[:sessionid]}
 
 <html>
@@ -119,21 +192,15 @@ Set-cookie: session_id = #{status[:sessionid]}
 			
 			view_form()
 			
-			@view_buffer += add_new_line(CGI.escapeHTML(status[:username]) + "でログインしたった")
+			@res.body += add_new_line(CGI.escapeHTML(status[:username]) + "でログインしたった")
 	
 		else
 		
-			super
-			@view_buffer += add_new_line("よくわからんけどうまくいかへんわ")
+			@res.body += add_new_line("よくわからんけどうまくいかへんわ")
 			
 		end
 	
-	else
 	
-		super
-		@view_buffer += add_new_line("意味不明なメソッド")
-	
-	end
 
 end
 
@@ -141,57 +208,4 @@ end
 end
 
 
-cgi = CGI.new
-sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
-login = Login.new
 
-# メイン処理だよ！
-def control(cgi, sql, login, view_status = {:method => "",:result => "",:username => "",:specialcharacter_list => "",:sessionid => ""})
-	if  cgi.request_method == "POST" then
-
-		view_status[:method] = Base::METHOD_POST
-		
-		# 何はともあれまずは入力値検証
-		begin
-		
-			login.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
-			
-		rescue => e
-		
-			view_status[:result] = Login::RESULT_SPECIAL_CHARACTER_ERROR
-			view_status[:specialcharacter_list] = e.falselist
-			
-			return view_status
-			
-		end
-
-			username = cgi["name"]
-			passwd = cgi["passwd"]
-
-			# 2以上になることはない担保はDB側のカラム設計でやるよ
-			if login.check_ID_PW(sql, username, passwd) != 1 then 
-		
-				view_status[:result] = Login::RESULT_LOGIN_FAILED
-			
-			else
-
-				session = login.login(cgi, username)
-			
-				view_status[:sessionid] = session.instance_variable_get(:@session_id)
-				view_status[:username] = session.instance_variable_get(:@data)["name"]
-				view_status[:result] = Login::RESULT_LOGIN_SUCCESS
-			
-			end
-		
-	else
-
-		view_status[:method] = Base::METHOD_GET
-		
-	end
-
-	return view_status
-	
-end
-
-result = control(cgi, sql, login)
-login.view(result)

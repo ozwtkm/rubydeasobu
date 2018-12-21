@@ -3,43 +3,37 @@ require 'optparse'
 require 'cgi'
 include WEBrick
 require_relative './route'
+require_relative './baseclass'
 
-
-module WEBrick::HTTPServlet
-  FileHandler.add_handler('rb', CGIHandler)
-end
 
 # httpサーバー
 s = HTTPServer.new(:BindAddress => '127.0.0.1', :DocumentRoot => '/var/www/html/testruby/', :Port => 8082 )
 
-
-routes = Routes::ROUTES
-
-# dispatcherだよ
-s.mount_proc('/') do |req, res|
+class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
+	def service(req, res)
 	
-	route_path = routes[req.path]
+		klass = Routes::ROUTES[req.path]
 	
-	if route_path == nil then
-		res.content_type = "text/html"
-		res.status = 404
-		res.body = "404<br><br>" + CGI.escapeHTML(req.path) + "なんかねーよ"
-	else
-		srv = WEBrick::HTTPServlet::CGIHandler.new(s, "./#{route_path}")
-		
-		if req.request_method === "GET" then
-			srv.do_GET(req,res)
-		elsif req.request_method == "POST" then
-			srv.do_POST(req,res)
+		if klass == nil then
+			res.content_type = "text/html"
+			res.status = 404
+			res.body = "404<br><br>" + CGI.escapeHTML(req.path) + "なんかねーよ"
 		else
-			res.status = 405
-			res.body = "そのmethodだめ"
+			controler = klass.new(req, res)
+	
+			case req.request_method 
+			when "GET" then
+				controler.get_handler()
+			when "POST" then
+				controler.post_handler()
+			else
+				controler.not_allow_handler()
+			end
 		end
-	
 	end
-	
 end
 
+s.mount('/', DispatchServlet)
 
 # Ctrl + C で停止するようにトラップを仕込む。
 trap(:INT){ s.shutdown }
