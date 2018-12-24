@@ -1,7 +1,7 @@
 ﻿require 'webrick'
 
 
-class Base < WEBrick::HTTPServlet::AbstractServlet
+class Base
 
 METHOD_GET = 0
 METHOD_POST = 1
@@ -15,32 +15,35 @@ def initialize(req,res)
 end
 
 
-def view_header()
+
+def view(status={})
+
+	view_http_header()
+	view_http_body(status)
+	
+end
+
+
+
+def view_http_header()
 
 	@res.header['Content-Type'] = "text/html; charset=UTF-8"
 
 end
 
 
-def view_footer()
-	
-	@res.body += <<-EOS
-<a href =matome.html>もどる</a><br><br>
-</body>
-	EOS
+
+def view_http_body(status={})
+
+	view_html_header()
+	view_html_body(status)
+	view_html_footer()
 	
 end
 
-# オーバーライドする前提
-def view_form()
-
-	@res.body += ""
-
-end
 
 
-# オーバーライドする前提
-def view_body(status={})
+def view_html_header()
 
 	@res.body += <<-EOS
 <html>
@@ -50,17 +53,34 @@ def view_body(status={})
 <body>
 	EOS
 
-	view_form()
+end
+
+
+
+# オーバーライドする前提。
+# viewまわりでここが各ページ固有になる。
+def view_html_body(status={})
+
+	raise NotImplementedError
 
 end
-	
-def view(status={})
 
-	view_header()
-	view_body(status)
-	view_footer()
+
+
+
+def view_html_footer()
+	
+	@res.body += <<-EOS
+<a href =matome.html>もどる</a><br><br>
+</body>
+	EOS
 	
 end
+
+
+
+	
+
 
 
 def validate_special_character(input_hash)
@@ -123,7 +143,4 @@ def initialize(list)
 
 end
 end
-
-
-
 
