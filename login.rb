@@ -32,28 +32,32 @@ end
 def post_handler()
 
 	create_instance()
-
+	status = control()
+	view(status)
+	
 end
 
 
 def create_instance()
 
 	ARGV.replace(["abc=001&def=002"]) # オフラインモード回避。
+	
 	@cgi = CGI.new
 	@sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
 
 end
 
 
-def control(cgi, sql, login, view_status = {:method => "",:result => "",:username => "",:specialcharacter_list => "",:sessionid => ""})
-	if  cgi.request_method == "POST" then
+
+# 入力→viewの流れの核となる処理。
+def control(view_status = {:method => "",:result => "",:username => "",:specialcharacter_list => "",:sessionid => ""})
 
 		view_status[:method] = Base::METHOD_POST
 		
 		# 何はともあれまずは入力値検証
 		begin
 		
-			login.validate_special_character({:ユーザ名 => cgi["name"], :パスワード => cgi["passwd"]})
+			validate_special_character({:ユーザ名 => @cgi["name"], :パスワード => @cgi["passwd"]})
 			
 		rescue => e
 		
@@ -64,29 +68,23 @@ def control(cgi, sql, login, view_status = {:method => "",:result => "",:usernam
 			
 		end
 
-			username = cgi["name"]
-			passwd = cgi["passwd"]
+			username = @cgi["name"]
+			passwd = @cgi["passwd"]
 
 			# 2以上になることはない担保はDB側のカラム設計でやるよ
-			if login.check_ID_PW(sql, username, passwd) != 1 then 
+			if check_ID_PW(username, passwd) != 1 then
 		
 				view_status[:result] = Login::RESULT_LOGIN_FAILED
 			
 			else
 
-				session = login.login(cgi, username)
+				session = login(username)
 			
 				view_status[:sessionid] = session.instance_variable_get(:@session_id)
 				view_status[:username] = session.instance_variable_get(:@data)["name"]
 				view_status[:result] = Login::RESULT_LOGIN_SUCCESS
 			
 			end
-		
-	else
-
-		view_status[:method] = Base::METHOD_GET
-		
-	end
 
 	return view_status
 	
@@ -100,11 +98,11 @@ end
 
 
 
-def check_ID_PW(sql, username, passwd)
+def check_ID_PW(username, passwd)
 	
 	#ログイン可能な入力組み合わせかチェックする。（入力値組に合致するレコードの個数を返す）
 	
-	statement = sql.prepare("select salt from users2 where name = ?")
+	statement = @sql.prepare("select salt from users2 where name = ?")
 	salt_tmp = statement.execute(username)
 	
 	salt = nil
@@ -120,7 +118,7 @@ def check_ID_PW(sql, username, passwd)
 		pw_hash = Digest::SHA1.hexdigest(passwd + salt)
     end
 	
-	statement = sql.prepare("select COUNT(*) from users2 where name = ? and passwd = ?")
+	statement = @sql.prepare("select COUNT(*) from users2 where name = ? and passwd = ?")
     exist_count_tmp = statement.execute(username, pw_hash)
 	
 	exist_count = nil
@@ -135,19 +133,84 @@ def check_ID_PW(sql, username, passwd)
 end
 
 
-def login(cgi, username)
+
+
+def login(username)
 
 	# セッションにログイン情報を持たせるよ
-	session = CGI::Session.new(cgi,{"new_session" => true})
+	session = CGI::Session.new(@cgi,{"new_session" => true})
 	session['name'] = username
     session.close
+	
+	@res.header['Set-cookie'] += "session_id = #{session}"
 
 	return session
 	
 end
 
 
+
+
+
 # オーバーライド
+def view_html_body(status={})
+	
+	case status[:method]
+	when METHOD_GET then
+	
+		view_form()
+		
+	when METHOD_POST then
+
+		case status[:result]
+		when RESULT_SPECIAL_CHARACTER_ERROR then
+		
+			view_form()
+			status[:specialcharacter_list].each do |row|
+				@res.body += add_new_line("#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ")
+			end
+		
+		when RESULT_LOGIN_FAILED then
+			
+			view_form()
+			@res.body += add_new_line("IDかパスワードが違う")
+		
+		when RESULT_LOGIN_SUCCESS then
+			
+=begin
+			@res.body += <<-EOS
+Set-cookie: session_id = #{status[:sessionid]}
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+</head>
+<body>
+			EOS
+=end
+			
+			view_form()
+			
+			@res.body += add_new_line(CGI.escapeHTML(status[:username]) + "でログインしたった")
+	
+		else
+		
+			view_form()
+			@res.body += add_new_line("よくわからんけどうまくいかへんわ")
+			
+		end
+	
+	else
+	
+		view_form()
+		@res.body += add_new_line("意味不明なメソッド")
+	
+	end
+
+end
+
+
+
+
 def view_form()
 
 	@res.body += <<-EOS
@@ -164,59 +227,6 @@ def view_form()
 end
 
 
-# オーバーライド
-def view_body(status={})
-	
-	case status[:method]
-	when METHOD_GET then
-	
-		super
-		
-	when METHOD_POST then
-
-		case status[:result]
-		when RESULT_SPECIAL_CHARACTER_ERROR then
-		
-			super
-			status[:specialcharacter_list].each do |row|
-				@res.body += add_new_line("#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ")
-			end
-		
-		when RESULT_LOGIN_FAILED then
-			
-			super
-			@res.body += add_new_line("IDかパスワードが違う")
-		
-		when RESULT_LOGIN_SUCCESS then
-			
-			@res.body += <<-EOS
-Set-cookie: session_id = #{status[:sessionid]}
-<html>
-<head>
-<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
-</head>
-<body>
-			EOS
-			
-			view_form()
-			
-			@res.body += add_new_line(CGI.escapeHTML(status[:username]) + "でログインしたった")
-	
-		else
-		
-			super
-			@res.body += add_new_line("よくわからんけどうまくいかへんわ")
-			
-		end
-	
-	else
-	
-		super
-		@res.body += add_new_line("意味不明なメソッド")
-	
-	end
-
-end
 
 
 end
