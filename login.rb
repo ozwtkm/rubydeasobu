@@ -31,7 +31,7 @@ end
 
 def post_handler()
 
-	create_instance()
+	create_instance()	
 	status = control()
 	view(status)
 	
@@ -41,10 +41,13 @@ end
 def create_instance()
 
 	ARGV.replace(["abc=001&def=002"]) # オフラインモード回避。
+	#ENV['REQUEST_METHOD'] = "POST"
+	#ENV['CONTENT_LENGTH'] = @req.content_length.to_s
 	
 	@cgi = CGI.new
 	@sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
-
+  
+  
 end
 
 
@@ -56,20 +59,20 @@ def control(view_status = {:method => "",:result => "",:username => "",:specialc
 		
 		# 何はともあれまずは入力値検証
 		begin
-		
-			validate_special_character({:ユーザ名 => @cgi["name"], :パスワード => @cgi["passwd"]})
-			
+
+			validate_special_character({:ユーザ名 => @req.query["name"], :パスワード => @req.query["passwd"]})
+
 		rescue => e
-		
+
 			view_status[:result] = Login::RESULT_SPECIAL_CHARACTER_ERROR
 			view_status[:specialcharacter_list] = e.falselist
-			
+
 			return view_status
-			
+
 		end
 
-			username = @cgi["name"]
-			passwd = @cgi["passwd"]
+			username = @req.query["name"]
+			passwd = @req.query["passwd"]
 
 			# 2以上になることはない担保はDB側のカラム設計でやるよ
 			if check_ID_PW(username, passwd) != 1 then
@@ -79,7 +82,7 @@ def control(view_status = {:method => "",:result => "",:username => "",:specialc
 			else
 
 				session = login(username)
-			
+
 				view_status[:sessionid] = session.instance_variable_get(:@session_id)
 				view_status[:username] = session.instance_variable_get(:@data)["name"]
 				view_status[:result] = Login::RESULT_LOGIN_SUCCESS
@@ -87,11 +90,8 @@ def control(view_status = {:method => "",:result => "",:username => "",:specialc
 			end
 
 	return view_status
-	
+
 end
-
-
-
 
 
 
@@ -140,9 +140,10 @@ def login(username)
 	# セッションにログイン情報を持たせるよ
 	session = CGI::Session.new(@cgi,{"new_session" => true})
 	session['name'] = username
-    session.close
+	sessionid = session.session_id()
+	session.close
 	
-	@res.header['Set-cookie'] += "session_id = #{session}"
+	@res.header['Set-cookie'] = "session_id = #{sessionid}"
 
 	return session
 	
@@ -177,19 +178,7 @@ def view_html_body(status={})
 		
 		when RESULT_LOGIN_SUCCESS then
 			
-=begin
-			@res.body += <<-EOS
-Set-cookie: session_id = #{status[:sessionid]}
-<html>
-<head>
-<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
-</head>
-<body>
-			EOS
-=end
-			
 			view_form()
-			
 			@res.body += add_new_line(CGI.escapeHTML(status[:username]) + "でログインしたった")
 	
 		else
@@ -225,8 +214,6 @@ def view_form()
 	EOS
 
 end
-
-
 
 
 end
