@@ -34,7 +34,7 @@ def post_handler()
 	
 end
 
-
+# オーバーライド
 def create_instance()
 
 	ARGV.replace(["abc=001&def=002"]) # オフラインモード回避。
@@ -160,28 +160,30 @@ def view_html_body(status={})
 		when RESULT_SPECIAL_CHARACTER_ERROR then
 		
 			status[:specialcharacter_list].each do |row|
-				@res.body += add_new_line("#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ")
+				@res.body += "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ"
 			end
 		
 		when RESULT_LOGIN_FAILED then
 			
-			@res.body += add_new_line("IDかパスワードが違う")
+			@res.body += "IDかパスワードが違う"
 		
 		when RESULT_LOGIN_SUCCESS then
 			
-			@res.body += add_new_line(CGI.escapeHTML(status[:username]) + "でログインしたった")
+			@res.body += CGI.escapeHTML(status[:username]) + "でログインしたった"
 	
 		else
 		
-			@res.body += add_new_line("よくわからんけどうまくいかへんわ")
+			@res.body += "よくわからんけどうまくいかへんわ"
 			
 		end
 	
 	else
 	
-		@res.body += add_new_line("意味不明なメソッド")
+		@res.body += "意味不明なメソッド"
 	
 	end
+
+	add_new_line()
 
 end
 

@@ -1,5 +1,5 @@
 ﻿require 'webrick'
-
+require 'mysql2'
 
 class Base
 
@@ -12,6 +12,13 @@ def initialize(req,res)
 	@req = req
 	@res = res
 
+end
+
+
+def create_instance()
+	
+	@sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
+  
 end
 
 
@@ -71,15 +78,12 @@ end
 def view_html_footer()
 	
 	@res.body += <<-EOS
-<a href =matome.html>もどる</a><br><br>
+<a href =index>トップ</a><br><br>
 </body>
 	EOS
 	
 end
 
-
-
-	
 
 
 
@@ -107,16 +111,18 @@ def validate_special_character(input_hash)
 end
 
 
-def add_new_line(message)
+def add_new_line()
 
-	return message + "<br>\r\n"
+	@res.body += "<br>\r\n"
 
 end
+
 
 # オーバーライドするぜんてい
 def get_handler()
 	
 end
+
 
 # オーバーライドするぜんてい
 def post_handler()

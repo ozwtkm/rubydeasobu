@@ -33,11 +33,6 @@ end
 
 
 
-def create_instance()
-	
-	@sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
-  
-end
 
 
 
@@ -161,28 +156,30 @@ def view_html_body(status={})
 		when RESULT_SPECIAL_CHARACTER_ERROR then
 		
 			status[:specialcharacter_list].each do |row|
-				@res.body += add_new_line("#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ")
+				@res.body += "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ"
 			end
 		
 		when RESULT_ID_DUPLICATE then
 		
-			@res.body += add_new_line("キャラかぶってるで")
+			@res.body += "キャラかぶってるで"
 		
 		when RESULT_SUCCESS then
 	
-			@res.body += add_new_line(CGI.escapeHTML(status[:username]) + "を登録しといたぞ")
+			@res.body += CGI.escapeHTML(status[:username]) + "を登録しといたぞ"
 	
 		else
 		
-			@res.body += add_new_line("よくわからんけどうまくいかへんわ")
+			@res.body += "よくわからんけどうまくいかへんわ"
 			
 		end
 	
 	else
 	
-		@res.body += add_new_line("意味不明なメソッド")
+		@res.body += "意味不明なメソッド"
 	
 	end
+	
+	add_new_line()
 	
 end
 
