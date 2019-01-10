@@ -1,4 +1,6 @@
 require_relative './baseclass'
+require 'erb'
+
 
 class Index < Base
 
@@ -19,15 +21,12 @@ end
 
 def view_html_body(status={})
 
-	@res.body += <<-EOS
-<h2>Rubyeeeee! TOP</h2>
-<a href ="regist">ユーザ登録</a><br><br>
-<a href ="login">ログイン</a><br><br>
-	EOS
+	file = File.open("index.erb", "r")
+  erb = ERB.new(file.read())
+
+	@res.body += erb.result(binding)
 
 end
-
-
 
 
 end
