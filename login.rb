@@ -149,7 +149,10 @@ end
 # オーバーライド
 def view_html_body(status={})
 
-	view_form()
+	msg = ""
+
+	file = File.open("login.erb", "r")
+	erb = ERB.new(file.read())
 	
 	case status[:method]
 	when METHOD_GET then
@@ -160,50 +163,35 @@ def view_html_body(status={})
 		when RESULT_SPECIAL_CHARACTER_ERROR then
 		
 			status[:specialcharacter_list].each do |row|
-				@res.body += "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ"
+				msg += "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ"
 			end
 		
 		when RESULT_LOGIN_FAILED then
 			
-			@res.body += "IDかパスワードが違う"
+			msg += "IDかパスワードが違う"
 		
 		when RESULT_LOGIN_SUCCESS then
 			
-			@res.body += CGI.escapeHTML(status[:username]) + "でログインしたった"
+			msg += CGI.escapeHTML(status[:username]) + "でログインしたった"
 	
 		else
 		
-			@res.body += "よくわからんけどうまくいかへんわ"
+			msg += "よくわからんけどうまくいかへんわ"
 			
 		end
 	
 	else
 	
-		@res.body += "意味不明なメソッド"
+		msg += "意味不明なメソッド"
 	
 	end
 
-	add_new_line()
+	@res.body += erb.result(binding)
+	add_break()
 
 end
 
 
-
-
-def view_form()
-
-	@res.body += <<-EOS
-<h1>ログインするぞい</h1>
-<form action="" method="post">
-ユーザID<br>
-<input type="text" name="name" value=""><br>
-パスワード(text属性なのは茶目っ気)<br>
-<input type="text" name="passwd" value=""><br>
-<input type="submit" value="ログインするぞい"><br>
-</form>
-	EOS
-
-end
 
 
 end
