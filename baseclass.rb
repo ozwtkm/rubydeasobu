@@ -40,51 +40,12 @@ end
 
 
 
-def view_http_body(status={})
-
-	view_html_header()
-	view_html_body(status)
-	view_html_footer()
-	
-end
-
-
-
-def view_html_header()
-
-	@res.body += <<-EOS
-<html>
-<head>
-<meta http-equiv="Content-type" content="text/html; charset=UTF-8">
-</head>
-<body>
-	EOS
-
-end
-
-
-
 # オーバーライドする前提。
-# viewまわりでここが各ページ固有になる。
-def view_html_body(status={})
+def view_http_body(status={})
 
 	raise NotImplementedError
 
 end
-
-
-
-
-def view_html_footer()
-	
-	@res.body += <<-EOS
-<a href =index>トップ</a><br><br>
-</body>
-	EOS
-	
-end
-
-
 
 
 def validate_special_character(input_hash)
@@ -111,7 +72,7 @@ def validate_special_character(input_hash)
 end
 
 
-def add_new_line()
+def add_break()
 
 	@res.body += "<br>\r\n"
 
@@ -137,7 +98,10 @@ def not_allow_handler()
 
 end
 
+
 end
+
+
 
 
 class Special_character_error < StandardError

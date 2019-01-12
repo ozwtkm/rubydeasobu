@@ -1,6 +1,6 @@
-require_relative './baseclass'
 require 'erb'
-
+require_relative './baseclass'
+require_relative './render'
 
 class Index < Base
 
@@ -19,12 +19,10 @@ def post_handler()
 end
 
 
-def view_html_body(status={})
+# オーバーライド。
+def view_http_body(status={})
 
-	file = File.open("index.erb", "r")
-  erb = ERB.new(file.read())
-
-	@res.body += erb.result(binding)
+	@res.body += render("index.erb")
 
 end
 
