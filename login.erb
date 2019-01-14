@@ -1,3 +1,4 @@
+<%= render("_html_header.erb") %>
 <h1>ログインするぞい</h1>
 <form action="" method="post">
 ユーザID<br>
@@ -7,5 +8,5 @@
 <input type="submit" value="ログインするぞい"><br>
 </form>
 
-<%= msg %>
-
+<%= c[:msg] %>
+<%= render("_html_footer.erb") %>
