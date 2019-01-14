@@ -1,8 +1,15 @@
-def render(template)
 
-	file = File.open(template, "r")
-	erb = ERB.new(file.read())
+
+class Base
+
+def self.render(template, context={})
+
+	c = context
+	erb = ERB.new(File.read(template))
 	return erb.result(binding)
 
 end
+
+end
+
 
