@@ -1,5 +1,4 @@
 require 'webrick'
-require 'optparse'
 require 'cgi'
 include WEBrick
 require_relative './route'
