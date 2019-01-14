@@ -175,7 +175,7 @@ def view_http_body(status={})
 	
 	end
 
-	@res.body += Base.render("login.erb", @context)
+	@res.body += render("login.erb", @context)
 
 end
 

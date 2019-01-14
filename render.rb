@@ -2,7 +2,7 @@
 
 class Base
 
-def self.render(template, context={})
+def render(template, context={})
 
 	c = context
 	erb = ERB.new(File.read(template))
