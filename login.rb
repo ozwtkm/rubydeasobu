@@ -10,31 +10,18 @@ require_relative './baseclass'
 class Login < Base
 
 
-RESULT_LOGIN_FAILED = RESULT_SPECIAL_CHARACTER_ERROR + 1
-RESULT_LOGIN_SUCCESS = RESULT_SPECIAL_CHARACTER_ERROR + 2
-
-
-def get_handler()
-
-	view({:method => Base::METHOD_GET})
-	
-end
-
-
 def post_handler()
 
 	ARGV.replace(["abc=001&def=002"]) # オフラインモード回避。
 	@cgi = CGI.new
-	status = control()
-	view(status)
+	control()
+	view()
 	
 end
 
 
 # 入力→viewの流れの核となる処理。
-def control(view_status = {:method => "", :result => "", :username => "", :specialcharacter_list => ""})
-
-	view_status[:method] = Base::METHOD_POST
+def control()
 	
 	
 	# 何はともあれまずは入力値検証
@@ -44,16 +31,22 @@ def control(view_status = {:method => "", :result => "", :username => "", :speci
 
 	rescue => e
 
-		view_status[:result] = Login::RESULT_SPECIAL_CHARACTER_ERROR
-		view_status[:specialcharacter_list] = e.falselist
+		@context[:msg] = ""
 
-		return view_status
+		e.falselist.each do |row|
+			
+			@context[:msg] += "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ<br>"
+			
+		end
+
+		return
 
 	end
 
 
 	username = @req.query["name"]
 	passwd = @req.query["passwd"]
+
 
 	# ログインできる認証情報か？の検証
 	begin
@@ -62,19 +55,20 @@ def control(view_status = {:method => "", :result => "", :username => "", :speci
 	
 	rescue => e
 		
-			view_status[:result] = Login::RESULT_LOGIN_FAILED
+		@context[:msg] = "IDかパスワードが違う"
 
-			return view_status
+		return
 		
 	end
 		
 		
 	session = login(username)
 
-	view_status[:username] = session.instance_variable_get(:@data)["name"]
-	view_status[:result] = Login::RESULT_LOGIN_SUCCESS
+	login_user_name = session.instance_variable_get(:@data)["name"]
+	
+	@context[:msg] = CGI.escapeHTML(login_user_name) + "でログインしたった"
 		
-	return view_status
+	return
 
 end
 
@@ -135,45 +129,9 @@ def login(username)
 end
 
 
-
-
-
 # オーバーライド
-def view_http_body(status={})
-	
-	case status[:method]
-	when METHOD_GET then
-	
-	when METHOD_POST then
-
-		case status[:result]
-		when RESULT_SPECIAL_CHARACTER_ERROR then
-		
-			status[:specialcharacter_list].each do |row|
-			
-				@context[:msg] = "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ"
-			
-			end
-		
-		when RESULT_LOGIN_FAILED then
-			
-			@context[:msg] = "IDかパスワードが違う"
-		
-		when RESULT_LOGIN_SUCCESS then
-			
-			@context[:msg] = CGI.escapeHTML(status[:username]) + "でログインしたった"
-	
-		else
-		
-			@context[:msg] = "よくわからんけどうまくいかへんわ"
-			
-		end
-	
-	else
-	
-		@context[:msg] = "意味不明なメソッド"
-	
-	end
+##  "login.erb"を引数で与える形にすれば、このメソッドBase側に持ってこれるのでは？
+def view_http_body()
 
 	@res.body += render("login.erb", @context)
 

@@ -4,12 +4,8 @@ require_relative './render'
 
 class Base
 
-METHOD_GET = 0
-METHOD_POST = 1
-RESULT_SPECIAL_CHARACTER_ERROR = 0
 
-
-def initialize(req,res)
+def initialize(req, res)
 
 	@req = req
 	@res = res
@@ -22,10 +18,10 @@ def initialize(req,res)
 end
 
 
-def view(status={})
+def view()
 
 	view_http_header()
-	view_http_body(status)
+	view_http_body()
 	
 end
 
@@ -39,7 +35,7 @@ end
 
 
 # オーバーライドする前提。
-def view_http_body(status={})
+def view_http_body()
 
 	raise NotImplementedError
 
