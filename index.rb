@@ -4,7 +4,7 @@ class Index < Base
 
 
 # オーバーライド。
-def view_http_body(status={})
+def view_http_body()
 
 	@res.body += render("index.erb")
 
