@@ -1,20 +1,12 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
 
-require "pry"
 require 'digest/sha1'
 require 'securerandom'
 require_relative './baseclass'
 
 
 class Regist < Base
-
-
-def get_handler()
-
-	view()
-	
-end
 
 
 def post_handler()
