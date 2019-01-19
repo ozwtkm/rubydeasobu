@@ -2,13 +2,14 @@ require_relative './baseclass'
 
 class Index < Base
 
+def initialize(req,res)
 
-# オーバーライド。
-def view_http_body()
-
-	@res.body += render("index.erb")
+	super
+	
+	@template = "index.erb"
 
 end
+
 
 
 end

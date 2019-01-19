@@ -8,12 +8,12 @@ require_relative './baseclass'
 
 class Regist < Base
 
+def initialize(req,res)
 
-def post_handler()
-
-	control()
-	view()
+	super
 	
+	@template = "regist.erb"
+
 end
 
 
@@ -61,14 +61,6 @@ end
 
 
 
-
-
-
-
-
-
-
-
 def check_id_duplication(username, passwd)
 
 	# ユーザIDを重複チェック
@@ -102,14 +94,6 @@ def regist(username, passwd)
 		
 	statement = @sql.prepare("insert into users2(name,salt,passwd) values(?,?,?)")
 	statement.execute(username, salt, pw_hash)
-
-end
-
-
-# オーバーライド
-def view_http_body()
-
-	@res.body = render("regist.erb", @context)
 
 end
 

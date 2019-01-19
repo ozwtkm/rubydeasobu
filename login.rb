@@ -2,25 +2,37 @@
 # -*- coding: utf-8 -*-
 
 require 'cgi'
-require 'mysql2'
 require 'digest/sha1'
 require 'cgi/session'
 require_relative './baseclass'
 	
 class Login < Base
 
+# オーバーライド。
+## initializerをオーバーライドするのはキモいか？？
+def initialize(req,res)
+
+	super
+	
+	@template = "login.erb"
+
+end
+
+
+
 
 def post_handler()
 
 	ARGV.replace(["abc=001&def=002"]) # オフラインモード回避。
 	@cgi = CGI.new
-	control()
-	view()
-	
+
+	super
+
 end
 
 
 # 入力→viewの流れの核となる処理。
+# オーバーライド。
 def control()
 	
 	
@@ -67,8 +79,7 @@ def control()
 	login_user_name = session.instance_variable_get(:@data)["name"]
 	
 	@context[:msg] = CGI.escapeHTML(login_user_name) + "でログインしたった"
-		
-	return
+	
 
 end
 
@@ -128,14 +139,6 @@ def login(username)
 	
 end
 
-
-# オーバーライド
-##  "login.erb"を引数で与える形にすれば、このメソッドBase側に持ってこれるのでは？
-def view_http_body()
-
-	@res.body += render("login.erb", @context)
-
-end
 
 
 end

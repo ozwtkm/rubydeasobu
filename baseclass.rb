@@ -12,16 +12,49 @@ def initialize(req, res)
 	
 	@sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
 	
-	# view時、テンプレートに渡すための変数(ハッシュ)の箱 
+	# view時、render()に引数として渡すテンプレート。
+	# Baseを引き継ぐ各クラスにて対応するテンプレート名を指定すること。
+	@template = ""
+	
+	# view時、テンプレートに渡すための変数(ハッシュ)の箱。
 	@context = {}
 	
+end
+
+
+def get_handler()
+	
+	view()
+	
+end
+
+
+def post_handler()
+
+	control()
+	view()
+
+end
+
+
+def not_allow_handler()
+
+	@res.status = 405
+	@res.body = "そのmethodだめ"
+
+end
+
+
+# オーバーライド前提。
+def control()
+
 end
 
 
 def view()
 
 	view_http_header()
-	view_http_body()
+	view_http_body(@template)
 	
 end
 
@@ -33,11 +66,9 @@ def view_http_header()
 end
 
 
+def view_http_body(template)
 
-# オーバーライドする前提。
-def view_http_body()
-
-	raise NotImplementedError
+	@res.body = render(template, @context)
 
 end
 
@@ -53,7 +84,7 @@ def validate_special_character(input_hash)
 		
 		end
 		
-	end	
+	end
 
 	if falselist != [] then
 	
@@ -61,30 +92,6 @@ def validate_special_character(input_hash)
 			
 	end
 	
-end
-
-
-# オーバーライドするぜんてい
-def get_handler()
-	
-	view()
-	
-end
-
-
-# オーバーライドするぜんてい
-def post_handler()
-
-	view()
-
-end
-
-
-def not_allow_handler()
-
-	@res.status = 405
-	@res.body = "そのmethodだめ"
-
 end
 
 
