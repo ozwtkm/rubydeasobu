@@ -1,6 +1,6 @@
 ﻿require 'webrick'
 require 'mysql2'
-require_relative './render'
+require_relative './util/render'
 
 class Base
 
@@ -12,10 +12,14 @@ def initialize(req, res)
 	
 	@sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
 	
-	# view時、render()に引数として渡すテンプレート。
+	# @tmplateはview時、render()に引数として渡すテンプレート。
 	# Baseを引き継ぐ各クラスにて対応するテンプレート名を指定すること。
-	@template = ""
+	if @template.nil?
 	
+		raise NotImplementedError
+			
+	end
+		
 	# view時、テンプレートに渡すための変数(ハッシュ)の箱。
 	@context = {}
 	
@@ -48,13 +52,15 @@ end
 # オーバーライド前提。
 def control()
 
+	raise NotImplementedError
+
 end
 
 
 def view()
 
 	view_http_header()
-	view_http_body(@template)
+	view_http_body()
 	
 end
 
@@ -66,9 +72,10 @@ def view_http_header()
 end
 
 
-def view_http_body(template)
+def view_http_body()
 
-	@res.body = render(template, @context)
+
+	@res.body = render(@template, @context)
 
 end
 

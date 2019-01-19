@@ -4,9 +4,9 @@ class Index < Base
 
 def initialize(req,res)
 
-	super
-	
 	@template = "index.erb"
+
+	super
 
 end
 

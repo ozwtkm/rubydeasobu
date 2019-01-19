@@ -12,9 +12,11 @@ class Login < Base
 ## initializerをオーバーライドするのはキモいか？？
 def initialize(req,res)
 
+	@template = "login.erb"
+
 	super
 	
-	@template = "login.erb"
+
 
 end
 

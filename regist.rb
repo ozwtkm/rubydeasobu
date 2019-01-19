@@ -10,9 +10,11 @@ class Regist < Base
 
 def initialize(req,res)
 
+	@template = "regist.erb"
+
 	super
 	
-	@template = "regist.erb"
+
 
 end
 
