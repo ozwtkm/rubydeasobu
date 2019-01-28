@@ -14,7 +14,7 @@ def initialize(req,res)
 
 	super
 	
-
+	@context[:msg] = []
 
 end
 
@@ -28,12 +28,10 @@ def control()
 			validate_special_character({:ユーザ名 => @req.query["name"], :パスワード => @req.query["passwd"]})
 			
 		rescue => e
-		
-			@context[:msg] = ""
 
 			e.falselist.each do |row|
 			
-				@context[:msg] += "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ<br>"
+				@context[:msg] << "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ"
 			
 			end
 			
@@ -48,7 +46,7 @@ def control()
 		
 		rescue => e
 		
-			@context[:msg] = "キャラかぶってるで"
+			@context[:msg] << "キャラかぶってるで"
 
 			return
 
@@ -57,7 +55,7 @@ def control()
 
 		regist(@req.query["name"], @req.query["passwd"])
 		
-		@context[:msg] = "#{@req.query["name"]}を登録したったで。"
+		@context[:msg] << "#{@req.query["name"]}を登録したったで。"
 
 end
 

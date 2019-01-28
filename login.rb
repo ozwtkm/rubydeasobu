@@ -5,6 +5,7 @@ require 'cgi'
 require 'digest/sha1'
 require 'cgi/session'
 require_relative './baseclass'
+
 	
 class Login < Base
 
@@ -16,7 +17,7 @@ def initialize(req,res)
 
 	super
 	
-
+	@context[:msg] = []
 
 end
 
@@ -45,11 +46,9 @@ def control()
 
 	rescue => e
 
-		@context[:msg] = ""
-
 		e.falselist.each do |row|
 			
-			@context[:msg] += "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ<br>"
+			@context[:msg] << "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ"
 			
 		end
 
@@ -69,7 +68,7 @@ def control()
 	
 	rescue => e
 		
-		@context[:msg] = "IDかパスワードが違う"
+		@context[:msg] << "IDかパスワードが違う"
 
 		return
 		
@@ -80,7 +79,7 @@ def control()
 
 	login_user_name = session.instance_variable_get(:@data)["name"]
 	
-	@context[:msg] = CGI.escapeHTML(login_user_name) + "でログインしたった"
+	@context[:msg] << login_user_name + "でログインしたった"
 	
 
 end
