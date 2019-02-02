@@ -6,7 +6,7 @@ class Base
 
 
 def initialize(req, res)
-
+	
 	@req = req
 	@res = res
 	
@@ -93,7 +93,7 @@ def validate_special_character(input_hash)
 		
 	end
 
-	if falselist != [] then
+	if falselist.empty? then
 	
 		raise Special_character_error.new(falselist)
 			
