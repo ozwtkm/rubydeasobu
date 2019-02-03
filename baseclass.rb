@@ -85,7 +85,7 @@ def validate_special_character(input_hash)
 	falselist = []
 	input_hash.each do |key, value| 
 
-		if value.match(/\A[a-zA-Z0-9_@]+\z/) == nil then
+		if value.match(/\A[a-zA-Z0-9_@]+\z/).nil? then
 		
 			falselist << key
 		
@@ -93,7 +93,7 @@ def validate_special_character(input_hash)
 		
 	end
 
-	if falselist.empty? then
+	if !falselist.empty? then
 	
 		raise Special_character_error.new(falselist)
 			
