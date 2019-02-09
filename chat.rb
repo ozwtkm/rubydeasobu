@@ -3,7 +3,7 @@
 
 require_relative './baseclass'
 	
-class Websocket_client < Base
+class Chat < Base
 
 def initialize(req,res)
 
