@@ -36,7 +36,7 @@ EM.run {
 
 			set_username(cgi, ws)
 
-			messege_send("join", ws, connections)
+			send_messege("join", ws, connections)
 
 			connections << ws
 		
@@ -45,14 +45,14 @@ EM.run {
 
 		ws.onmessage { |comment|
 		
-			messege_send("speak", ws, connections, comment)
+			send_messege("speak", ws, connections, comment)
 			
 		}
 	
 	
 		ws.onclose {
 
-			messege_send("leave", ws, connections)
+			send_messege("leave", ws, connections)
 			
 		}
 	
@@ -77,40 +77,40 @@ EM.run {
 	end
 
 
-	def messege_send(kind, ws, connections, comment="")
+	def send_messege(kind, ws, connections, comment="")
 	
 		case kind
 		when "join" then
 		
 			ws.send "Hello #{ws.username}"
-									
+
 			puts "#{ws.username}が来たみたいだよ"  
 			
-			msg = "みんな～、#{ws.username}が来たみたいだぜ"
+			broadcast_msg = "みんな～、#{ws.username}が来たみたいだぜ"
 		  
 		when "speak" then
 		
 			puts "Recieved message: #{comment} from #{ws.username}"
-			
-			msg = "#{ws.username}「#{comment}」"
+
+			broadcast_msg = "#{ws.username}「#{comment}」"
 		
 		when "leave" then
 				
 			puts "#{ws.username} が帰宅したよ"
 		
-			msg = "#{ws.username}が逃げ出したぞ（逃がすな）.."
+			broadcast_msg = "#{ws.username}が逃げ出したぞ（逃がすな）.."
 		
 		end
 		
-		broadcast(connections, msg)
+		broadcast(connections, broadcast_msg)
 		
 	end
 	
 	
-	def broadcast(connections, msg)
+	def broadcast(connections, broadcast_msg)
 		
 		connections.each{|conn|
-			conn.send(msg)
+			conn.send(broadcast_msg)
 		}
 	
 	end
