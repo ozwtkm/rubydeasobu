@@ -18,15 +18,15 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 			res.status = 404
 			res.body = "404<br><br>" + CGI.escapeHTML(req.path) + "なんかねーよ"
 		else
-			controler = klass.new(req, res)
+			controller = klass.new(req, res)
 	
 			case req.request_method 
 			when "GET" then
-				controler.get_handler()
+				controller.get_handler()
 			when "POST" then
-				controler.post_handler()
+				controller.post_handler()
 			else
-				controler.not_allow_handler()
+				controller.not_allow_handler()
 			end
 		end
 	end
