@@ -1,7 +1,6 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
 
-
 require 'em-websocket'
 require 'cgi'
 require 'cgi/session'
@@ -15,7 +14,6 @@ module Ex_connection
 		attr_accessor :username
 
 	end
-	
 end
 
 # オフラインモード回避のためのおまじない
@@ -32,7 +30,9 @@ EM.run {
 	
 		ws.onopen { |handshake|
 
-			set_session(ws, handshake)	# cgiで使っているセッションの情報をwebsocketに引き継ぐ
+			cgi = get_sessionid(ws, handshake)
+
+			set_username(cgi, ws)
 
 			messege_send("join", ws, connections)
 
@@ -41,38 +41,45 @@ EM.run {
 		}
 
 
-		ws.onmessage { |msg|
+		ws.onmessage { |comment|
 		
-			messege_send("speak", ws, connections, msg)
+			messege_send("speak", ws, connections, comment)
 			
 		}
 	
 	
 		ws.onclose {
 
-			messege_send("logout", ws, connections)
+			messege_send("leave", ws, connections)
 			
 		}
 	
 	end
 	
 	
-	def set_session(ws, handshake)
-	 	 
+	def get_sessionid(ws, handshake)
+	
 		cgi = CGI.new
-	 
+	
 		c = handshake.headers_downcased["cookie"]
 	 
-		cgi.cookies['_session_id'] = c.match(/session_id=([a-f0-9]+)/)[1]
+		cgi.cookies['_session_id'] = c.match(/(^|;\s*)session_id=([a-f0-9]+)/)[2]
+	
+		return cgi
+	
+	end
+	
+	
+	def set_username(cgi, ws)
 	
 		session = CGI::Session.new(cgi, {'new_session' => false})
 
 		ws.username = (session['name'])
-
+		
 	end
 
 
-	def messege_send(kind, ws, connections, msg={})
+	def messege_send(kind, ws, connections, comment="")
 	
 		case kind
 		when "join" then
@@ -81,29 +88,44 @@ EM.run {
 		
 			ws.send "Hello #{ws.username}"
 		  
-			connections.each{|conn|
-				conn.send("#{ws.username} 参戦！！")
-		  }
-		  
 		when "speak" then
 		
-			puts "Recieved message: #{msg} from #{ws.username}"
-	  
-			connections.each{|conn|
-				conn.send("#{ws.username} Said : #{msg}")
-			}
+			puts "Recieved message: #{comment} from #{ws.username}"
 		
-		when "logout" then
+		when "leave" then
 				
 			puts "#{ws.username} が帰宅したよ"
-			
-			connections.each{|conn|
-				conn.send("#{ws.username}が尻尾を巻いて逃げ出した")
-			}
 		
 		end
+		
+		broadcast(kind, ws, connections, comment)
+		
+	end
+	
+	
+	def broadcast(kind, ws, connections, comment)
+	
+		case kind
+		when "join" then
+		
+			msg = "みんな～、#{ws.username}が来たみたいだぜ"
+		
+		when "speak" then
+		
+			msg = "#{ws.username}「#{comment}」"
+		
+		when "leave" then
+		
+			msg = "#{ws.username}が逃げ出したぞ（逃がすな）.."
+		
+		end
+		
+		connections.each{|conn|
+			conn.send(msg)
+		}
 	
 	end
+	
 
 }
 
