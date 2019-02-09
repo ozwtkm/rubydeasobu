@@ -1,6 +1,10 @@
-﻿require 'webrick'
+#!/usr/bin/ruby -Ku 
+# -*- coding: utf-8 -*-
+
+
+require 'webrick'
 require 'mysql2'
-require_relative './util/render'
+require_relative './_util/render'
 
 class Base
 
