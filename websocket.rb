@@ -6,8 +6,7 @@ require 'cgi'
 require 'cgi/session'
 require_relative './baseclass'
 
-# セッション変数をwebsocketのインスタンスに渡すためにem-websocketをいじり、
-# 
+# セッション変数をwebsocketに渡すためにwebsocketにインスタンス変数を追加する。
 module Ex_connection
 	refine EventMachine::WebSocket::Connection do
 	
@@ -15,6 +14,7 @@ module Ex_connection
 
 	end
 end
+
 
 # オフラインモード回避のためのおまじない
 ENV['REQUEST_METHOD'] = 'GET'
@@ -29,8 +29,10 @@ EM.run {
 	EM::WebSocket.run(:host => "127.0.0.1", :port => 8882) do |ws|
 	
 		ws.onopen { |handshake|
-
-			cgi = get_sessionid(ws, handshake)
+		
+			cgi = CGI.new
+			
+			cgi.cookies['_session_id'] = get_sessionid(handshake)
 
 			set_username(cgi, ws)
 
@@ -57,15 +59,11 @@ EM.run {
 	end
 	
 	
-	def get_sessionid(ws, handshake)
-	
-		cgi = CGI.new
-	
+	def get_sessionid(handshake)
+		
 		c = handshake.headers_downcased["cookie"]
 	 
-		cgi.cookies['_session_id'] = c.match(/(^|;\s*)session_id=([a-f0-9]+)/)[2]
-	
-		return cgi
+		return c.match(/(^|;\s*)session_id=([a-f0-9]+)/)[2]
 	
 	end
 	
@@ -84,41 +82,32 @@ EM.run {
 		case kind
 		when "join" then
 		
-			puts "#{ws.username}が来たみたいだよ"  
-		
 			ws.send "Hello #{ws.username}"
+									
+			puts "#{ws.username}が来たみたいだよ"  
+			
+			msg = "みんな～、#{ws.username}が来たみたいだぜ"
 		  
 		when "speak" then
 		
 			puts "Recieved message: #{comment} from #{ws.username}"
+			
+			msg = "#{ws.username}「#{comment}」"
 		
 		when "leave" then
 				
 			puts "#{ws.username} が帰宅したよ"
 		
+			msg = "#{ws.username}が逃げ出したぞ（逃がすな）.."
+		
 		end
 		
-		broadcast(kind, ws, connections, comment)
+		broadcast(connections, msg)
 		
 	end
 	
 	
-	def broadcast(kind, ws, connections, comment)
-	
-		case kind
-		when "join" then
-		
-			msg = "みんな～、#{ws.username}が来たみたいだぜ"
-		
-		when "speak" then
-		
-			msg = "#{ws.username}「#{comment}」"
-		
-		when "leave" then
-		
-			msg = "#{ws.username}が逃げ出したぞ（逃がすな）.."
-		
-		end
+	def broadcast(connections, msg)
 		
 		connections.each{|conn|
 			conn.send(msg)
