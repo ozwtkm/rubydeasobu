@@ -1,10 +1,10 @@
-# moduleはクラス変数に相当する機能はないらしいので、
-# moduleはあきらめてクラスを作る。
+#!/usr/bin/ruby -Ku 
+# -*- coding: utf-8 -*-
 
-require_relative './login'
+require_relative './controller/login'
 require_relative './regist'
 require_relative './index'
-require_relative './websocket_client'
+require_relative './chat'
 
 
 # ここそのうち自動生成させたい
@@ -14,7 +14,8 @@ ROUTES = {
 	"/regist" => Regist,
 	"/login" => Login,
 	"/index" => Index,
-	"/websocket" => Chat
+	"/websocket" => Chat # 自動生成時ここ注意
 }
 
 end
+
