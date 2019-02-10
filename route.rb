@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 require_relative './controller/login'
-require_relative './regist'
-require_relative './index'
-require_relative './chat'
+require_relative './controller/regist'
+require_relative './controller/index'
+require_relative './controller/chat'
 
 
 # ここそのうち自動生成させたい
