@@ -19,7 +19,6 @@ def initialize(req,res)
 	
 	@context[:msg] = []
 	
-	@login_model = Login_model.new # 使うシーン、無しｗ
 
 end
 
@@ -85,29 +84,26 @@ def check_ID_PW(username, passwd)
 	
 	statement = @sql.prepare("select salt from users2 where name = ? limit 1")
 	result_tmp = statement.execute(username)
-		
-	result = nil
-	result_tmp.each do |row|
-		result = row
-	end
 	
-	if result.nil?
+	if result_tmp.count == 0
 	
 		raise
 	
 	end
 	
+ 	result = result_tmp.first
+ 	
 	pw_hash = Digest::SHA1.hexdigest(passwd + result["salt"])
 	
 	statement = @sql.prepare("select * from users2 where name = ? and passwd = ? limit 1")
-	result = statement.execute(username, pw_hash).count
+	result = statement.execute(username, pw_hash)
 	
-	if result == 0
+	if result.count == 0
 	
 		raise
 	
 	end
-
+	
 end
 
 
