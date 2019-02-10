@@ -1,10 +1,10 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
 
+require 'webrick'
 require 'em-websocket'
 require 'cgi'
 require 'cgi/session'
-	
 
 # セッション変数をwebsocketに渡すためにwebsocketにインスタンス変数を追加する。
 module Ex_connection
@@ -117,7 +117,6 @@ EM.run {
 	
 
 }
-
 
 
 
