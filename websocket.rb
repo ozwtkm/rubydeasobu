@@ -4,7 +4,7 @@
 require 'em-websocket'
 require 'cgi'
 require 'cgi/session'
-require_relative './baseclass'
+	
 
 # セッション変数をwebsocketに渡すためにwebsocketにインスタンス変数を追加する。
 module Ex_connection
@@ -36,7 +36,7 @@ EM.run {
 
 			set_username(cgi, ws)
 
-			send_messege("join", ws, connections)
+			send_message("join", ws, connections)
 
 			connections << ws
 		
@@ -45,14 +45,14 @@ EM.run {
 
 		ws.onmessage { |comment|
 		
-			send_messege("speak", ws, connections, comment)
+			send_message("speak", ws, connections, comment)
 			
 		}
 	
 	
 		ws.onclose {
 
-			send_messege("leave", ws, connections)
+			send_message("leave", ws, connections)
 			
 		}
 	
@@ -77,7 +77,7 @@ EM.run {
 	end
 
 
-	def send_messege(kind, ws, connections, comment="")
+	def send_message(kind, ws, connections, comment="")
 	
 		case kind
 		when "join" then
