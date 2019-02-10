@@ -69,16 +69,9 @@ def check_id_duplication(username, passwd)
 	# DB側でunique制約しないとレースコンディションの可能性あり
 	statement = @sql.prepare("select * from users2 where name = ? limit 1")
 	result_tmp = statement.execute(username)
-	
-	result =nil
-	result_tmp.each do |row|
-	
-		result = row
-		
-	end
-	
-	if !result.nil?
-	
+
+	if result_tmp.count == 1
+
 		raise
 	
 	end
