@@ -19,7 +19,7 @@ def initialize(req,res)
 	
 	@context[:msg] = []
 	
-	@login_model = Login_model.new
+	@login_model = Login_model.new # 使うシーン、無しｗ
 
 end
 
@@ -60,7 +60,7 @@ def control()
 
 	begin
 	
-		@login_model.check_ID_PW(@sql, username, passwd)
+		check_ID_PW(username, passwd)
 	
 	rescue => e
 		
@@ -71,9 +71,9 @@ def control()
 	end
 		
 		
-	session = @login_model.login(@cgi, username)
+	sessionid = login(username)
 	
-	@res.header['Set-cookie'] = "session_id =" + session.session_id()
+	@res.header['Set-cookie'] = "session_id =" + sessionid
 	
 	@context[:msg] << username + "でログインしたった"
 
@@ -81,6 +81,47 @@ def control()
 end
 
 
+def check_ID_PW(username, passwd)
+	
+	statement = @sql.prepare("select salt from users2 where name = ? limit 1")
+	result_tmp = statement.execute(username)
+		
+	result = nil
+	result_tmp.each do |row|
+		result = row
+	end
+	
+	if result.nil?
+	
+		raise
+	
+	end
+	
+	pw_hash = Digest::SHA1.hexdigest(passwd + result["salt"])
+	
+	statement = @sql.prepare("select * from users2 where name = ? and passwd = ? limit 1")
+	result = statement.execute(username, pw_hash).count
+	
+	if result == 0
+	
+		raise
+	
+	end
+
 end
 
 
+def login(username)
+
+	# セッションにログイン情報を持たせるよ
+	session = CGI::Session.new(@cgi,{"new_session" => true})
+	session['name'] = username
+	sessionid = session.session_id()
+	session.close
+	
+	return sessionid
+	
+end
+
+
+end
