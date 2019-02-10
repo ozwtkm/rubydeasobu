@@ -5,7 +5,6 @@ require 'cgi'
 require 'digest/sha1'
 require 'cgi/session'
 require_relative '../baseclass'
-require_relative '../model/login_model'
 
 
 class Login < Base
