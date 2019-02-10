@@ -1,6 +1,8 @@
 <%= render("_html_header.erb") %>
 
 <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.3.min.js"></script> 
+<script type="text/javascript" src="../rsc/chat.js"></script>
+
 
 <div id="debug"></div>
 
@@ -8,51 +10,6 @@
 <input type="button" id="send" value="send" ><br>
 <input type="button" value="退出" id="logout">
 <ul id="msg-area" />
-
-
-
-
-<script>
-function init() {
-
-	function debug(string) {
-		var element = document.getElementById("debug");
-		var p = document.createElement("p");
-		p.appendChild(document.createTextNode(string));
-		element.appendChild(p);
-	}
-	
-	var Socket = WebSocket;
-	var ws = new Socket("ws://192.168.119.128:81/unko/");
-	
-	ws.onclose = function(event) {	
-		debug("Closed - code: " + event.code + ", reason: " + event.reason + ", wasClean: " + event.wasClean);
-	};
-	
-	ws.onopen = function() {
-		debug("connected...");
-	};
-
-	ws.onmessage = function(event){
-		var message_li = $('<li>').text(event.data);
-		$("#msg-area").append(message_li);
-	};
-	
-	$("#send").on('click', function(){
-		ws.send($('#message').val());
-	});
-	
-	$("#logout").on('click', function(){
-		ws.close();
-	});
-	
-};
-
-window.onload = init();
-
-</script>
-
-
 
 
 
