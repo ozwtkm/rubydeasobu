@@ -3,8 +3,8 @@
 
 require 'digest/sha1'
 require 'securerandom'
-require_relative './baseclass'
-
+require_relative '../baseclass'
+require_relative '../model/user'
 
 class Regist < Base
 
@@ -15,6 +15,8 @@ def initialize(req,res)
 	super
 	
 	@context[:msg] = []
+	
+	@user = User.new
 
 end
 
@@ -53,7 +55,7 @@ def control()
 		end
 
 
-		regist(@req.query["name"], @req.query["passwd"])
+		@user.regist(@sql, @req.query["name"], @req.query["passwd"])
 		
 		@context[:msg] << "#{@req.query["name"]}を登録したったで。"
 
@@ -75,7 +77,7 @@ def check_id_duplication(username, passwd)
 		
 	end
 	
-	if result != nil
+	if !result.nil?
 	
 		raise
 	
@@ -83,19 +85,6 @@ def check_id_duplication(username, passwd)
 
 end
 
-
-def regist(username, passwd)
-
-	# saltを生成
-	salt = SecureRandom.hex(10) + "aaaaburiburi"
-		
-	# saltとパスワードを連結してハッシュ値生成
-	pw_hash = Digest::SHA1.hexdigest(passwd+salt)
-		
-	statement = @sql.prepare("insert into users2(name,salt,passwd) values(?,?,?)")
-	statement.execute(username, salt, pw_hash)
-
-end
 
 
 end
