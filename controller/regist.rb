@@ -3,7 +3,7 @@
 
 require 'digest/sha1'
 require 'securerandom'
-require_relative '../baseclass'
+require_relative './baseclass'
 require_relative '../model/user'
 
 class Regist < Base
