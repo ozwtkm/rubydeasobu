@@ -78,8 +78,7 @@ end
 
 def view_http_body()
 
-
-	@res.body = render(@template, @context)
+	@res.body = render(@template)
 
 end
 
