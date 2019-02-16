@@ -77,7 +77,7 @@ def control()
 
 	if error_flg then
 	
-		raise 
+		return
 	
 	end
 
