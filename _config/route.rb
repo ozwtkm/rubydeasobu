@@ -1,10 +1,10 @@
 #!/usr/bin/ruby -Ku 
 # -*- coding: utf-8 -*-
 
-require_relative './controller/login'
-require_relative './controller/regist'
-require_relative './controller/index'
-require_relative './controller/chat'
+require_relative '../controller/login'
+require_relative '../controller/regist'
+require_relative '../controller/index'
+require_relative '../controller/chat'
 
 
 # ここそのうち自動生成させたい

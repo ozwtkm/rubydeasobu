@@ -1,8 +1,8 @@
 require 'webrick'
 require 'cgi'
 include WEBrick
-require_relative './route'
-require_relative './baseclass'
+require_relative './_config/route'
+require_relative './controller/baseclass'
 
 
 # httpサーバー

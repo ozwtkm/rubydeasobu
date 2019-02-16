@@ -4,7 +4,7 @@
 
 require 'webrick'
 require 'mysql2'
-require_relative './_util/render'
+require_relative '../_util/render'
 
 class Base
 
