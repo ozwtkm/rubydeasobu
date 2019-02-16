@@ -71,7 +71,7 @@ def control()
 		
 	sessionid = login(username)
 	
-	@res.header['Set-cookie'] = "session_id =" + sessionid
+	@res.header['Set-cookie'] = "session_id=" + sessionid
 	
 	@context[:msg] << username + "でログインしたった"
 

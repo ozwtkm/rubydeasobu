@@ -13,11 +13,14 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 	
 		klass = Routes::ROUTES[req.path]
 	
-		if klass == nil then
+		if klass.nil? then
+		
 			res.content_type = "text/html"
 			res.status = 404
-			res.body = "404<br><br>" + CGI.escapeHTML(req.path) + "なんかねーよ"
-		else
+			res.body = "404<br/><br/>" + CGI.escapeHTML(req.path) + "なんかねーよ"
+	
+		end
+
 			controller = klass.new(req, res)
 	
 			case req.request_method 
@@ -28,7 +31,7 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 			else
 				controller.not_allow_handler()
 			end
-		end
+			
 	end
 end
 

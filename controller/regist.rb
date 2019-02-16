@@ -15,8 +15,6 @@ def initialize(req,res)
 	super
 	
 	@context[:msg] = []
-	
-	@user = User.new
 
 end
 
@@ -42,7 +40,8 @@ def control()
 
 		
 		begin
-			
+		
+			@user = User.new(@sql)
 			@user.regist(@sql, @req.query["name"], @req.query["passwd"])
 		
 		rescue => e

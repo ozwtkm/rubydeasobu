@@ -62,8 +62,15 @@ EM.run {
 	def get_sessionid(handshake)
 		
 		c = handshake.headers_downcased["cookie"]
+		sessionid = c.match(/(^|;\s*)session_id=([a-f0-9]+)/)[2]
 	 
-		return c.match(/(^|;\s*)session_id=([a-f0-9]+)/)[2]
+		 if sessionid.nil? then
+			
+			send_message("require_login", ws, connections)
+			
+		 end
+	 
+		return sessionid
 	
 	end
 	
@@ -99,6 +106,10 @@ EM.run {
 			puts "#{ws.username} が帰宅したよ"
 		
 			broadcast_msg = "#{ws.username}が逃げ出したぞ（逃がすな）.."
+		
+		when "require_login" then
+		
+			ws.send "ログインしろカス"
 		
 		end
 		
