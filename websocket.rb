@@ -32,7 +32,19 @@ EM.run {
 		
 			cgi = CGI.new
 			
-			cgi.cookies['_session_id'] = get_sessionid(handshake)
+			
+			begin
+			
+				cgi.cookies['_session_id'] = get_sessionid(handshake)
+
+			rescue
+			
+				send_message("require_login", ws, connections)
+			
+				return
+			
+			end
+
 
 			set_username(cgi, ws)
 
@@ -62,15 +74,15 @@ EM.run {
 	def get_sessionid(handshake)
 		
 		c = handshake.headers_downcased["cookie"]
-		sessionid = c.match(/(^|;\s*)session_id=([a-f0-9]+)/)[2]
+		match = c.match(/(^|;\s*)session_id=([a-f0-9]+)/)
 	 
-		 if sessionid.nil? then
+		 if match.nil? then
 			
-			send_message("require_login", ws, connections)
+			raise
 			
 		 end
 	 
-		return sessionid
+		return match[2]
 	
 	end
 	
