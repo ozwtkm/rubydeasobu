@@ -21,28 +21,58 @@ end
 
 def control()
 
-		# 何はともあれまずは入力値検証
-		begin
-			
-			validate_special_character({:ユーザ名 => @req.query["name"], :パスワード => @req.query["passwd"]})
-			
-		rescue => e
+	query = {:ユーザ名 => @req.query["name"], :パスワード => @req.query["passwd"]}
+	error_flg = false
 
-			e.falselist.each do |row|
+	begin
+		
+		validate_nil(query)
+		
+	rescue => e
+
+		e.falselist.each do |row|
 			
-				@context[:msg] << "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ"
+			@context[:msg] << "#{row}をちゃんと指定しろ。"
 			
-			end
-			
-			return
+			query.delete(row)
 			
 		end
+
+		error_flg = true
+
+	end
+	
+	
+	begin
+		
+		validate_special_character(query)
+
+	rescue => e
+
+		e.falselist.each do |row|
+			
+			@context[:msg] << "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ"
+			
+		end
+
+		error_flg = true
+
+	end
+
+	# なんかキモくて嫌だが、以下の用件を満たす方法がerror_flgを用いる方法しか思いつかなかった。
+	# ・クエリの片方がnilチェック、片方が特殊文字チェックで引っかかるとき、両方のエラーを伝えたい。
+
+	if error_flg then
+	
+		return
+	
+	end
 
 		
 		begin
 		
 			@user = User.new(@sql)
-			@user.regist(@sql, @req.query["name"], @req.query["passwd"])
+			@user.regist(@req.query["name"], @req.query["passwd"])
 		
 		rescue => e
 		

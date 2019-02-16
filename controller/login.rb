@@ -33,11 +33,32 @@ end
 
 
 def control()
+
+	query = {:ユーザ名 => @req.query["name"], :パスワード => @req.query["passwd"]}
+	error_flg = false
+
+	begin
+		
+		validate_nil(query)
+		
+	rescue => e
+
+		e.falselist.each do |row|
+			
+			@context[:msg] << "#{row}をちゃんと指定しろ。"
+			
+			query.delete(row)
+			
+		end
+
+		error_flg = true
+
+	end
 	
 	
 	begin
-
-		validate_special_character({:ユーザ名 => @req.query["name"], :パスワード => @req.query["passwd"]})
+		
+		validate_special_character(query)
 
 	rescue => e
 
@@ -47,8 +68,17 @@ def control()
 			
 		end
 
-		return
+		error_flg = true
 
+	end
+
+	# なんかキモくて嫌だが、以下の用件を満たす方法がerror_flgを用いる方法しか思いつかなかった。
+	# ・クエリの片方がnilチェック、片方が特殊文字チェックで引っかかるとき、両方のエラーを伝えたい。
+
+	if error_flg then
+	
+		raise 
+	
 	end
 
 

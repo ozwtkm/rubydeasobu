@@ -41,10 +41,9 @@ EM.run {
 			
 				send_message("require_login", ws, connections)
 			
-				return
+				next
 			
 			end
-
 
 			set_username(cgi, ws)
 

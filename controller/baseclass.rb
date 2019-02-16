@@ -83,6 +83,29 @@ def view_http_body()
 end
 
 
+def validate_nil(input_hash)
+
+	falselist = []
+	input_hash.each do |key, value|
+	
+		if value.nil? then
+		
+			falselist <<key
+		
+		end
+	
+	end
+	
+	if !falselist.empty? then
+	
+		raise Input_error.new(falselist)
+	
+	end
+	
+
+end
+
+
 def validate_special_character(input_hash)
 
 	falselist = []
@@ -98,7 +121,7 @@ def validate_special_character(input_hash)
 
 	if !falselist.empty? then
 	
-		raise Special_character_error.new(falselist)
+		raise Input_error.new(falselist)
 			
 	end
 	
@@ -109,11 +132,11 @@ end
 
 
 
-# 入力値に特殊記号が来たときに使うエラー
-class Special_character_error < StandardError
+# 入力値に特殊記号とかnilが来たときに使うエラー
+class Input_error < StandardError
 attr_reader :falselist
 
-def initialize(list)
+def initialize(list={})
 
 	@falselist = list
 
