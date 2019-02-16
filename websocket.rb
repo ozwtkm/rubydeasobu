@@ -110,6 +110,8 @@ EM.run {
 		when "require_login" then
 		
 			ws.send "ログインしろカス"
+			
+			return
 		
 		end
 		

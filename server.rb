@@ -18,6 +18,8 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 			res.content_type = "text/html"
 			res.status = 404
 			res.body = "404<br/><br/>" + CGI.escapeHTML(req.path) + "なんかねーよ"
+			
+			return
 	
 		end
 
