@@ -1,15 +1,15 @@
 <%= render("_html_header.erb") %>
 <h1>ログインするぞい</h1>
 <form action="" method="post">
-ユーザID<br>
-<input type="text" name="name" value=""><br>
-パスワード(text属性なのは茶目っ気)<br>
-<input type="text" name="passwd" value=""><br>
-<input type="submit" value="ログインするぞい"><br>
+ユーザID<br/>
+<input type="text" name="name" value=""/><br/>
+パスワード(text属性なのは茶目っ気)<br/>
+<input type="text" name="passwd" value=""/><br/>
+<input type="submit" value="ログインするぞい"/><br/>
 </form>
 
 <% c[:msg].each do |row| %>
-	<%= CGI.escapeHTML(row) %><br>
+	<%= CGI.escapeHTML(row) %><br/>
 <% end %>
 
 <%= render("_html_footer.erb") %>
