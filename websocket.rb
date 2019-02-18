@@ -19,6 +19,8 @@ end
 # オフラインモード回避のためのおまじない
 ENV['REQUEST_METHOD'] = 'GET'
 
+mutex = Mutex.new
+
 connections = []
 
 
@@ -49,7 +51,9 @@ EM.run {
 
 			send_message("join", ws, connections)
 
-			connections << ws
+			mutex.synchronize {
+				connections << ws
+			}
 		
 		}
 
