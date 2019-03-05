@@ -1,0 +1,44 @@
+<%= render("_html_header.erb") %>
+
+<body>
+<h1>ガチャ引くぞい</h1>
+
+
+<% c[:msg].each do |row| %>
+	<%= CGI.escapeHTML(row) %><br/>
+<% end %><br/><br/>
+
+<h2>モンスターガチャ！</h2>
+gem100でモンスター一匹やるよ
+<form action="" method="post">
+<input type="hidden" name="gacha_id" value="1"/>
+<input type="submit" value="回すよ"/>
+</form>
+
+<b>お前のgem数:</b>
+<%= CGI.escapeHTML(c[:gem]) %><br/>
+
+<b>お前のmoney数</b>
+<%= CGI.escapeHTML(c[:money]) %><br/>
+
+<b>所持モンスター</b>
+
+<table border="5">
+	<tr>
+		<th width="500">なまえ</th>
+		<th width="120">レア度</th>
+	</tr>
+
+<% c[:monsters].each do |row| %>
+	<tr>
+		<td align="left"><%= CGI.escapeHTML(row[:name]) %><br/></td>
+		<td align="center"><%= CGI.escapeHTML(row[:rarity]) %><br/></td>
+	</tr>
+<% end %><br/><br/>
+
+</table>
+<br/>
+
+<%= render("_html_footer.erb") %>
+
+

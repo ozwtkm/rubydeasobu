@@ -4,6 +4,7 @@
 require_relative '../controller/login'
 require_relative '../controller/regist'
 require_relative '../controller/index'
+require_relative '../controller/gacha'
 require_relative '../controller/chat'
 
 
@@ -14,8 +15,10 @@ ROUTES = {
 	"/regist" => Regist,
 	"/login" => Login,
 	"/index" => Index,
+	"/gacha" => Gacha,
 	"/websocket" => Chat # 自動生成時ここ注意
 }
 
 end
+
 

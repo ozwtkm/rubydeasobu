@@ -16,10 +16,36 @@ def regist(username, passwd)
 		
 	pw_hash = Digest::SHA1.hexdigest(passwd+salt)
 		
-	statement = @sql.prepare("insert into users2(name,salt,passwd) values(?,?,?)")
+	statement = @sql.prepare("insert into transaction.users(name,salt,passwd) values(?,?,?)")
 	statement.execute(username, salt, pw_hash)
 
 end
+
+
+def add_monster(user_id, monster_id)
+
+	statement = @sql.prepare("insert into transaction.user_monster(user_id,monster_id) values(?,?)")
+	statement.execute(user_id, monster_id)
+
+end
+
+
+def get_userid(username)
+
+	statement =@sql.prepare("select id from transaction.users where name = ?")
+	result_tmp = statement.execute(username)
+
+	result = nil
+	result_tmp.each do |row|
+	
+		result = row["id"]
+				
+	end
+
+	return result
+
+end
+
 
 end
 
