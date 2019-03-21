@@ -7,6 +7,7 @@ require_relative '../controller/index'
 require_relative '../controller/gacha'
 require_relative '../controller/chat'
 require_relative '../controller/monsters'
+require_relative '../controller/wallet'
 
 
 # ここそのうち自動生成させたい
@@ -18,7 +19,7 @@ ROUTES = {
 	"/index" => Index,
 	"/gacha" => Gacha,
 	"/monsters" => Monsters,
-	#"/wallet" => Wallet,
+	"/wallet" => Wallet_controller,
 	"/websocket" => Chat # 自動生成時ここ注意
 }
 
