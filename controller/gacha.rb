@@ -8,6 +8,7 @@ require_relative './baseclass'
 require_relative '../model/user'
 require_relative '../model/monster'
 require_relative '../model/wallet'
+require 'json'
 
 class Gacha < Base
 
@@ -33,13 +34,24 @@ end
 
 def get_handler()
 	
-	set_session()
-	
 	@user = User.new(@sql)
-	user_id = @user.get_userid(@session["name"])
 	
+	begin
+	
+		set_session()
+		user_id = @user.get_userid(@session["name"])
+	
+	rescue
+	
+		@context[:msg] << "ログインしろゴミが"
+	
+		super
+		
+		return
+	
+	end
+
 	monsters = @monster.get_monsters(user_id)
-	
 	monsters.each do |row|
 			
 			@context[:monsters] << {:name => row['name'], :rarity => row['rarity']}
@@ -76,18 +88,9 @@ end
 def set_session()
 
 	# ToDo: cgiまわりの処理、baseclassかutilあたりに一般化
-	begin
 
-		@cgi.cookies['_session_id'] = get_sessionid(@req.header["cookie"].to_s)
-		@session = CGI::Session.new(@cgi,{'new_session' => false})
-	
-	rescue
-	
-		@context[:msg] << "ログインしろゴミが"
-		
-		return
-	
-	end
+	@cgi.cookies['_session_id'] = get_sessionid(@req.header["cookie"].to_s)
+	@session = CGI::Session.new(@cgi,{'new_session' => false})
 	
 	@context[:msg] << "ようこそ" + @session['name'] + "さん"
 

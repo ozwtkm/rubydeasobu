@@ -1,5 +1,8 @@
 <%= render("_html_header.erb") %>
 
+<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.3.min.js"></script> 
+<script type="text/javascript" src="../rsc/gacha.js"></script>
+
 <body>
 <h1>ガチャ引くぞい</h1>
 
@@ -10,34 +13,41 @@
 
 <h2>モンスターガチャ！</h2>
 gem100でモンスター一匹やるよ
+
 <form action="" method="post">
-<input type="hidden" name="gacha_id" value="1"/>
-<input type="submit" value="回すよ"/>
+	<input type="hidden" name="gacha_id" value="1"/>
+	<input type="submit" value="回すよ"/>
 </form>
 
-<b>お前のgem数:</b>
-<%= CGI.escapeHTML(c[:gem]) %><br/>
+<b>お前のgem数</b>
+<div id="gem"></div><br/>
 
 <b>お前のmoney数</b>
-<%= CGI.escapeHTML(c[:money]) %><br/>
+<div id="money"></div><br/>
 
 <b>所持モンスター</b>
 
 <table border="5">
+<tbody id="monsters_list">
 	<tr>
 		<th width="500">なまえ</th>
 		<th width="120">レア度</th>
 	</tr>
-
-<% c[:monsters].each do |row| %>
-	<tr>
-		<td align="left"><%= CGI.escapeHTML(row[:name]) %><br/></td>
-		<td align="center"><%= CGI.escapeHTML(row[:rarity]) %><br/></td>
-	</tr>
-<% end %><br/><br/>
-
+</tbody>
 </table>
 <br/>
+
+<script>
+
+	$(document).ready(function(){
+		get_monsters();
+		get_wallet();
+	});
+
+</script>
+
+
+
 
 <%= render("_html_footer.erb") %>
 
