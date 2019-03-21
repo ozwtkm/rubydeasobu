@@ -14,7 +14,7 @@ def initialize(req, res)
 	@req = req
 	@res = res
 	
-	@sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'webrick_test')
+	@sql = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'master')
 	
 	# @tmplateはview時、render()に引数として渡すテンプレート。
 	# Baseを引き継ぐ各クラスにて対応するテンプレート名を指定すること。
