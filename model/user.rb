@@ -22,14 +22,6 @@ def regist(username, passwd)
 end
 
 
-def add_monster(user_id, monster_id)
-
-	statement = @sql.prepare("insert into transaction.user_monster(user_id,monster_id) values(?,?)")
-	statement.execute(user_id, monster_id)
-
-end
-
-
 def get_userid(username)
 
 	statement =@sql.prepare("select id from transaction.users where name = ?")

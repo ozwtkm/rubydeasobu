@@ -53,10 +53,14 @@ def get_money(user_id)
 end
 
 
+def sub_gem(user_id, num)
+
+	statement = @sql.prepare("update transaction.wallets set gem = gem - ? where user_id = ?")
+	result_tmp = statement.execute(num, user_id)
 
 end
 
 
 
 
-
+end

@@ -17,12 +17,11 @@ ROUTES = {
 	"/regist" => Regist,
 	"/login" => Login,
 	"/index" => Index,
-	"/gacha" => Gacha,
+	"/gacha" => Gacha_controller,
 	"/monsters" => Monsters,
 	"/wallet" => Wallet_controller,
 	"/websocket" => Chat # 自動生成時ここ注意
 }
 
 end
-
 

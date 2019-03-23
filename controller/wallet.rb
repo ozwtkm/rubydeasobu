@@ -19,7 +19,7 @@ def initialize(req,res)
 
 	super
 	
-	@context[:json] = []
+	@context[:json] = "{}"
 	
 	ARGV.replace(["abc=001&def=002"]) # オフラインモード回避。
 	@cgi = CGI.new
@@ -57,8 +57,7 @@ def get_handler()
 	gem = @wallet.get_gem(user_id).to_s
 	money = @wallet.get_money(user_id).to_s
 	
-	@context[:json] << {:gem => gem, :money => money}
-	@context[:json] = JSON.generate(@context[:json])
+	@context[:json] = JSON.generate({:gem => gem, :money => money})
 	
 	super
 
