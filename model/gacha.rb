@@ -3,16 +3,16 @@
 
 class Gacha
 
-def initialize(sql)
-
-	@sql = sql
+def initialize(probability)
+	
+	@probability = probability
 
 end
 
 
-def get_probability(gacha_id)
+def self.get_gacha(gacha_id, sql)
 
-	statement = @sql.prepare("select monster_id, probability from gacha_probability where gacha_id = ? order by 'probability' desc;")
+	statement = sql.prepare("select monster_id, probability from gacha_probability where gacha_id = ? order by 'probability' desc;")
 	result_tmp = statement.execute(gacha_id)
 	
 	result = []
@@ -22,7 +22,9 @@ def get_probability(gacha_id)
 				
 	end
 
-	return result
+	gacha = Gacha.new(sql, result)
+
+	return gacha
 
 end
 

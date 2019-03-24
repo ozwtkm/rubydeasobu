@@ -3,14 +3,31 @@
 
 class User
 
-def initialize(sql)
+def initialize(userinfo)
 
-	@sql = sql
+	@userinfo = userinfo
 
 end
 
 
-def regist(username, passwd)
+def self.get_user(username, sql)
+
+	userinfo = {}
+
+	statement = sql.prepare("select * from transaction.user where name = ?")
+	statement.execute(username)
+	
+	# userinfo‚ÉŒ‹‰Ê‚Ô‚Á‚±‚Şito doj
+	
+	user = User.new(userinfo)
+	
+	return user
+
+end
+
+
+
+def self.regist(username, passwd)
 
 	salt = SecureRandom.hex(10) + "aaaaburiburi"
 		

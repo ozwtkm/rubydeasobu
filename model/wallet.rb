@@ -3,37 +3,37 @@
 
 class Wallet
 
-def initialize(sql)
+def initialize(wallet)
 
-	@sql = sql
+	@wallet = wallet
 
 end
 
 
-def self.get_wallet(sql)
+def self.get_wallet(user_id)
 
-	wallet = Wallet.new(sql)
+	wallet_result = {}
+	wallet_result[:gem] = get_gem(user_id)
+	wallet_result[:money] = get_money(user_id)
+
+	wallet = Wallet.new(wallet_result)
 	
 	return wallet
 
 end
 
 
-def get_gem(user_id)
+def self.sub_gem(user_id, num)
 
-	statement = @sql.prepare("select gem from transaction.wallets where user_id = ?")
-	result_tmp = statement.execute(user_id)
-	
-	result = nil
-	result_tmp.each do |row|
+	# controller側だけでなくmodel側でも残量がnum以下のチェックをしてもいいかも。
 
-		result = row["gem"]
-				
-	end
-
-	return result
+	statement = @sql.prepare("update transaction.wallets set gem = gem - ? where user_id = ?")
+	statement.execute(num, user_id)
 
 end
+
+
+private
 
 
 def get_money(user_id)
@@ -53,14 +53,21 @@ def get_money(user_id)
 end
 
 
-def sub_gem(user_id, num)
+def get_gem(user_id)
 
-	statement = @sql.prepare("update transaction.wallets set gem = gem - ? where user_id = ?")
-	result_tmp = statement.execute(num, user_id)
+	statement = @sql.prepare("select gem from transaction.wallets where user_id = ?")
+	result_tmp = statement.execute(user_id)
+	
+	result = nil
+	result_tmp.each do |row|
+
+		result = row["gem"]
+				
+	end
+
+	return result
 
 end
-
-
 
 
 end
