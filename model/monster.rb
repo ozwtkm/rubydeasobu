@@ -4,40 +4,56 @@
 class Monster
 	attr_reader :monster_info
 
-def initialize(monster_info)
+def initialize(monster_info, possession)
 
-	@monster_info = monster_info
+	@id = monster_info["id"]
+	@name = monster_info["name"]
+	@hp = monter_info["atk"]
+	@def = monster_info["def"]
+	@exp = monster_info["exp"]
+	@money = monster_info["money"]
+	@img_id = monster_info["img_id"]
+	@rarity = monster_info["rarity"]
+	@possession = possession
 
 end
 
 
+def self.get_monster(sql,user_id)
 
-
-
-# +----+-----------------+-------+-------+-------+-------+--------+--------+--------+------------+----------------+
-# | id | name            | hp    | atk   | def   | exp   | money  | img_id | rarity | monster_id | count(user_id) |
-# +----+-----------------+-------+-------+-------+-------+--------+--------+--------+------------+----------------+
-# |  5 | XXXXX           |     2 |     1 |     2 |     0 |      3 |      1 | normal |          5 |             49 |
-# | 10 | AAAAA           | 75442 | 84325 | 66431 | 64323 |  24124 |      4 | SSrare |         10 |              1 |
-# | 11 | BBBBB           |  1000 |  1000 |  1000 |  1000 |   1000 |      3 | Srare  |         11 |              3 |
-# | 12 | CCCCC           |   100 |   100 |   100 |   100 |    100 |      2 | rare   |         12 |             22 |
-# | 13 | YYYYY           |     1 |     1 |     1 |     1 | 999999 |      5 | SSrare |       NULL |           NULL |
-# +----+-----------------+-------+-------+-------+-------+--------+--------+--------+------------+----------------+
-# ↓ こんな形式のデータセットをとってきてレコードごとにインスタンスつくる。
-
-def self.get_monster(sql, user_id)
-
-	statement = sql.prepare("select * from master.monsters left outer join (select monster_id, count(user_id) from transaction.user_monster where user_id = ? group by monster_id) as XXX on master.monsters.id = XXX.monster_id")
-	result = statement.execute(user_id)
+	statement = sql.prepare("select * from master.monsters")
+	result = statement.execute()
 	
-	monsterinfo = {}
-	monsters = []
+	master_monster_list = []
 	result.each do |row|
 	
-			monsterinfo = row
+		master_monster_list << row
+	
+	end
+	
+	
+	statement = sql.prepare("select monster_id from transaction.user_monster where user_id = ?")
+	result = statement.execute(user_id)
+	
+	possession_monster_list = []
+	result.each do |row|
+	
+		possession_monster_list << row["monster_id"]
+	
+	end
+	
+	user_monster_list = master_monster_list.select do |row|
+	
+		possession_monster_list.include?(row["monster_id"])
+	
+	end
+	
+	user_monster_list.each do |row|
+	
+		possession = possession_monster_list.count(row["id"])
 		
-			monsters << Monster.new(monsterinfo)
-			
+		monsters << Monster.new(row, possession)
+	
 	end
 
 	return monsters

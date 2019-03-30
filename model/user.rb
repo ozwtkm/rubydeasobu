@@ -6,7 +6,8 @@ class User
 
 def initialize(userinfo)
 
-	@userinfo = userinfo
+	@id = userinfo["id"]
+	@name = userinfo["name"]
 
 end
 

@@ -12,7 +12,7 @@ end
 
 def self.get_gacha(gacha_id, sql)
 
-	statement = sql.prepare("select monster_id, probability from gacha_probability where gacha_id = ? order by 'probability' desc;")
+	statement = sql.prepare("select monster_id, probability from gacha_probability where gacha_id = ? order by 'probability' desc")
 	result_tmp = statement.execute(gacha_id)
 	
 	result = []
@@ -47,24 +47,22 @@ end
 # 　　①は昇順sortedのため、最初にrangeに合致するmonsterを当選とすれば要件を満足する。
 def execute_gacha()
 	
-	probability_range = []
+	count = 0
+	probability_range = @probability.map do |row|
 	
-
-	for i in 0 .. @probability.length - 1 do
-
-		if i == 0 then
+		count += 1
+		if count === 1 then
 		
-			probability_range[i] = {@probability[i].keys[0] => @probability[i].values[0]}
-		
-		else
-		
-			probability_range[i] = {@probability[i].keys[0] => @probability[i].values[0] + probability_range[i-1].values[0]}
+			{row.keys[0] => row.values[0]}
 			
+			next
+		
 		end
-
-		i+=1
+	
+		{row.keys[0] => row.values[0] + probability_range[count-1].values[0]}
 	
 	end
+	
 
 	# lastがsumと一致するのでlast値と満たすべき確率合計値を比較
 	if probability_range.last.values[0] != 100000
@@ -73,20 +71,21 @@ def execute_gacha()
 	
 	end
 
+
 	random = SecureRandom.random_number(99999)
 
 	obtain_monster_id = 0
-	for i in 0 .. probability_range.length - 1 do
+	probability_range.each do |row|
 	
-		if random < probability_range[i].values[0] then
+		if random < row.values[0] then
 		
-			obtain_monster_id = probability_range[i].keys[0]
+			obtain_monster_id = row.keys[0]
 			
 			break
 			
 		end
 	
-		i+=1
+		i += 1
 	
 	end
 
