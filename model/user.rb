@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 class User
+	attr_reader :userinfo
 
 def initialize(userinfo)
 
@@ -10,14 +11,19 @@ def initialize(userinfo)
 end
 
 
+
 def self.get_user(username, sql)
 
 	userinfo = {}
 
-	statement = sql.prepare("select * from transaction.user where name = ?")
-	statement.execute(username)
+	statement = sql.prepare("select * from transaction.users where name = ?")
+	result = statement.execute(username)
 	
-	# userinfo‚ÉŒ‹‰Ê‚Ô‚Á‚±‚Şito doj
+	result.each do |row|
+	
+		userinfo = row
+	
+	end
 	
 	user = User.new(userinfo)
 	
@@ -26,22 +32,21 @@ def self.get_user(username, sql)
 end
 
 
-
-def self.regist(username, passwd)
+def self.regist(sql, username, passwd)
 
 	salt = SecureRandom.hex(10) + "aaaaburiburi"
 		
 	pw_hash = Digest::SHA1.hexdigest(passwd+salt)
 		
-	statement = @sql.prepare("insert into transaction.users(name,salt,passwd) values(?,?,?)")
+	statement = sql.prepare("insert into transaction.users(name,salt,passwd) values(?,?,?)")
 	statement.execute(username, salt, pw_hash)
 
 end
 
 
-def get_userid(username)
+def get_userid(sql, username)
 
-	statement =@sql.prepare("select id from transaction.users where name = ?")
+	statement =sql.prepare("select id from transaction.users where name = ?")
 	result_tmp = statement.execute(username)
 
 	result = nil

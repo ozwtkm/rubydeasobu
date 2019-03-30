@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 class Wallet
+	attr_reader :wallet
 
 def initialize(wallet)
 
@@ -10,11 +11,12 @@ def initialize(wallet)
 end
 
 
-def self.get_wallet(user_id)
+def self.get_wallet(user_id, sql)
 
 	wallet_result = {}
-	wallet_result[:gem] = get_gem(user_id)
-	wallet_result[:money] = get_money(user_id)
+	wallet_result[:id] = user_id
+	wallet_result[:gem] = get_gem(user_id, sql)
+	wallet_result[:money] = get_money(user_id, sql)
 
 	wallet = Wallet.new(wallet_result)
 	
@@ -23,12 +25,20 @@ def self.get_wallet(user_id)
 end
 
 
-def self.sub_gem(user_id, num)
+def sub_gem(num)
 
 	# controller側だけでなくmodel側でも残量がnum以下のチェックをしてもいいかも。
+	# todo sqlたたかずインスタンス変数更新する。
 
-	statement = @sql.prepare("update transaction.wallets set gem = gem - ? where user_id = ?")
-	statement.execute(num, user_id)
+	@wallet[:gem] -= num
+
+end
+
+
+def save(sql)
+
+	statement = sql.prepare("update transaction.wallets set gem = ?, money = ? where user_id = ?")
+	statement.execute(@wallet[:gem], @wallet[:money], @wallet[:id])
 
 end
 
@@ -36,9 +46,9 @@ end
 private
 
 
-def get_money(user_id)
+def self.get_money(user_id, sql)
 
-	statement = @sql.prepare("select money from transaction.wallets where user_id = ?")
+	statement = sql.prepare("select money from transaction.wallets where user_id = ?")
 	result_tmp = statement.execute(user_id)
 	
 	result = nil
@@ -53,9 +63,9 @@ def get_money(user_id)
 end
 
 
-def get_gem(user_id)
+def self.get_gem(user_id, sql)
 
-	statement = @sql.prepare("select gem from transaction.wallets where user_id = ?")
+	statement = sql.prepare("select gem from transaction.wallets where user_id = ?")
 	result_tmp = statement.execute(user_id)
 	
 	result = nil
