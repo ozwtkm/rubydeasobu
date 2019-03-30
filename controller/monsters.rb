@@ -24,8 +24,6 @@ def initialize(req,res)
 	ARGV.replace(["abc=001&def=002"]) # オフラインモード回避。
 	@cgi = CGI.new
 	
-	@monster = Monster.new(@sql)
-	
 end
 
 
@@ -39,12 +37,9 @@ end
 
 def get_handler()
 
-	@user = User.new(@sql)
-
 	begin
 
 		set_session()
-		user_id = @user.get_userid(@session["name"])
 	
 	rescue
 	
@@ -54,11 +49,14 @@ def get_handler()
 	
 	end
 	
-	monsters = @monster.get_monsters(user_id)
-	monsters.each do |row|
-			
-			@context[:json] << {:name => row['name'], :rarity => row['rarity']}
+	@user = User.get_user(@session["name"], @sql)
+	@monsters = Monster.get_monster(@sql, @user.userinfo["id"])
 	
+	possession_monsters = @monsters.select { |row| row.monster_info["count(user_id)"] != nil }
+	possession_monsters.each do |row|
+			
+		@context[:json] << {:name => row.monster_info["name"], :rarity => row.monster_info["name"], :count => row.monster_info["count(user_id)"]}
+		
 	end
 	
 	@context[:json] = JSON.generate(@context[:json])

@@ -24,8 +24,6 @@ def initialize(req,res)
 	ARGV.replace(["abc=001&def=002"]) # オフラインモード回避。
 	@cgi = CGI.new
 	
-	@wallet = Wallet.get_wallet(@sql)
-	
 end
 
 
@@ -39,13 +37,10 @@ end
 
 def get_handler()
 
-	@user = User.new(@sql)
-
 	begin
 
 		set_session()
-		user_id = @user.get_userid(@session["name"])
-	
+		
 	rescue
 	
 		super
@@ -54,8 +49,11 @@ def get_handler()
 	
 	end
 	
-	gem = @wallet.get_gem(user_id).to_s
-	money = @wallet.get_money(user_id).to_s
+	@user = User.get_user(@session["name"], @sql)
+	@wallet = Wallet.get_wallet(@user.userinfo["id"], @sql)
+	
+	gem = @wallet.wallet[:gem]
+	money = @wallet.wallet[:money]
 	
 	@context[:json] = JSON.generate({:gem => gem, :money => money})
 	
