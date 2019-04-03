@@ -50,13 +50,12 @@ def get_handler()
 	end
 	
 	@user = User.get_user(@session["name"], @sql)
-	@monsters = Monster.get_monster(@sql, @user.userinfo["id"])
+	@monsters = Monster.get_possession_monsters(@sql, @user.id)
 	
-	possession_monsters = @monsters.select { |row| row.monster_info["count(user_id)"] != nil }
-	possession_monsters.each do |row|
-			
-		@context[:json] << {:name => row.monster_info["name"], :rarity => row.monster_info["name"], :count => row.monster_info["count(user_id)"]}
-		
+	@monsters.each do |row|
+	
+		@context[:json] << {:name => row.name, :rarity => row.rarity}
+	
 	end
 	
 	@context[:json] = JSON.generate(@context[:json])

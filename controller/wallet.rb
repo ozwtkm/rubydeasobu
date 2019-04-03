@@ -50,10 +50,10 @@ def get_handler()
 	end
 	
 	@user = User.get_user(@session["name"], @sql)
-	@wallet = Wallet.get_wallet(@user.userinfo["id"], @sql)
+	@wallet = Wallet.get_wallet(@user.id, @sql)
 	
-	gem = @wallet.wallet[:gem]
-	money = @wallet.wallet[:money]
+	gem = @wallet.gem
+	money = @wallet.money
 	
 	@context[:json] = JSON.generate({:gem => gem, :money => money})
 	

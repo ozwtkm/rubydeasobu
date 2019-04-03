@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 class User
-	attr_reader :userinfo
+	attr_reader :id, :name
 
 def initialize(userinfo)
 

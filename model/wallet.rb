@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 class Wallet
-	attr_reader :wallet
+	attr_reader :user_id, :gem, :money
 
 def initialize(wallet, user_id)
 
@@ -21,8 +21,8 @@ def self.get_wallet(user_id, sql)
 	wallet_result = {}
 	result.each do |row|
 
-		wallet_result[:gem] = result["gem"]
-		wallet_result[:money] = result["money"]
+		wallet_result.store(:gem, row["gem"])
+		wallet_result.store(:money, row["money"])
 				
 	end
 
@@ -46,7 +46,7 @@ end
 def save(sql)
 
 	statement = sql.prepare("update transaction.wallets set gem = ?, money = ? where user_id = ?")
-	statement.execute(@gem, @money, @id)
+	statement.execute(@gem, @money, @user_id)
 
 end
 

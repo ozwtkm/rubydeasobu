@@ -75,13 +75,13 @@ end
 
 def control()
 
-	@wallet = Wallet.get_wallet(@user.userinfo["id"], @sql)
-	@monster = Monster.get_monster(@sql, @user.userinfo["id"])
+	@wallet = Wallet.get_wallet(@user.id, @sql)
+	@master_monster = Monster.get_master_monsters(@sql)
 	@gacha = Gacha.get_gacha(@req.query["gacha_id"], @sql)
 	
 	begin
 	
-		check_gem(@wallet.wallet[:gem])
+		check_gem(@wallet.gem)
 	
 	rescue
 	
@@ -104,10 +104,10 @@ def control()
 	
 	end
 
-	Monster.add_monster(@sql, @user.userinfo["id"], obtain_monster_id)
+	Monster.add_monster(@sql, @user.id, obtain_monster_id)
 	
-	obtain_monster = @monster.select { |row| row.monster_info["monster_id"] === obtain_monster_id }
-	obtain_monster_name = obtain_monster[0].monster_info["name"]
+	obtain_monster = @master_monster.select { |row| row.id === obtain_monster_id }
+	obtain_monster_name = obtain_monster[0].name
 
 	@context[:msg] << obtain_monster_name + "をGETしたよ"
 

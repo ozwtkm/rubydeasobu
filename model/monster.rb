@@ -2,24 +2,41 @@
 # -*- coding: utf-8 -*-
 
 class Monster
-	attr_reader :monster_info
+	attr_reader :id, :name, :hp, :def, :exp, :money, :img_id, :rarity
 
-def initialize(monster_info, possession)
+
+def initialize(monster_info)
 
 	@id = monster_info["id"]
 	@name = monster_info["name"]
-	@hp = monter_info["atk"]
+	@hp = monster_info["atk"]
 	@def = monster_info["def"]
 	@exp = monster_info["exp"]
 	@money = monster_info["money"]
 	@img_id = monster_info["img_id"]
 	@rarity = monster_info["rarity"]
-	@possession = possession
 
 end
 
 
-def self.get_monster(sql,user_id)
+def self.get_master_monsters(sql)
+
+	statement = sql.prepare("select * from master.monsters")
+	result = statement.execute()
+	
+	master_monster_list = []
+	result.each do |row|
+	
+		master_monster_list << Monster.new(row)
+	
+	end
+	
+	return master_monster_list
+
+end
+
+
+def self.get_possession_monsters(sql, user_id)
 
 	statement = sql.prepare("select * from master.monsters")
 	result = statement.execute()
@@ -42,17 +59,25 @@ def self.get_monster(sql,user_id)
 	
 	end
 	
+	
 	user_monster_list = master_monster_list.select do |row|
 	
-		possession_monster_list.include?(row["monster_id"])
+		possession_monster_list.include?(row["id"])
 	
 	end
 	
-	user_monster_list.each do |row|
 	
+	
+	monsters = []
+	user_monster_list.each do |row|
+
 		possession = possession_monster_list.count(row["id"])
 		
-		monsters << Monster.new(row, possession)
+		possession.times do
+		
+			monsters << Monster.new(row)
+	
+		end
 	
 	end
 
