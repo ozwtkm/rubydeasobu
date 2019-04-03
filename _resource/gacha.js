@@ -40,21 +40,17 @@ function append_monsters_list(data){
 
 
 function append_wallet(data){
-
-	$.each(data, function(index, val){
 	
-		$.each(val, function(index, val){
+	$.each(data, function(index, val){
 
-			switch(index){
-				case "gem":
-					$("#gem").append(val);
-					break;
-				case "money":
-					$("#money").append(val);
-					break;
-			}
-
-		});
+		switch(index){
+			case "gem":
+				$("#gem").append(val);
+				break;
+			case "money":
+				$("#money").append(val);
+				break;
+		}
 
 	});
 
