@@ -69,20 +69,19 @@ def control()
 	end
 
 		
-		begin
-		
-			@user = User.new(@sql)
-			@user.regist(@req.query["name"], @req.query["passwd"])
-		
-		rescue => e
-		
-			@context[:msg] << "キャラかぶってるで"
+	begin
+	
+		User.regist(@sql, @req.query["name"], @req.query["passwd"])
+	
+	rescue => e
+	
+		@context[:msg] << "キャラかぶってるで"
 
-			return
+		return
 
-		end
-		
-		@context[:msg] << "#{@req.query["name"]}を登録したったで。"
+	end
+	
+	@context[:msg] << "#{@req.query["name"]}を登録したったで。"
 
 end
 
