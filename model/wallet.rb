@@ -13,9 +13,9 @@ def initialize(wallet, user_id)
 end
 
 
-def self.get_wallet(user_id, sql)
+def self.get_wallet(user_id, sql_transaction)
 
-	statement = sql.prepare("select gem,money from transaction.wallets where user_id = ?")
+	statement = sql_transaction.prepare("select gem,money from transaction.wallets where user_id = ?")
 	result = statement.execute(user_id)
 	
 	wallet_result = {}
@@ -43,9 +43,9 @@ def sub_gem(num)
 end
 
 
-def save(sql)
+def save(sql_transaction)
 
-	statement = sql.prepare("update transaction.wallets set gem = ?, money = ? where user_id = ?")
+	statement = sql_transaction.prepare("update transaction.wallets set gem = ?, money = ? where user_id = ?")
 	statement.execute(@gem, @money, @user_id)
 
 end

@@ -13,11 +13,11 @@ end
 
 
 
-def self.get_user(username, sql)
+def self.get_user(username, sql_transaction)
 
 	userinfo = {}
 
-	statement = sql.prepare("select * from transaction.users where name = ?")
+	statement = sql_transaction.prepare("select * from transaction.users where name = ?")
 	result = statement.execute(username)
 	
 	result.each do |row|
@@ -33,21 +33,21 @@ def self.get_user(username, sql)
 end
 
 
-def self.regist(sql, username, passwd)
+def self.regist(sql_transaction, username, passwd)
 
 	salt = SecureRandom.hex(10) + "aaaaburiburi"
 		
 	pw_hash = Digest::SHA1.hexdigest(passwd+salt)
 		
-	statement = sql.prepare("insert into transaction.users(name,salt,passwd) values(?,?,?)")
+	statement = sql_transaction.prepare("insert into transaction.users(name,salt,passwd) values(?,?,?)")
 	statement.execute(username, salt, pw_hash)
 
 end
 
 
-def get_userid(sql, username)
+def get_userid(sql_transaction, username)
 
-	statement =sql.prepare("select id from transaction.users where name = ?")
+	statement = sql_transaction.prepare("select id from transaction.users where name = ?")
 	result_tmp = statement.execute(username)
 
 	result = nil
@@ -63,8 +63,6 @@ end
 
 
 end
-
-
 
 
 

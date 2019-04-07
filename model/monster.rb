@@ -19,26 +19,26 @@ def initialize(monster_info)
 end
 
 
-def self.get_master_monsters(sql)
+#def self.get_master_monsters(sql)
+#
+#	statement = sql.prepare("select * from master.monsters")
+#	result = statement.execute()
+#	
+#	master_monster_list = []
+#	result.each do |row|
+#	
+#		master_monster_list << Monster.new(row)
+#	
+#	end
+#	
+#	return master_monster_list
+#
+#end
 
-	statement = sql.prepare("select * from master.monsters")
-	result = statement.execute()
-	
-	master_monster_list = []
-	result.each do |row|
-	
-		master_monster_list << Monster.new(row)
-	
-	end
-	
-	return master_monster_list
 
-end
+def self.get_possession_monsters(sql_master, sql_transaction, user_id)
 
-
-def self.get_possession_monsters(sql, user_id)
-
-	statement = sql.prepare("select * from master.monsters")
+	statement = sql_master.prepare("select * from master.monsters")
 	result = statement.execute()
 	
 	master_monster_list = []
@@ -49,7 +49,7 @@ def self.get_possession_monsters(sql, user_id)
 	end
 	
 	
-	statement = sql.prepare("select monster_id from transaction.user_monster where user_id = ?")
+	statement = sql_transaction.prepare("select monster_id from transaction.user_monster where user_id = ?")
 	result = statement.execute(user_id)
 	
 	possession_monster_list = []
@@ -86,9 +86,9 @@ def self.get_possession_monsters(sql, user_id)
 end
 
 
-def self.add_monster(sql, user_id, monster_id)
+def self.add_monster(sql_transaction, user_id, monster_id)
 
-	statement = sql.prepare("insert into transaction.user_monster(user_id, monster_id) values(?,?)")
+	statement = sql_transaction.prepare("insert into transaction.user_monster(user_id, monster_id) values(?,?)")
 	statement.execute(user_id, monster_id)
 
 end
