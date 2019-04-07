@@ -14,6 +14,7 @@ def initialize(userinfo)
 end
 
 
+
 def self.get_user(username)
 
 	sql_transaction =  SQL_transaction.instance.sql

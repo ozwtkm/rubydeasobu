@@ -56,7 +56,7 @@ def post_handler()
 	begin
 	
 		set_session()
-		@user = User.get_user(@session["name"], @sql)
+		@user = User.get_user(@session["name"])
 
 	rescue
 	
@@ -75,9 +75,9 @@ end
 
 def control()
 
-	@wallet = Wallet.get_wallet(@user.id, @sql)
-	@master_monster = Monster.get_master_monsters(@sql)
-	@gacha = Gacha.get_gacha(@req.query["gacha_id"], @sql)
+	@wallet = Wallet.get_wallet(@user.id)
+	@master_monster = Monster.get_master_monsters()
+	@gacha = Gacha.get_gacha(@req.query["gacha_id"])
 	
 	begin
 	
@@ -104,7 +104,7 @@ def control()
 	
 	end
 
-	Monster.add_monster(@sql, @user.id, obtain_monster_id)
+	Monster.add_monster(@user.id, obtain_monster_id)
 	
 	obtain_monster = @master_monster.select { |row| row.id === obtain_monster_id }
 	obtain_monster_name = obtain_monster[0].name
@@ -112,7 +112,7 @@ def control()
 	@context[:msg] << obtain_monster_name + "をGETしたよ"
 
 	@wallet.sub_gem(100)
-	@wallet.save(@sql)
+	@wallet.save()
 
 end
 

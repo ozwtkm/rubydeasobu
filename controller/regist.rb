@@ -71,7 +71,7 @@ def control()
 		
 	begin
 	
-		User.regist(@sql, @req.query["name"], @req.query["passwd"])
+		User.regist(@req.query["name"], @req.query["passwd"])
 	
 	rescue => e
 	

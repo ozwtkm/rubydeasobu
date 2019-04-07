@@ -5,7 +5,7 @@ require 'cgi'
 require 'digest/sha1'
 require 'cgi/session'
 require_relative './baseclass'
-
+require_relative '../_util/SQL_transaction'
 
 class Login < Base
 
@@ -111,7 +111,9 @@ end
 
 def check_ID_PW(username, passwd)
 	
-	statement = @sql.prepare("select salt from transaction.users where name = ? limit 1")
+	sql_transaction = SQL_transaction.instance.sql
+	
+	statement = sql_transaction.prepare("select salt from transaction.users where name = ? limit 1")
 	result_tmp = statement.execute(username)
 	
 	if result_tmp.count == 0
@@ -124,7 +126,7 @@ def check_ID_PW(username, passwd)
  	
 	pw_hash = Digest::SHA1.hexdigest(passwd + result["salt"])
 	
-	statement = @sql.prepare("select * from transaction.users where name = ? and passwd = ? limit 1")
+	statement = sql_transaction.prepare("select * from transaction.users where name = ? and passwd = ? limit 1")
 	result = statement.execute(username, pw_hash)
 	
 	if result.count == 0

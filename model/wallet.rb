@@ -47,7 +47,7 @@ def sub_gem(num)
 end
 
 
-def save(sql_transaction)
+def save()
 
 	sql_transaction =  SQL_transaction.instance.sql
 

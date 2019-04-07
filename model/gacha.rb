@@ -1,7 +1,6 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
 
-
 require_relative '../_util/SQL_master'
 
 class Gacha

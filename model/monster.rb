@@ -20,22 +20,24 @@ def initialize(monster_info)
 
 end
 
+#あとで消す
+def self.get_master_monsters()
 
-#def self.get_master_monsters(sql)
-#
-#	statement = sql.prepare("select * from master.monsters")
-#	result = statement.execute()
-#	
-#	master_monster_list = []
-#	result.each do |row|
-#	
-#		master_monster_list << Monster.new(row)
-#	
-#	end
-#	
-#	return master_monster_list
-#
-#end
+	sql_master = SQL_master.instance.sql
+
+	statement = sql_master.prepare("select * from master.monsters")
+	result = statement.execute()
+	
+	master_monster_list = []
+	result.each do |row|
+	
+		master_monster_list << Monster.new(row)
+	
+	end
+	
+	return master_monster_list
+
+end
 
 
 def self.get_possession_monsters(user_id)
