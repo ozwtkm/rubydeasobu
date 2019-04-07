@@ -18,6 +18,7 @@ def self.get_gacha(gacha_id)
 	
 	statement = sql_master.prepare("select monster_id, probability from master.gacha_probability where gacha_id = ? order by 'probability' desc")
 	result_tmp = statement.execute(gacha_id)
+	statement.close
 	
 	result = []
 	result_tmp.each do |row|

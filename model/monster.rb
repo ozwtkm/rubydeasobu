@@ -27,6 +27,7 @@ def self.get_master_monsters()
 
 	statement = sql_master.prepare("select * from master.monsters")
 	result = statement.execute()
+	statement.close
 	
 	master_monster_list = []
 	result.each do |row|
@@ -47,6 +48,7 @@ def self.get_possession_monsters(user_id)
 
 	statement = sql_master.prepare("select * from master.monsters")
 	result = statement.execute()
+	statement.close
 	
 	master_monster_list = []
 	result.each do |row|
@@ -58,6 +60,7 @@ def self.get_possession_monsters(user_id)
 	
 	statement = sql_transaction.prepare("select monster_id from transaction.user_monster where user_id = ?")
 	result = statement.execute(user_id)
+	statement.close
 	
 	possession_monster_list = []
 	result.each do |row|
@@ -99,6 +102,7 @@ def self.add_monster(user_id, monster_id)
 
 	statement = sql_transaction.prepare("insert into transaction.user_monster(user_id, monster_id) values(?,?)")
 	statement.execute(user_id, monster_id)
+	statement.close
 
 end
 

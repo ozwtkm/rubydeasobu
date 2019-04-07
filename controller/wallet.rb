@@ -8,9 +8,10 @@ require_relative './baseclass'
 require_relative '../model/user'
 require_relative '../model/monster'
 require_relative '../model/wallet'
+require_relative './baseclass_require_login'
 
 # クラス名、Walletとしたいが、そうするとmodelと衝突してまう
-class Wallet_controller < Base
+class Wallet_controller < Base_require_login
 
 # オーバーライド。
 def initialize(req,res)
@@ -20,9 +21,6 @@ def initialize(req,res)
 	super
 	
 	@context[:json] = "{}"
-	
-	ARGV.replace(["abc=001&def=002"]) # オフラインモード回避。
-	@cgi = CGI.new
 	
 end
 
@@ -36,20 +34,7 @@ end
 
 
 def get_handler()
-
-	begin
-
-		set_session()
-		
-	rescue
 	
-		super
-		
-		return
-	
-	end
-	
-	@user = User.get_user(@session["name"])
 	@wallet = Wallet.get_wallet(@user.id)
 	
 	gem = @wallet.gem
@@ -90,34 +75,6 @@ def control()
 	
 
 end
-
-
-def set_session()
-
-	# ToDo: cgiまわりの処理、baseclassかutilあたりに一般化したい
-
-		@cgi.cookies['_session_id'] = get_sessionid(@req.header["cookie"].to_s)
-		@session = CGI::Session.new(@cgi,{'new_session' => false})
-
-end
-
-
-
-def get_sessionid(header)
-
-	# ここの正規表現いけてない
-	match = header.match(/session_id=([a-f0-9]+)/)
- 
-	 if match.nil? then
-		
-		raise
-		
-	 end
- 
-	return match[1]
-
-end
-
 
 
 end

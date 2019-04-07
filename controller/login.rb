@@ -115,6 +115,8 @@ def check_ID_PW(username, passwd)
 	
 	statement = sql_transaction.prepare("select salt from transaction.users where name = ? limit 1")
 	result_tmp = statement.execute(username)
+	statement.close
+	
 	
 	if result_tmp.count == 0
 	
@@ -128,6 +130,7 @@ def check_ID_PW(username, passwd)
 	
 	statement = sql_transaction.prepare("select * from transaction.users where name = ? and passwd = ? limit 1")
 	result = statement.execute(username, pw_hash)
+	statement.close
 	
 	if result.count == 0
 	

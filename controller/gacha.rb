@@ -15,7 +15,7 @@ require_relative '../model/gacha'
 class Gacha_controller < Base_require_login
 
 # オーバーライド。
-def initialize(req,res)
+def initialize(req, res)
 
 	@template = "gacha.erb"
 
@@ -26,7 +26,6 @@ end
 
 def control()
 
-	@user = User.get_user(@session["name"])
 	@wallet = Wallet.get_wallet(@user.id)
 	@master_monster = Monster.get_master_monsters()
 	@gacha = Gacha.get_gacha(@req.query["gacha_id"])

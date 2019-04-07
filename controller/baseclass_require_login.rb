@@ -1,14 +1,16 @@
 #!/usr/bin/ruby -Ku 
 # -*- coding: utf-8 -*-
-
 require 'webrick'
 require 'cgi'
 require 'cgi/session'
 require_relative './baseclass'
 require_relative '../_util/render'
 require_relative '../_util/procedure_session'
+require_relative '../model/user'
+
 
 class Base_require_login < Base
+
 
 def initialize(req, res)
 	
@@ -19,51 +21,21 @@ def initialize(req, res)
 	
 	@context[:msg] = []
 	
-end
-
-
-def get_handler()
-	
 	begin
 	
 		@session = Procedure_session.get_session(@cgi, @req.header["cookie"].to_s)
-	
-	rescue
-	
-		@context[:msg] << "ログインしろゴミが"
-		
-		super
-		
-	end
-
-	@context[:msg] << "ようこそ" + @session['name'] + "さん"
-
-	super
-
-end
-
-
-def post_handler()
-	
-	begin
-	
-		@session = Procedure_session.get_session(@cgi, @req.header["cookie"].to_s)
+		@user = User.get_user(@session["name"])
 
 	rescue
 	
 		@context[:msg] << "ログインしろゴミが"
 	
 		view()
-		
-		return
 	
 	end
-
-	super
-
+	
 end
 
 
 end
-
 

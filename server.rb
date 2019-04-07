@@ -6,6 +6,8 @@ require 'cgi'
 include WEBrick
 require_relative './_config/route'
 require_relative './controller/baseclass'
+require_relative './_util/SQL_master'
+require_relative './_util/SQL_transaction'
 
 
 # httpサーバー
@@ -36,6 +38,9 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 			else
 				controller.not_allow_handler()
 			end
+			
+			#SQL_master.sql.close
+			#SQL_transaction.sql.close
 			
 	end
 end
