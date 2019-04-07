@@ -49,8 +49,8 @@ def get_handler()
 	
 	end
 	
-	@user = User.get_user(@session["name"], @sql_transaction)
-	@wallet = Wallet.get_wallet(@user.id, @sql_transaction)
+	@user = User.get_user(@session["name"])
+	@wallet = Wallet.get_wallet(@user.id)
 	
 	gem = @wallet.gem
 	money = @wallet.money

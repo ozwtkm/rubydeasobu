@@ -50,8 +50,8 @@ def get_handler()
 	end
 	
 	
-	@user = User.get_user(@session["name"], @sql_transaction)
-	@monsters = Monster.get_possession_monsters(@sql_master, @sql_transaction, @user.id)
+	@user = User.get_user(@session["name"])
+	@monsters = Monster.get_possession_monsters(@user.id)
 	
 	@monsters.each do |row|
 	

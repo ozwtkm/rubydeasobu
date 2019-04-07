@@ -1,9 +1,11 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
 
+require_relative '../_util/SQL_master'
+require_relative '../_util/SQL_transaction'
+
 class Monster
 	attr_reader :id, :name, :hp, :def, :exp, :money, :img_id, :rarity
-
 
 def initialize(monster_info)
 
@@ -36,7 +38,10 @@ end
 #end
 
 
-def self.get_possession_monsters(sql_master, sql_transaction, user_id)
+def self.get_possession_monsters(user_id)
+
+	sql_master = SQL_master.instance.sql
+	sql_transaction =  SQL_transaction.instance.sql
 
 	statement = sql_master.prepare("select * from master.monsters")
 	result = statement.execute()
@@ -86,7 +91,9 @@ def self.get_possession_monsters(sql_master, sql_transaction, user_id)
 end
 
 
-def self.add_monster(sql_transaction, user_id, monster_id)
+def self.add_monster(user_id, monster_id)
+
+	sql_transaction =  SQL_transaction.instance.sql
 
 	statement = sql_transaction.prepare("insert into transaction.user_monster(user_id, monster_id) values(?,?)")
 	statement.execute(user_id, monster_id)

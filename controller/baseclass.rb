@@ -3,8 +3,6 @@
 
 require 'webrick'
 require_relative '../_util/render'
-require_relative '../_util/SQL_master'
-require_relative '../_util/SQL_transaction'
 
 class Base
 
@@ -12,9 +10,6 @@ def initialize(req, res)
 	
 	@req = req
 	@res = res
-	
-	@sql_master = SQL_master.instance.sql
-	@sql_transaction =  SQL_transaction.instance.sql
 	
 	# @tmplateはview時、render()に引数として渡すテンプレート。
 	# Baseを引き継ぐ各クラスにて対応するテンプレート名を指定すること。

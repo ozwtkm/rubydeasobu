@@ -1,6 +1,8 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
 
+require_relative '../_util/SQL_transaction'
+
 class Wallet
 	attr_reader :user_id, :gem, :money
 
@@ -13,7 +15,9 @@ def initialize(wallet, user_id)
 end
 
 
-def self.get_wallet(user_id, sql_transaction)
+def self.get_wallet(user_id)
+
+	sql_transaction =  SQL_transaction.instance.sql
 
 	statement = sql_transaction.prepare("select gem,money from transaction.wallets where user_id = ?")
 	result = statement.execute(user_id)
@@ -44,6 +48,8 @@ end
 
 
 def save(sql_transaction)
+
+	sql_transaction =  SQL_transaction.instance.sql
 
 	statement = sql_transaction.prepare("update transaction.wallets set gem = ?, money = ? where user_id = ?")
 	statement.execute(@gem, @money, @user_id)

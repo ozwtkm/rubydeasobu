@@ -1,6 +1,8 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
 
+require_relative '../_util/SQL_transaction'
+
 class User
 	attr_reader :id, :name
 
@@ -12,8 +14,9 @@ def initialize(userinfo)
 end
 
 
+def self.get_user(username)
 
-def self.get_user(username, sql_transaction)
+	sql_transaction =  SQL_transaction.instance.sql
 
 	userinfo = {}
 
@@ -33,7 +36,9 @@ def self.get_user(username, sql_transaction)
 end
 
 
-def self.regist(sql_transaction, username, passwd)
+def self.regist(username, passwd)
+
+	sql_transaction =  SQL_transaction.instance.sql
 
 	salt = SecureRandom.hex(10) + "aaaaburiburi"
 		
@@ -45,7 +50,9 @@ def self.regist(sql_transaction, username, passwd)
 end
 
 
-def get_userid(sql_transaction, username)
+def get_userid(username)
+
+	sql_transaction =  SQL_transaction.instance.sql
 
 	statement = sql_transaction.prepare("select id from transaction.users where name = ?")
 	result_tmp = statement.execute(username)
