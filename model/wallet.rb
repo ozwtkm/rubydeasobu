@@ -21,27 +21,25 @@ def self.get_wallet(user_id)
 
 	statement = sql_transaction.prepare("select gem,money from transaction.wallets where user_id = ? limit 1")
 	result = statement.execute(user_id)
-	statement.close
 	
-	wallet_result = {}
+	wallet_info = {}
 	result.each do |row|
 
-		wallet_result.store(:gem, row["gem"])
-		wallet_result.store(:money, row["money"])
-				
+		wallet_info = {:gem => row["gem"], :money => row["money"]}
+		
 	end
 
-	wallet = Wallet.new(wallet_result, user_id)
+	statement.close
+
+	wallet = Wallet.new(wallet_info, user_id)
 	
 	return wallet
 
 end
 
 
+# controller側だけでなくmodel側でも残量がnum以下のチェックをしてもいいかも。
 def sub_gem(num)
-
-	# controller側だけでなくmodel側でも残量がnum以下のチェックをしてもいいかも。
-	# todo sqlたたかずインスタンス変数更新する。
 
 	@gem -= num
 
