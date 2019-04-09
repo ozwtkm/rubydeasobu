@@ -27,14 +27,15 @@ def self.get_master_monsters()
 
 	statement = sql_master.prepare("select * from master.monsters")
 	result = statement.execute()
-	statement.close
 	
-	master_monster_list = []
+	master_monster_list = {}
 	result.each do |row|
 	
-		master_monster_list << Monster.new(row)
+		master_monster_list[row["id"]] = Monster.new(row)
 	
 	end
+
+	statement.close
 	
 	return master_monster_list
 
@@ -43,55 +44,23 @@ end
 
 def self.get_possession_monsters(user_id)
 
-	sql_master = SQL_master.instance.sql
 	sql_transaction =  SQL_transaction.instance.sql
-
-	statement = sql_master.prepare("select * from master.monsters")
-	result = statement.execute()
-	statement.close
 	
-	master_monster_list = []
-	result.each do |row|
-	
-		master_monster_list << row
-	
-	end
-	
+	master_monster_list = Monster.get_master_monsters()
 	
 	statement = sql_transaction.prepare("select monster_id from transaction.user_monster where user_id = ?")
 	result = statement.execute(user_id)
-	statement.close
 	
 	possession_monster_list = []
 	result.each do |row|
-	
-		possession_monster_list << row["monster_id"]
-	
-	end
-	
-	
-	user_monster_list = master_monster_list.select do |row|
-	
-		possession_monster_list.include?(row["id"])
-	
-	end
-	
-	
-	
-	monsters = []
-	user_monster_list.each do |row|
-
-		possession = possession_monster_list.count(row["id"])
 		
-		possession.times do
-		
-			monsters << Monster.new(row)
-	
-		end
+		possession_monster_list << master_monster_list[row["monster_id"]].clone
 	
 	end
-
-	return monsters
+	
+	statement.close
+	
+	return possession_monster_list
 
 end
 
