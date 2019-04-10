@@ -20,7 +20,7 @@ def initialize(monster_info)
 
 end
 
-#あとで消す
+
 def self.get_master_monsters()
 
 	sql_master = SQL_master.instance.sql

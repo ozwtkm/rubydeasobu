@@ -27,8 +27,6 @@ end
 def control()
 
 	@wallet = Wallet.get_wallet(@user.id)
-	@master_monster = Monster.get_master_monsters()
-	@gacha = Gacha.get_gacha(@req.query["gacha_id"])
 	
 	begin
 	
@@ -42,7 +40,9 @@ def control()
 	
 	end
 	
-
+	
+	@gacha = Gacha.get_gacha(@req.query["gacha_id"])
+	
 	begin
 	
 		obtain_monster_id = @gacha.execute_gacha()
@@ -55,12 +55,12 @@ def control()
 	
 	end
 
+
 	Monster.add_monster(@user.id, obtain_monster_id)
 	
-	obtain_monster = @master_monster.select { |row| row.id === obtain_monster_id }
-	obtain_monster_name = obtain_monster[0].name
-
-	@context[:msg] << obtain_monster_name + "をGETしたよ"
+	obtain_monster = Monster.get_master_monsters.select! { |key, value| key === obtain_monster_id }
+	
+	@context[:msg] << obtain_monster.values[0].name + "をGETしたよ"
 
 	@wallet.sub_gem(100)
 	@wallet.save()
