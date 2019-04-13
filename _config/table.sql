@@ -1,25 +1,63 @@
+-- MySQL dump 10.13  Distrib 5.6.36, for Linux (x86_64)
+--
+-- Host: localhost    Database: 
+-- ------------------------------------------------------
+-- Server version	5.6.36-log
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Current Database: `master`
+--
 
 CREATE DATABASE /*!32312 IF NOT EXISTS*/ `master` /*!40100 DEFAULT CHARACTER SET utf8 */;
 
 USE `master`;
+
+--
+-- Table structure for table `gacha_probability`
+--
+
+DROP TABLE IF EXISTS `gacha_probability`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `gacha_probability` (
-  `gacha_id` int(11) unsigned DEFAULT NULL,
+  `gacha_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `monster_id` int(11) unsigned NOT NULL,
   `probability` int(11) unsigned NOT NULL,
   KEY `gacha_id` (`gacha_id`),
   CONSTRAINT `gacha_probability_ibfk_1` FOREIGN KEY (`gacha_id`) REFERENCES `gachas` (`gacha_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `gachas`
+--
+
+DROP TABLE IF EXISTS `gachas`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `gachas` (
   `gacha_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `gacha_name` varchar(20) DEFAULT NULL,
   PRIMARY KEY (`gacha_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `imgs`
+--
+
+DROP TABLE IF EXISTS `imgs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `imgs` (
@@ -28,6 +66,12 @@ CREATE TABLE `imgs` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `monsters`
+--
+
+DROP TABLE IF EXISTS `monsters`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `monsters` (
@@ -39,14 +83,24 @@ CREATE TABLE `monsters` (
   `exp` int(10) unsigned DEFAULT NULL,
   `money` int(10) unsigned DEFAULT NULL,
   `img_id` int(10) unsigned DEFAULT NULL,
-  `rarity` varchar(20) DEFAULT NULL,
+  `rarity` int(5) unsigned NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Current Database: `transaction`
+--
 
 CREATE DATABASE /*!32312 IF NOT EXISTS*/ `transaction` /*!40100 DEFAULT CHARACTER SET utf8 */;
 
 USE `transaction`;
+
+--
+-- Table structure for table `user_monster`
+--
+
+DROP TABLE IF EXISTS `user_monster`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `user_monster` (
@@ -54,10 +108,15 @@ CREATE TABLE `user_monster` (
   `monster_id` int(10) unsigned NOT NULL,
   KEY `user_id` (`user_id`),
   KEY `monster_id` (`monster_id`),
-  CONSTRAINT `user_monster_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
-  CONSTRAINT `user_monster_ibfk_2` FOREIGN KEY (`monster_id`) REFERENCES `master`.`monsters` (`id`)
+  CONSTRAINT `user_monster_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `users`
+--
+
+DROP TABLE IF EXISTS `users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `users` (
@@ -67,8 +126,14 @@ CREATE TABLE `users` (
   `passwd` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unko` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `wallets`
+--
+
+DROP TABLE IF EXISTS `wallets`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `wallets` (
