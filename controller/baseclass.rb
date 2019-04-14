@@ -3,6 +3,9 @@
 
 require 'webrick'
 require_relative '../_util/render'
+require_relative '../exception/Error_input_nil'
+require_relative '../exception/Error_input_specialcharacter'
+require_relative '../exception/Error_multi_412'
 
 class Base
 
@@ -21,6 +24,7 @@ def initialize(req, res)
 		
 	# view時、テンプレートに渡すための変数(ハッシュ)の箱。
 	@context = {}
+	@context[:e] = nil
 	
 end
 
@@ -78,66 +82,36 @@ def view_http_body()
 end
 
 
-def validate_nil(input_hash)
+def validate_nil(key, value)
 
-	falselist = []
-	input_hash.each do |key, value|
-	
-		if value.nil? then
-		
-			falselist <<key
-		
-		end
-	
-	end
-	
-	if !falselist.empty? then
-	
-		raise Input_error.new(falselist)
-	
-	end
-	
-
-end
-
-
-def validate_special_character(input_hash)
-
-	falselist = []
-	input_hash.each do |key, value| 
-
-		if value.match(/\A[a-zA-Z0-9_@]+\z/).nil? then
-		
-			falselist << key
-		
-		end
-		
-	end
-
-	if !falselist.empty? then
-	
-		raise Input_error.new(falselist)
+		if value.nil?
 			
-	end
-	
+			raise Error_input_nil.new(key)
+		
+		end
+
+end
+
+
+def validate_special_character(key, value)
+
+		if value.match(/\A[a-zA-Z0-9_@]+\z/).nil?
+		
+			raise Error_input_special_character.new(key)
+		
+		end
+		
+end
+
+
+
+def add_exception_context(e)
+
+	@context[:e] = e
+
 end
 
 
 end
-
-
-
-# 入力値に特殊記号とかnilが来たときに使うエラー
-class Input_error < StandardError
-attr_reader :falselist
-
-def initialize(list={})
-
-	@falselist = list
-
-end
-
-end
-
 
 

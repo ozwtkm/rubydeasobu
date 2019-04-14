@@ -7,6 +7,7 @@ require 'cgi/session'
 require_relative './baseclass'
 require_relative '../_util/SQL_transaction'
 require_relative '../model/user'
+require_relative '../exception/Error_login'
 
 class Login < Base
 
@@ -36,67 +37,36 @@ end
 def control()
 
 	query = {:ユーザ名 => @req.query["name"], :パスワード => @req.query["passwd"]}
-	error_flg = false
 
-	begin
+	exceptions = []
 		
-		validate_nil(query)
-		
-	rescue => e
+	query.each do |key,value|
 
-		e.falselist.each do |row|
-			
-			@context[:msg] << "#{row}をちゃんと指定しろ。"
-			
-			query.delete(row)
-			
+		begin
+		
+			validate_nil(key, value)
+			validate_special_character(key, value)
+		
+		rescue => e
+		
+			exceptions << e
+		
 		end
-
-		error_flg = true
-
-	end
-	
-	
-	begin
-		
-		validate_special_character(query)
-
-	rescue => e
-
-		e.falselist.each do |row|
-			
-			@context[:msg] << "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ"
-			
-		end
-
-		error_flg = true
 
 	end
 
-	# なんかキモくて嫌だが、以下の用件を満たす方法がerror_flgを用いる方法しか思いつかなかった。
-	# ・クエリの片方がnilチェック、片方が特殊文字チェックで引っかかるとき、両方のエラーを伝えたい。
-	if error_flg then
+	if !exceptions.empty?
 	
-		return
-	
+		raise Error_multi_412.new(exceptions)
+
 	end
 
 	username = @req.query["name"]
 	passwd = @req.query["passwd"]
-
-	begin
 	
-		user = login(username, passwd)
+	user = login(username, passwd)
 	
-	rescue => e
-		
-		@context[:msg] << "IDかパスワードが違う"
-
-		return
-		
-	end
-	
-	@context[:msg] << CGI.escapeHTML(user.name) + "でログインしたった"
+	@context[:user] = user
 
 end
 
@@ -110,7 +80,7 @@ def login(username, passwd)
 	
 	if result.count == 0
 	
-		raise
+		raise Error_login.new
 	
 	end
 	
@@ -120,7 +90,7 @@ def login(username, passwd)
 	
 	if pw_hash != userinfo["passwd"]
 	
-		raise
+		raise Error_login.new
 	
 	end
 	

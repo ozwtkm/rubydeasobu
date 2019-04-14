@@ -8,8 +8,22 @@
 <input type="submit" value="ログインするぞい"/><br/>
 </form>
 
-<% c[:msg].each do |row| %>
-	<%= CGI.escapeHTML(row) %><br/>
+<% if !c[:e].nil? %>
+	<% tmp = c[:e] %>
+	<% error_list = tmp %>
+	<% if tmp.class == Error_multi_412 %>
+  		<% error_list = tmp.exceptions %>
+	<% else %>
+  		<% error_list = [tmp] %>
+	<% end %>
+
+	<% error_list.each do |e| %>
+		<%= CGI.escapeHTML(e.message)%><br/>
+	<% end %>
+<% end %>
+
+<% if !c[:user].nil? %>
+	<%= CGI.escapeHTML(c[:user].name) + "でログインしたよ" %><br/>
 <% end %>
 
 <%= render("_html_footer.erb") %>
