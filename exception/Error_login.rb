@@ -7,7 +7,7 @@ class Error_login < Base_exception
 
 def initialize()
 
-	super(412, "IDかパスワードが違う")
+	super(401, "IDかパスワードが違う")
 
 end
 

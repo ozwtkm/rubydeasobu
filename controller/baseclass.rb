@@ -24,8 +24,7 @@ def initialize(req, res)
 		
 	# view時、テンプレートに渡すための変数(ハッシュ)の箱。
 	@context = {}
-	@context[:e] = nil
-	
+
 end
 
 

@@ -17,9 +17,6 @@ def initialize(req,res)
 	@template = "login.erb"
 
 	super
-	
-	@context[:msg] = []
-	
 
 end
 
