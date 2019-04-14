@@ -6,6 +6,7 @@ require 'digest/sha1'
 require 'cgi/session'
 require_relative './baseclass'
 require_relative '../_util/SQL_transaction'
+require_relative '../model/user'
 
 class Login < Base
 
@@ -74,21 +75,18 @@ def control()
 
 	# なんかキモくて嫌だが、以下の用件を満たす方法がerror_flgを用いる方法しか思いつかなかった。
 	# ・クエリの片方がnilチェック、片方が特殊文字チェックで引っかかるとき、両方のエラーを伝えたい。
-
 	if error_flg then
 	
 		return
 	
 	end
 
-
 	username = @req.query["name"]
 	passwd = @req.query["passwd"]
 
-
 	begin
 	
-		check_ID_PW(username, passwd)
+		user = login(username, passwd)
 	
 	rescue => e
 		
@@ -97,40 +95,18 @@ def control()
 		return
 		
 	end
-		
-		
-	sessionid = login(username)
 	
-	@res.header['Set-cookie'] = "session_id=" + sessionid
-	
-	@context[:msg] << username + "でログインしたった"
-
+	@context[:msg] << CGI.escapeHTML(user.name) + "でログインしたった"
 
 end
 
 
-def check_ID_PW(username, passwd)
+def login(username, passwd)
 	
 	sql_transaction = SQL_transaction.instance.sql
 	
-	statement = sql_transaction.prepare("select salt from transaction.users where name = ? limit 1")
-	result_tmp = statement.execute(username)
-	statement.close
-	
-	
-	if result_tmp.count == 0
-	
-		raise
-	
-	end
-	
- 	result = result_tmp.first
- 	
-	pw_hash = Digest::SHA1.hexdigest(passwd + result["salt"])
-	
-	statement = sql_transaction.prepare("select * from transaction.users where name = ? and passwd = ? limit 1")
-	result = statement.execute(username, pw_hash)
-	statement.close
+	statement = sql_transaction.prepare("select * from transaction.users where name = ? limit 1")
+	result = statement.execute(username)
 	
 	if result.count == 0
 	
@@ -138,18 +114,28 @@ def check_ID_PW(username, passwd)
 	
 	end
 	
-end
+	userinfo = result.first
 
+	pw_hash = Digest::SHA1.hexdigest(passwd + userinfo["salt"])
+	
+	if pw_hash != userinfo["passwd"]
+	
+		raise
+	
+	end
+	
+	user = User.get_user(userinfo["id"])
 
-def login(username)
+	statement.close
 
-	# セッションにログイン情報を持たせるよ
 	session = CGI::Session.new(@cgi,{"new_session" => true})
-	session['name'] = username
-	sessionid = session.session_id()
+	session['name'] = user.name
+	session['id'] = user.id
 	session.close
 	
-	return sessionid
+	@res.header['Set-cookie'] = "session_id=" + session.session_id()
+	
+	return user
 	
 end
 

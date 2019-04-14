@@ -14,17 +14,14 @@ def initialize(userinfo)
 end
 
 
-
-def self.get_user(username)
+def self.get_user(user_id)
 
 	sql_transaction =  SQL_transaction.instance.sql
 
-	userinfo = {}
-
-	statement = sql_transaction.prepare("select * from transaction.users where name = ? limit 1")
-	result = statement.execute(username)
-	statement.close
+	statement = sql_transaction.prepare("select * from transaction.users where id = ? limit 1")
+	result = statement.execute(user_id)
 	
+	userinfo = {}
 	result.each do |row|
 	
 		userinfo = row
@@ -32,6 +29,8 @@ def self.get_user(username)
 	end
 	
 	user = User.new(userinfo)
+	
+	statement.close
 	
 	return user
 
@@ -49,26 +48,6 @@ def self.regist(username, passwd)
 	statement = sql_transaction.prepare("insert into transaction.users(name,salt,passwd) values(?,?,?)")
 	statement.execute(username, salt, pw_hash)
 	statement.close
-
-end
-
-
-def get_userid(username)
-
-	sql_transaction =  SQL_transaction.instance.sql
-
-	statement = sql_transaction.prepare("select id from transaction.users where name = ? limit 1")
-	result_tmp = statement.execute(username)
-	statement.close
-
-	result = nil
-	result_tmp.each do |row|
-	
-		result = row["id"]
-				
-	end
-
-	return result
 
 end
 
