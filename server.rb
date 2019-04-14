@@ -8,7 +8,8 @@ require_relative './_config/route'
 require_relative './controller/baseclass'
 require_relative './_util/SQL_master'
 require_relative './_util/SQL_transaction'
-
+require_relative './exception/baseclass_exception'
+require_relative './exception/Error_404'
 
 # httpサーバー
 s = HTTPServer.new(:BindAddress => '127.0.0.1', :DocumentRoot => '/var/www/html/testruby/', :Port => 8082 )
@@ -16,16 +17,16 @@ s = HTTPServer.new(:BindAddress => '127.0.0.1', :DocumentRoot => '/var/www/html/
 class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 	def service(req, res)
 	
-		klass = Routes::ROUTES[req.path]
+		begin 
 	
+			klass = Routes::ROUTES[req.path]
+	
+		# To do:404時専用のcontrollerをつくってklass.nil?にならなくする
 		if klass.nil? then
 		
 			res.content_type = "text/html"
-			res.status = 404
-			res.body = "404<br/><br/>" + CGI.escapeHTML(req.path) + "なんかねーよ"
-			
-			return
-	
+			raise Error_404.new
+		
 		end
 
 			controller = klass.new(req, res)
@@ -39,8 +40,19 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 				controller.not_allow_handler()
 			end
 			
-			#SQL_master.sql.close
-			#SQL_transaction.sql.close
+			rescue => e
+				if controller.nil?
+					res.content_type = "text/html"
+					res.body = e.message
+				else
+					controller.add_exception_context(e)
+					controller.view()
+				end
+					res.status = e.status
+			ensure
+				#SQL_master.sql.close
+				#SQL_transaction.sql.close
+			end
 			
 	end
 end
