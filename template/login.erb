@@ -9,11 +9,10 @@
 </form>
 
 <% if !c[:e].nil? %>
-	<% error_list = c[:e] %>
 	<% if c[:e].class == Error_multi_412 %>
-  		<% error_list = tmp.exceptions %>
+  		<% error_list = c[:e].exceptions %>
 	<% else %>
-  		<% error_list = [tmp] %>
+  		<% error_list = [c[:e]] %>
 	<% end %>
 
 	<% error_list.each do |e| %>

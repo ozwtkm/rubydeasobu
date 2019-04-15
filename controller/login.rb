@@ -91,7 +91,7 @@ def login(username, passwd)
 	
 	end
 	
-	user = User.get_user(userinfo["id"])
+	user = User.new({"id" => userinfo["id"], "name" => username})
 
 	statement.close
 
