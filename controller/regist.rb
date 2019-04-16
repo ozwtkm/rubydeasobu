@@ -5,6 +5,7 @@ require 'digest/sha1'
 require 'securerandom'
 require_relative './baseclass'
 require_relative '../model/user'
+require_relative '../exception/Error_duplicate_id'
 
 class Regist < Base
 
@@ -13,8 +14,6 @@ def initialize(req,res)
 	@template = "regist.erb"
 
 	super
-	
-	@context[:msg] = []
 
 end
 
@@ -22,68 +21,54 @@ end
 def control()
 
 	query = {:ユーザ名 => @req.query["name"], :パスワード => @req.query["passwd"]}
-	error_flg = false
 
-	begin
+	exceptions = []
 		
-		validate_nil(query)
-		
-	rescue => e
+	query.each do |key,value|
 
-		e.falselist.each do |row|
-			
-			@context[:msg] << "#{row}をちゃんと指定しろ。"
-			
-			query.delete(row)
-			
+		begin
+		
+			validate_nil(key, value)
+			validate_special_character(key, value)
+		
+		rescue => e
+		
+			exceptions << e
+		
 		end
 
-		error_flg = true
+	end
+
+	if !exceptions.empty?
+	
+		raise Error_multi_412.new(exceptions)
 
 	end
 	
-	
-	begin
-		
-		validate_special_character(query)
+	user = regist(@req.query["name"], @req.query["passwd"])
 
-	rescue => e
+	@context[:user] = user
 
-		e.falselist.each do |row|
-			
-			@context[:msg] << "#{row}は/\A[a-zA-Z0-9_@]+\z/でよろ"
-			
-		end
+end
 
-		error_flg = true
 
-	end
+def regist(username, passwd)
 
-	# なんかキモくて嫌だが、以下の用件を満たす方法がerror_flgを用いる方法しか思いつかなかった。
-	# ・クエリの片方がnilチェック、片方が特殊文字チェックで引っかかるとき、両方のエラーを伝えたい。
-
-	if error_flg then
-	
-		return
-	
-	end
-
-		
+	# rescueしてraiseするのなんか気持ち悪いがほかにmodelでのエラーを拾うやり方がわからない
 	begin
 	
-		User.regist(@req.query["name"], @req.query["passwd"])
-	
-	rescue => e
-	
-		@context[:msg] << "キャラかぶってるで"
+		user = User.add_user(username, passwd)
 
-		return
+	rescue
+	
+		raise Error_duplicate_id.new
 
 	end
-	
-	@context[:msg] << "#{@req.query["name"]}を登録したったで。"
+
+	return user
 
 end
 
 
 end
+

@@ -37,7 +37,7 @@ def self.get_user(user_id)
 end
 
 
-def self.regist(username, passwd)
+def self.add_user(username, passwd)
 
 	sql_transaction =  SQL_transaction.instance.sql
 
@@ -48,6 +48,10 @@ def self.regist(username, passwd)
 	statement = sql_transaction.prepare("insert into transaction.users(name,salt,passwd) values(?,?,?)")
 	statement.execute(username, salt, pw_hash)
 	statement.close
+
+	user = User.new({"id" => nil, "name" => username})
+
+	return user
 
 end
 
