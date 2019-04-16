@@ -57,11 +57,8 @@ def control()
 		raise Error_multi_412.new(exceptions)
 
 	end
-
-	username = @req.query["name"]
-	passwd = @req.query["passwd"]
 	
-	user = login(username, passwd)
+	user = login(@req.query["name"], @req.query["passwd"])
 	
 	@context[:user] = user
 
