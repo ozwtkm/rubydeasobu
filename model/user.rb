@@ -21,15 +21,8 @@ def self.get_user(user_id)
 	statement = sql_transaction.prepare("select * from transaction.users where id = ? limit 1")
 	result = statement.execute(user_id)
 	
-	userinfo = {}
-	result.each do |row|
-	
-		userinfo = row
-	
-	end
-	
-	user = User.new(userinfo)
-	
+	user = User.new(result.first)
+
 	statement.close
 	
 	return user
