@@ -10,16 +10,15 @@ require_relative '../model/monster'
 require_relative '../model/wallet'
 require_relative './baseclass_require_login'
 
+
 class Monsters < Base_require_login
 
 # オーバーライド。
 def initialize(req,res)
 
-	@template = "json.erb"
+	@template = "monsters.erb"
 
 	super
-	
-	@context[:json] = []
 	
 end
 
@@ -34,18 +33,10 @@ end
 
 def get_handler()
 	
+	@context[:monsters] = Monster.get_possession_monsters(@user.id)
+
 	super
 	
-	@monsters = Monster.get_possession_monsters(@user.id)
-	
-	@monsters.each do |row|
-	
-		@context[:json] << {:name => row.name, :rarity => row.rarity}
-	
-	end
-	
-	@context[:json] = JSON.generate(@context[:json])
-
 end
 
 
@@ -59,22 +50,17 @@ end
 # todo
 def delete_handler()
 
-	super
-
 end
 
 
 # todo
 def put_handler()
 
-	super
-
 end
 
 
+# todo
 def control()
-
-	
 
 end
 

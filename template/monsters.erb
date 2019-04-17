@@ -1,0 +1,6 @@
+<% 
+	c[:monsters].map! do |row|
+		{:name=>row.name, :rarity=>row.rarity}
+	end
+ %>
+<%= JSON.generate(c[:monsters]) %>
