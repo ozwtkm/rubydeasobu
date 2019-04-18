@@ -9,8 +9,8 @@ class Wallet
 def initialize(wallet, user_id)
 
 	@user_id = user_id
-	@gem = wallet[:gem]
-	@money = wallet[:money]
+	@gem = wallet["gem"]
+	@money = wallet["money"]
 
 end
 
@@ -21,17 +21,10 @@ def self.get_wallet(user_id)
 
 	statement = sql_transaction.prepare("select gem,money from transaction.wallets where user_id = ? limit 1")
 	result = statement.execute(user_id)
-	
-	wallet_info = {}
-	result.each do |row|
 
-		wallet_info = {:gem => row["gem"], :money => row["money"]}
-		
-	end
+	wallet = Wallet.new(result.first, user_id)
 
 	statement.close
-
-	wallet = Wallet.new(wallet_info, user_id)
 	
 	return wallet
 

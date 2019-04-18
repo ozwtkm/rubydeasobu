@@ -16,11 +16,9 @@ class Wallet_controller < Base_require_login
 # オーバーライド。
 def initialize(req,res)
 
-	@template = "json.erb"
+	@template = "wallet.erb"
 
 	super
-	
-	@context[:json] = "{}"
 	
 end
 
@@ -34,14 +32,9 @@ end
 
 
 def get_handler()
-	
-	@wallet = Wallet.get_wallet(@user.id)
-	
-	gem = @wallet.gem
-	money = @wallet.money
-	
-	@context[:json] = JSON.generate({:gem => gem, :money => money})
-	
+
+	@context[:wallet] = Wallet.get_wallet(@user.id)
+
 	super
 
 end
