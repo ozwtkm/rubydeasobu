@@ -8,34 +8,16 @@ require_relative '../_util/render'
 require_relative '../_util/procedure_session'
 require_relative '../model/user'
 
-
 class Base_require_login < Base
-
 
 def initialize(req, res)
 	
 	super
-	
-	ARGV.replace(["abc=001&def=002"]) # オフラインモード回避。
-	@cgi = CGI.new
-	
-	@context[:msg] = []
-	
-	begin
-	
-		@session = Procedure_session.get_session(@cgi, @req.header["cookie"].to_s)
-		@user = User.get_user(@session["name"])
 
-	rescue
-	
-		@context[:msg] << "ログインしろゴミが"
-	
-		view()
-	
-	end
+	@session = Procedure_session.get_session(@req.header["cookie"][0]) # @req.header["cookie"].class が Arrayなので[0]で文字列として取得
+	@user = User.get_user(@session["id"]) # id←sessionidじゃなくてuseridね。
 	
 end
-
 
 end
 
