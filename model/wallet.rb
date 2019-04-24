@@ -31,6 +31,20 @@ def self.get_wallet(user_id)
 end
 
 
+def self.initialize_wallet(user_id)
+
+	sql_transaction =  SQL_transaction.instance.sql
+	
+	statement = sql_transaction.prepare("insert into transaction.wallets(user_id,money,gem) values(?,100,100)")
+	statement.execute(user_id)
+	statement.close
+
+	wallet = Wallet.new({"gem"=>100,"money"=>100},user_id)
+
+	return wallet
+
+end
+
 # controller側だけでなくmodel側でも残量がnum以下のチェックをしてもいいかも。
 def sub_gem(num)
 

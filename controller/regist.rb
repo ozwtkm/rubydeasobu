@@ -5,6 +5,7 @@ require 'digest/sha1'
 require 'securerandom'
 require_relative './baseclass'
 require_relative '../model/user'
+require_relative '../model/wallet'
 require_relative '../exception/Error_duplicate_id'
 
 class Regist < Base
@@ -64,6 +65,8 @@ def regist(username, passwd)
 		raise Error_duplicate_id.new
 
 	end
+
+	Wallet.initialize_wallet(user.id)
 
 	return user
 

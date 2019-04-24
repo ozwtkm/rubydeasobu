@@ -40,9 +40,13 @@ def self.add_user(username, passwd)
 		
 	statement = sql_transaction.prepare("insert into transaction.users(name,salt,passwd) values(?,?,?)")
 	statement.execute(username, salt, pw_hash)
-	statement.close
+	
+	# add_userの直後にはinitialize_walletが控えているので、
+	# どうしてもuser_idが欲しく、泣く泣く2度目のSQL発行。
+	statement = sql_transaction.prepare("select id,name from transaction.users where name = ? limit 1")
+	result = statement.execute(username)
 
-	user = User.new({"id" => nil, "name" => username})
+	user = User.new(result.first)
 
 	return user
 
