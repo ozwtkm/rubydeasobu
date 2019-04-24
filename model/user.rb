@@ -45,6 +45,8 @@ def self.add_user(username, passwd)
 	# どうしてもuser_idが欲しく、泣く泣く2度目のSQL発行。
 	statement = sql_transaction.prepare("select id,name from transaction.users where name = ? limit 1")
 	result = statement.execute(username)
+	statement.close
+
 
 	user = User.new(result.first)
 
