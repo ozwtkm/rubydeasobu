@@ -3,11 +3,11 @@
 
 require_relative './baseclass_exception'
 
-class Error_404 < Base_exception
+class Error_shortage_of_gem < Base_exception
 
 def initialize
 
-	super(404, "naiyo")
+	super(412, "gem足りねえよ貧乏人")
 
 end
 

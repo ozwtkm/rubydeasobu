@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 require_relative '../_util/SQL_master'
+require_relative '../exception/Error_inconsistency_gacha_probability'
+
 
 class Gacha
 
@@ -36,7 +38,7 @@ def self.get_gacha(gacha_id)
 	# lastがsumと一致するのでlast値と満たすべき確率合計値を比較
 	if probability_range.values.last != 100000
 	
-		raise
+		raise Error_inconsistency_gacha_probability.new
 	
 	end
 
@@ -69,6 +71,8 @@ def execute_gacha()
 		end
 	
 	end
+	
+	# 起こらないはずだが、ここでobtain_monster_id.nil?→raiseしてもいいかも？
 
 	return obtain_monster_id
 

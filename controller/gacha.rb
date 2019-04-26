@@ -10,7 +10,7 @@ require_relative '../model/user'
 require_relative '../model/monster'
 require_relative '../model/wallet'
 require_relative '../model/gacha'
-
+require_relative '../exception/Error_shortage_of_gem'
 
 class Gacha_controller < Base_require_login
 
@@ -27,52 +27,28 @@ end
 def control()
 
 	@wallet = Wallet.get_wallet(@user.id)
-	
-	begin
-	
-		check_gem(@wallet.gem)
-	
-	rescue
-	
-		@context[:msg] << "gem足りねえよ貧乏人が"
-		
-		return
-	
-	end
-	
+
+	check_gem()
 	
 	@gacha = Gacha.get_gacha(@req.query["gacha_id"])
-	
-	begin
-	
-		obtain_monster_id = @gacha.execute_gacha()
-	
-	rescue
-	
-		@context[:msg] << "ごめんうまくいかなかった"
-		
-		return
-	
-	end
 
+	obtain_monster_id = @gacha.execute_gacha()
 
 	Monster.add_monster(@user.id, obtain_monster_id)
-	
-	obtain_monster = Monster.get_master_monsters.select! { |key, value| key === obtain_monster_id }
-	
-	@context[:msg] << obtain_monster.values[0].name + "をGETしたよ"
 
 	@wallet.sub_gem(100)
 	@wallet.save()
+	
+	@context[:monster] = Monster.get_master_monsters[obtain_monster_id]
 
 end
 
 
-def check_gem(gem)
+def check_gem()
 
-	if gem < 100 then
+	if @wallet.gem < 100 then
 	
-		raise
+		raise Error_shortage_of_gem.new
 	
 	end
 

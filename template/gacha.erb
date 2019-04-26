@@ -5,10 +5,13 @@
 
 <h1>ガチャ引くぞい</h1>
 
+<% if !c[:e].nil? %>
+	<%= CGI.escapeHTML(c[:e].message)%><br/>
+<% end %>
 
-<% c[:msg].each do |row| %>
-	<%= CGI.escapeHTML(row) %><br/>
-<% end %><br/><br/>
+<% if !c[:monster].nil? %>
+	<%= CGI.escapeHTML(c[:monster].name) + "をGETしたよ" %><br/>
+<% end %>
 
 <h2>モンスターガチャ！</h2>
 gem100でモンスター一匹やるよ
