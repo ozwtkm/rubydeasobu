@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 require_relative '../_util/SQL_transaction'
+require_relative '../exception/Error_duplicate_id'
 
 class User
 	attr_reader :id, :name
@@ -37,19 +38,23 @@ def self.add_user(username, passwd)
 	salt = SecureRandom.hex(10) + "aaaaburiburi"
 		
 	pw_hash = Digest::SHA1.hexdigest(passwd+salt)
-		
-	statement = sql_transaction.prepare("insert into transaction.users(name,salt,passwd) values(?,?,?)")
-	statement.execute(username, salt, pw_hash)
 	
-	# add_userの直後にはinitialize_walletが控えているので、
-	# どうしてもuser_idが欲しく、泣く泣く2度目のSQL発行。
-	statement = sql_transaction.prepare("select id,name from transaction.users where name = ? limit 1")
-	result = statement.execute(username)
+	statement = sql_transaction.prepare("insert into transaction.users(name,salt,passwd) values(?,?,?)")
+
+	begin
+
+		statement.execute(username, salt, pw_hash)
+
+	rescue
+
+		raise Error_duplicate_id.new
+	
+	end
+
+	user = User.new({"id"=>sql_transaction.last_id,"name"=>username})
+
 	statement.close
-
-
-	user = User.new(result.first)
-
+		
 	return user
 
 end

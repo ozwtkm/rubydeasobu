@@ -6,7 +6,6 @@ require 'securerandom'
 require_relative './baseclass'
 require_relative '../model/user'
 require_relative '../model/wallet'
-require_relative '../exception/Error_duplicate_id'
 
 class Regist < Base
 
@@ -55,17 +54,8 @@ end
 
 def regist(username, passwd)
 
-	# rescueしてraiseするのなんか気持ち悪いがほかにmodelでのエラーを拾うやり方がわからない
-	begin
+	user = User.add_user(username, passwd)
 	
-		user = User.add_user(username, passwd)
-
-	rescue
-	
-		raise Error_duplicate_id.new
-
-	end
-
 	Wallet.initialize_wallet(user.id)
 
 	return user
