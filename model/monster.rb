@@ -5,13 +5,14 @@ require_relative '../_util/SQL_master'
 require_relative '../_util/SQL_transaction'
 
 class Monster
-	attr_reader :id, :name, :hp, :def, :exp, :money, :img_id, :rarity
+	attr_reader :id, :name, :hp, :atk, :def, :exp, :money, :img_id, :rarity
 
 def initialize(monster_info)
 
 	@id = monster_info["id"]
 	@name = monster_info["name"]
-	@hp = monster_info["atk"]
+	@hp = monster_info["hp"]
+	@atk = monster_info["atk"]
 	@def = monster_info["def"]
 	@exp = monster_info["exp"]
 	@money = monster_info["money"]
@@ -27,16 +28,16 @@ def self.get_master_monsters()
 
 	statement = sql_master.prepare("select * from master.monsters")
 	result = statement.execute()
-	
+
 	master_monster_list = {}
 	result.each do |row|
-	
+
 		master_monster_list[row["id"]] = Monster.new(row)
-	
+
 	end
 
 	statement.close
-	
+
 	return master_monster_list
 
 end
