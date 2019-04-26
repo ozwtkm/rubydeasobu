@@ -28,8 +28,8 @@ def control()
 
 		begin
 		
-			validate_nil(key, value)
-			validate_special_character(key, value)
+			Validator.validate_nil(key, value)
+			Validator.validate_special_character(key, value)
 		
 		rescue => e
 		

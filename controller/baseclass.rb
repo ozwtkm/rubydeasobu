@@ -3,8 +3,7 @@
 
 require 'webrick'
 require_relative '../_util/render'
-require_relative '../exception/Error_input_nil'
-require_relative '../exception/Error_input_specialcharacter'
+require_relative '../_util/validator'
 require_relative '../exception/Error_multi_412'
 
 class Base
@@ -79,29 +78,6 @@ def view_http_body()
 	@res.body = render(@template)
 
 end
-
-
-def validate_nil(key, value)
-
-		if value.nil?
-			
-			raise Error_input_nil.new(key)
-		
-		end
-
-end
-
-
-def validate_special_character(key, value)
-
-		if value.match(/\A[a-zA-Z0-9_@]+\z/).nil?
-		
-			raise Error_input_special_character.new(key)
-		
-		end
-		
-end
-
 
 
 def add_exception_context(e)
