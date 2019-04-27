@@ -5,14 +5,17 @@ require 'webrick'
 require 'em-websocket'
 require 'cgi'
 require 'cgi/session'
+require_relative './_util/procedure_session'
 
 # セッション変数をwebsocketに渡すためにwebsocketにインスタンス変数を追加する。
 module Ex_connection
+
 	refine EventMachine::WebSocket::Connection do
-	
+
 		attr_accessor :username
 
 	end
+	
 end
 
 
@@ -31,13 +34,11 @@ EM.run {
 	EM::WebSocket.run(:host => "127.0.0.1", :port => 8882) do |ws|
 	
 		ws.onopen { |handshake|
-		
-			cgi = CGI.new
-			
-			
+			puts 1
 			begin
-			
-				cgi.cookies['_session_id'] = get_sessionid(handshake)
+
+				header = handshake.headers_downcased["cookie"]
+				session = Procedure_session.get_session(header)
 
 			rescue
 			
@@ -47,7 +48,7 @@ EM.run {
 			
 			end
 
-			set_username(cgi, ws)
+			ws.username = session['name']
 
 			send_message("join", ws, connections)
 
@@ -73,31 +74,6 @@ EM.run {
 	
 	end
 	
-	
-	def get_sessionid(handshake)
-		
-		c = handshake.headers_downcased["cookie"]
-		match = c.match(/(^|;\s*)session_id=([a-f0-9]+)/)
-	 
-		 if match.nil? then
-			
-			raise
-			
-		 end
-	 
-		return match[2]
-	
-	end
-	
-	
-	def set_username(cgi, ws)
-	
-		session = CGI::Session.new(cgi, {'new_session' => false})
-
-		ws.username = (session['name'])
-		
-	end
-
 
 	def send_message(kind, ws, connections, comment="")
 	
@@ -138,12 +114,13 @@ EM.run {
 	def broadcast(connections, broadcast_msg)
 		
 		connections.each{|conn|
+		
 			conn.send(broadcast_msg)
+		
 		}
 	
 	end
 	
-
 }
 
 
