@@ -13,7 +13,7 @@ module Ex_connection
 	refine EventMachine::WebSocket::Connection do
 
 		attr_accessor :username
-		attr_accessor :uuid
+		attr_accessor :unique_id
 
 	end
 	
@@ -49,13 +49,13 @@ EM.run {
 			end
 
 			ws.username = session['name']
-			ws.uuid = session.session_id()
+			ws.unique_id = session.session_id()
 
 			send_message("join", ws, connections)
 
 			mutex.synchronize {
 			
-				connections[ws.uuid] = ws
+				connections[ws.unique_id] = ws
 				
 			}
 		
@@ -73,7 +73,7 @@ EM.run {
 
 			send_message("leave", ws, connections)
 
-			connections.delete(ws.uuid)
+			connections.delete(ws.unique_id)
 
 		}
 	
@@ -118,17 +118,15 @@ EM.run {
 
 	def broadcast(connections, broadcast_msg)
 		
-		connections.each{|key,val|
+		connections.values.each{|row|
 		
-			val.send(broadcast_msg)
+			row.send(broadcast_msg)
 		
 		}
 	
 	end
 	
 }
-
-
 
 
 # 参考そーす：https://github.com/igrigorik/em-websocket
