@@ -3,6 +3,8 @@
 
 require_relative '../exception/Error_input_nil'
 require_relative '../exception/Error_input_specialcharacter'
+require_relative '../exception/Error_not_found'
+
 
 class Validator
 
@@ -28,8 +30,14 @@ def self.validate_special_character(key, value)
 end
 
 
+def self.validate_SQL_error(target, record_count = 0)
+
+	if target == record_count
+
+		raise Error_not_found.new
+
+	end
+
 end
 
-
-
-
+end

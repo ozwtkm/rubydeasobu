@@ -3,9 +3,9 @@
 
 require_relative '../_util/SQL_master'
 require_relative '../exception/Error_inconsistency_gacha_probability'
+require_relative './basemodel'
 
-
-class Gacha
+class Gacha < Base_model
 
 def initialize(probability_range)
 	
@@ -20,6 +20,8 @@ def self.get_gacha(gacha_id)
 	
 	statement = sql_master.prepare("select monster_id, probability from master.gacha_probability where gacha_id = ? order by 'probability' desc")
 	result = statement.execute(gacha_id)
+	
+	Validator.validate_SQL_error(result.count)
 	
 	probability_range = {}
 	count = 0

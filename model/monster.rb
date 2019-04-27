@@ -3,8 +3,9 @@
 
 require_relative '../_util/SQL_master'
 require_relative '../_util/SQL_transaction'
+require_relative './basemodel'
 
-class Monster
+class Monster < Base_model
 	attr_reader :id, :name, :hp, :atk, :def, :exp, :money, :img_id, :rarity
 
 def initialize(monster_info)
@@ -29,6 +30,8 @@ def self.get_master_monsters()
 	statement = sql_master.prepare("select * from master.monsters")
 	result = statement.execute()
 
+	Validator.validate_SQL_error(result.count)
+
 	master_monster_list = {}
 	result.each do |row|
 
@@ -51,6 +54,8 @@ def self.get_possession_monsters(user_id)
 	
 	statement = sql_transaction.prepare("select monster_id from transaction.user_monster where user_id = ?")
 	result = statement.execute(user_id)
+	
+	Validator.validate_SQL_error(result.count)
 	
 	possession_monster_list = []
 	result.each do |row|

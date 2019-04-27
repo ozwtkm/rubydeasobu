@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 
 require_relative '../_util/SQL_transaction'
+require_relative './basemodel'
 
-class Wallet
+class Wallet < Base_model
 	attr_reader :user_id, :gem, :money
 
 def initialize(wallet, user_id)
@@ -21,6 +22,8 @@ def self.get_wallet(user_id)
 
 	statement = sql_transaction.prepare("select gem,money from transaction.wallets where user_id = ? limit 1")
 	result = statement.execute(user_id)
+	
+	Validator.validate_SQL_error(result.count)
 
 	wallet = Wallet.new(result.first, user_id)
 
@@ -31,7 +34,7 @@ def self.get_wallet(user_id)
 end
 
 
-def self.initialize_wallet(user_id)
+def self.init(user_id)
 
 	sql_transaction =  SQL_transaction.instance.sql
 	

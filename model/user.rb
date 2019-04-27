@@ -3,8 +3,9 @@
 
 require_relative '../_util/SQL_transaction'
 require_relative '../exception/Error_duplicate_id'
+require_relative './basemodel'
 
-class User
+class User < Base_model
 	attr_reader :id, :name
 
 def initialize(userinfo)
@@ -21,6 +22,8 @@ def self.get_user(user_id)
 
 	statement = sql_transaction.prepare("select * from transaction.users where id = ? limit 1")
 	result = statement.execute(user_id)
+	
+	Validator.validate_SQL_error(result.count)
 	
 	user = User.new(result.first)
 
