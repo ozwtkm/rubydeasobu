@@ -13,6 +13,7 @@ module Ex_connection
 	refine EventMachine::WebSocket::Connection do
 
 		attr_accessor :username
+		attr_accessor :uuid
 
 	end
 	
@@ -24,8 +25,7 @@ ENV['REQUEST_METHOD'] = 'GET'
 
 mutex = Mutex.new
 
-connections = []
-
+connections = {}
 
 EM.run {
 
@@ -34,7 +34,7 @@ EM.run {
 	EM::WebSocket.run(:host => "127.0.0.1", :port => 8882) do |ws|
 	
 		ws.onopen { |handshake|
-			puts 1
+
 			begin
 
 				header = handshake.headers_downcased["cookie"]
@@ -49,11 +49,14 @@ EM.run {
 			end
 
 			ws.username = session['name']
+			ws.uuid = session.session_id()
 
 			send_message("join", ws, connections)
 
 			mutex.synchronize {
-				connections << ws
+			
+				connections[ws.uuid] = ws
+				
 			}
 		
 		}
@@ -69,7 +72,9 @@ EM.run {
 		ws.onclose {
 
 			send_message("leave", ws, connections)
-			
+
+			connections.delete(ws.uuid)
+
 		}
 	
 	end
@@ -109,13 +114,13 @@ EM.run {
 		broadcast(connections, broadcast_msg)
 		
 	end
-	
-	
+
+
 	def broadcast(connections, broadcast_msg)
 		
-		connections.each{|conn|
+		connections.each{|key,val|
 		
-			conn.send(broadcast_msg)
+			val.send(broadcast_msg)
 		
 		}
 	
