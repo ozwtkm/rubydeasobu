@@ -56,7 +56,7 @@ def regist(username, passwd)
 
 	user = User.add_user(username, passwd)
 	
-	Wallet.initialize_wallet(user.id)
+	Wallet.init(user.id)
 
 	return user
 

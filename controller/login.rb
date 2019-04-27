@@ -93,7 +93,7 @@ def login(username, passwd)
 	statement.close
 
 	session = CGI::Session.new(@cgi,{"new_session" => true})
-	session['name'] = user.name
+	session['name'] = user.name # Note: キャッシュ。更新忘れ注意。
 	session['id'] = user.id
 	session.close
 	
