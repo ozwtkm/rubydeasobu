@@ -30,7 +30,7 @@ def self.get_master_monsters()
 	statement = sql_master.prepare("select * from master.monsters")
 	result = statement.execute()
 
-	Validator.validate_SQL_error(result.count)
+	Validator.validate_SQL_error(result.count, true)
 
 	master_monster_list = {}
 	result.each do |row|
@@ -55,7 +55,7 @@ def self.get_possession_monsters(user_id)
 	statement = sql_transaction.prepare("select monster_id from transaction.user_monster where user_id = ?")
 	result = statement.execute(user_id)
 	
-	Validator.validate_SQL_error(result.count)
+	Validator.validate_SQL_error(result.count, true)
 	
 	possession_monster_list = []
 	result.each do |row|

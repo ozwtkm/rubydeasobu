@@ -20,8 +20,8 @@ def self.get_gacha(gacha_id)
 	
 	statement = sql_master.prepare("select monster_id, probability from master.gacha_probability where gacha_id = ? order by 'probability' desc")
 	result = statement.execute(gacha_id)
-	
-	Validator.validate_SQL_error(result.count)
+
+	Validator.validate_SQL_error(result.count, true)
 	
 	probability_range = {}
 	count = 0
