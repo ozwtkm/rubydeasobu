@@ -26,6 +26,9 @@ def self.get_routes
 end
 
 
+private
+
+
 def self.create_controller_class(filename)
 
 		classname = filename.split('/').last()
