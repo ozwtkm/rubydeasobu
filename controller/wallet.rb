@@ -4,11 +4,11 @@
 require 'cgi'
 require 'cgi/session'
 require 'json'
-require_relative './baseclass'
+require_relative './_baseclass'
 require_relative '../model/user'
 require_relative '../model/monster'
 require_relative '../model/wallet'
-require_relative './baseclass_require_login'
+require_relative './_baseclass_require_login'
 
 # クラス名、Walletとしたいが、そうするとmodelと衝突してまう
 class Wallet_controller < Base_require_login

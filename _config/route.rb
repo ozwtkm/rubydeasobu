@@ -1,27 +1,48 @@
 #!/usr/bin/ruby -Ku 
 # -*- coding: utf-8 -*-
 
-require_relative '../controller/login'
-require_relative '../controller/regist'
-require_relative '../controller/index'
-require_relative '../controller/gacha'
-require_relative '../controller/chat'
-require_relative '../controller/monsters'
-require_relative '../controller/wallet'
+require_relative './const'
+require_relative '../controller/_chat'
 
-
-# ここそのうち自動生成させたい
 class Routes
 
-ROUTES = {
-	"/regist" => Regist,
-	"/login" => Login,
-	"/index" => Index,
-	"/gacha" => Gacha_controller,
-	"/monsters" => Monsters,
-	"/wallet" => Wallet_controller,
-	"/websocket" => Chat # 自動生成時ここ注意
-}
+def self.get_routes
+
+	filenames = Dir.glob(PATH_CONTROLLER + "*.rb") # Baseたたけちゃうからなおす
+
+	@@routes = {}
+
+	filenames.each do |row|
+
+		Routes.create_controller_class(row)
+
+	end
+
+	# 例外対応
+	@@routes["/websocket"] = Chat
+
+	return @@routes
 
 end
 
+
+def self.create_controller_class(filename)
+
+		classname = filename.split('/').last()
+		classname.slice!(".rb")
+
+		# 「_hoge.rb」とか「huga.rb.xxx(一時ファイル)」を除去
+		if classname.match(/\A[0-9a-zA-Z]*\z/).nil?
+		
+			return
+		
+		end
+		
+		require_relative '../controller/' + classname
+
+		@@routes["/" + classname] = Object.const_get(classname.capitalize + "_controller")
+
+end
+
+
+end

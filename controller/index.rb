@@ -1,9 +1,9 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
 
-require_relative './baseclass'
+require_relative './_baseclass'
 
-class Index < Base
+class Index_controller < Base
 
 def initialize(req,res)
 

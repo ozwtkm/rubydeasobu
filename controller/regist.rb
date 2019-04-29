@@ -3,11 +3,11 @@
 
 require 'digest/sha1'
 require 'securerandom'
-require_relative './baseclass'
+require_relative './_baseclass'
 require_relative '../model/user'
 require_relative '../model/wallet'
 
-class Regist < Base
+class Regist_controller < Base
 
 def initialize(req,res)
 

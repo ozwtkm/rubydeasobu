@@ -9,7 +9,7 @@ def render(template)
 
 	# 単純に「context」だと長いから代入して変数名を短くしてるだけ。
 	c = @context
-	erb = ERB.new(File.read(PATH + template))
+	erb = ERB.new(File.read(PATH_VIEW + template))
 	return erb.result(binding)
 	
 end

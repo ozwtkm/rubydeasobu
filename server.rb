@@ -5,7 +5,7 @@ require 'webrick'
 require 'cgi'
 include WEBrick
 require_relative './_config/route'
-require_relative './controller/baseclass'
+require_relative './controller/_baseclass'
 require_relative './_util/SQL_master'
 require_relative './_util/SQL_transaction'
 require_relative './exception/baseclass_exception'
@@ -19,7 +19,7 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 	
 		begin 
 	
-			klass = Routes::ROUTES[req.path]
+			klass = Routes.get_routes[req.path]
 	
 			# To do:404時専用のcontrollerをつくってklass.nil?にならなくする
 			if klass.nil? then
@@ -62,8 +62,10 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 			res.status = e.status
 			
 		ensure
-			#SQL_master.sql.close
-			#SQL_transaction.sql.close
+		
+			SQL_master.close
+			SQL_transaction.close
+		
 		end
 			
 	end

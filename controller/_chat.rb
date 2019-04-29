@@ -1,7 +1,7 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
 
-require_relative './baseclass'
+require_relative './_baseclass'
 	
 class Chat < Base
 

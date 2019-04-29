@@ -4,12 +4,12 @@
 require 'cgi'
 require 'digest/sha1'
 require 'cgi/session'
-require_relative './baseclass'
+require_relative './_baseclass'
 require_relative '../_util/SQL_transaction'
 require_relative '../model/user'
 require_relative '../exception/Error_login'
 
-class Login < Base
+class Login_controller < Base
 
 # オーバーライド。
 def initialize(req,res)

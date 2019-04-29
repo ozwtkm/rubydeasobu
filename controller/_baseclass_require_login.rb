@@ -3,7 +3,7 @@
 require 'webrick'
 require 'cgi'
 require 'cgi/session'
-require_relative './baseclass'
+require_relative './_baseclass'
 require_relative '../_util/render'
 require_relative '../_util/procedure_session'
 require_relative '../model/user'
