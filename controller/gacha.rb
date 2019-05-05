@@ -38,7 +38,6 @@ def control()
 
 	@wallet.sub_gem(100)
 	@wallet.save()
-	
 	@context[:monster] = Monster.get_master_monsters[obtain_monster_id]
 
 end

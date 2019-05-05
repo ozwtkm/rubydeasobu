@@ -20,7 +20,7 @@ def self.get_user(user_id)
 
 	sql_transaction =  SQL_transaction.instance.sql
 
-	statement = sql_transaction.prepare("select * from transaction.users where id = ? limit 1")
+	statement = sql_transaction.prepare("select * from transaction.users where id = ? limit 1 for update")
 	result = statement.execute(user_id)
 	
 	Validator.validate_SQL_error(result.count)

@@ -1,5 +1,6 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
+
 require 'parallel'
 require 'webrick'
 require 'cgi'
@@ -9,8 +10,6 @@ require_relative './controller/_baseclass'
 require_relative './_util/SQL_master'
 require_relative './_util/SQL_transaction'
 require_relative './exception/Error_404'
-
-require 'color_echo/get'
 
 # httpサーバー
 s = HTTPServer.new(:BindAddress => '127.0.0.1', :DocumentRoot => '/var/www/html/testruby/', :Port => 8082 )
@@ -29,7 +28,7 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 			begin
 			
 				klass = Routes.get_routes[fork_req.path]
-		
+
 				# To do:404時専用のcontrollerをつくってklass.nil?にならなくする
 				if klass.nil? then
 				
@@ -54,6 +53,9 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 				
 				end
 
+				SQL_master.commit
+				SQL_transaction.commit
+
 			rescue => e
 			
 				if controller.nil?
@@ -68,7 +70,7 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 					
 				end
 				
-			  if e.respond_to?(:status)
+				if e.respond_to?(:status)
 			  
 					fork_res.status = e.status
 				
