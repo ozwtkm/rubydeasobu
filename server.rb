@@ -1,6 +1,6 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
-
+require 'parallel'
 require 'webrick'
 require 'cgi'
 include WEBrick
@@ -8,66 +8,90 @@ require_relative './_config/route'
 require_relative './controller/_baseclass'
 require_relative './_util/SQL_master'
 require_relative './_util/SQL_transaction'
-require_relative './exception/baseclass_exception'
 require_relative './exception/Error_404'
+
+require 'color_echo/get'
 
 # httpサーバー
 s = HTTPServer.new(:BindAddress => '127.0.0.1', :DocumentRoot => '/var/www/html/testruby/', :Port => 8082 )
 
 class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
+
+	FORK = [0] #配列長1の任意の配列
+	
 	def service(req, res)
 	
-		begin 
-	
-			klass = Routes.get_routes[req.path]
-	
-			# To do:404時専用のcontrollerをつくってklass.nil?にならなくする
-			if klass.nil? then
-			
-				raise Error_404.new
-			
-			end
-
-			controller = klass.new(req, res)
-	
-			case req.request_method 
-			when "GET" then
-			
-				controller.get_handler()
-			
-			when "POST" then
-			
-				controller.post_handler()
-			
-			else
-			
-				controller.not_allow_handler()
-			
-			end
-			
-		rescue => e
+		fork_req = req
+		fork_res = res
 		
-			if controller.nil?
+		ret = Parallel.map(FORK, :in_prosess => 1) do
+		
+			begin
 			
-				res.content_type = "text/html"
-				res.body = e.message
+				klass = Routes.get_routes[fork_req.path]
+		
+				# To do:404時専用のcontrollerをつくってklass.nil?にならなくする
+				if klass.nil? then
+				
+					raise Error_404.new
+				
+				end
+
+				controller = klass.new(fork_req, fork_res)
+
+				case fork_req.request_method 
+				when "GET" then
+				
+					controller.get_handler()
+				
+				when "POST" then
+				
+					controller.post_handler()
+				
+				else
+				
+					controller.not_allow_handler()
+				
+				end
+
+			rescue => e
 			
-			else
+				if controller.nil?
+				
+					fork_res.content_type = "text/html"
+					fork_res.body = e.message
+				
+				else
+				
+					controller.add_exception_context(e)
+					controller.view()
+					
+				end
+				
+			  if e.respond_to?(:status)
+			  
+					fork_res.status = e.status
+				
+				else
+				
+					fork_res.status = 500
+				
+				end
+				
+			ensure
 			
-				controller.add_exception_context(e)
-				controller.view()
+				SQL_master.close
+				SQL_transaction.close
 				
 			end
 			
-			res.status = e.status
-			
-		ensure
-		
-			SQL_master.close
-			SQL_transaction.close
+			[fork_res.status, fork_res.body] #Parallelの戻り値
 		
 		end
-			
+		
+		res.status = ret.first[0]
+		res.body = ret.first[1]
+		
 	end
 	
 end

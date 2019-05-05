@@ -5,16 +5,14 @@ require 'singleton'
 require 'mysql2'
 
 class SQL_transaction
+
 	include Singleton
-	
-	@@sql_client = nil
 	
 	def initialize
   
-		@@sql_client = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'transaction')
+		@@sql_client = Mysql2::Client.new(:socket => '/var/lib/mysql/mysql.sock', :host => 'localhost', :username => 'testwebrick', :password => 'test', :encoding => 'utf8', :database => 'transaction', :reconnect => true)
 
 	end
-	
 	
 	def sql
 	
@@ -25,7 +23,7 @@ class SQL_transaction
 	
 	def self.close
 	
-		if !@@sql_client.nil? then
+		if defined?(@@sql_client) then
 		
 			@@sql_client.close
 			

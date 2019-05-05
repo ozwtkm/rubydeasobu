@@ -30,14 +30,14 @@ def self.validate_special_character(key, value)
 end
 
 
-def self.validate_SQL_error(record_count, is_multi_line = false)
+def self.validate_SQL_error(record_count, is_multi_line: false)
 
 	if record_count === 0
 	
 		raise Error_not_found.new
 	
 	end
-	
+
 	if is_multi_line
 	
 		return
