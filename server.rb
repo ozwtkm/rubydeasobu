@@ -1,107 +1,93 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
-
 require 'parallel'
 require 'webrick'
 require 'cgi'
 include WEBrick
 require_relative './_config/route'
+require_relative './_config/const'
 require_relative './controller/_baseclass'
 require_relative './_util/SQL_master'
 require_relative './_util/SQL_transaction'
 require_relative './exception/Error_404'
 
 # httpサーバー
-s = HTTPServer.new(:BindAddress => '127.0.0.1', :DocumentRoot => '/var/www/html/testruby/', :Port => 8082 )
+s = HTTPServer.new(:BindAddress => '127.0.0.1', :DocumentRoot => ROOTPATH, :Port => 8082)
 
 class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
-
-	FORK = [0] #配列長1の任意の配列
+	DUMMY_ITEMS = [nil] #配列長1の任意の配列
+	INTERNAL_SERVER_ERROR = 500
+	@@routes = Routes.get_routes
 	
 	def service(req, res)
-	
-		fork_req = req
-		fork_res = res
+		finishProc = Proc.new { |item, index, result|
+			res.status = result[0]
+			res.body = result[1]
+		}
 		
-		ret = Parallel.map(FORK, :in_prosess => 1) do
-		
+		#最大フォーク数が1(0を指定すると現在のプロセス上で実行されてしまうので注意)
+		Parallel.map(DUMMY_ITEMS, :in_prosess => 1, :finish => finishProc) {
 			begin
-			
-				klass = Routes.get_routes[fork_req.path]
-
-				# To do:404時専用のcontrollerをつくってklass.nil?にならなくする
-				if klass.nil? then
-				
-					raise Error_404.new
-				
-				end
-
-				controller = klass.new(fork_req, fork_res)
-
-				case fork_req.request_method 
-				when "GET" then
-				
-					controller.get_handler()
-				
-				when "POST" then
-				
-					controller.post_handler()
-				
-				else
-				
-					controller.not_allow_handler()
-				
-				end
-
+				controller = createController(req, res)
+				dispatch(controller, req.request_method)
 				SQL_master.commit
 				SQL_transaction.commit
-
 			rescue => e
-			
-				if controller.nil?
-				
-					fork_res.content_type = "text/html"
-					fork_res.body = e.message
-				
-				else
-				
-					controller.add_exception_context(e)
-					controller.view()
-					
-				end
-				
-				if e.respond_to?(:status)
-			  
-					fork_res.status = e.status
-				
-				else
-				
-					fork_res.status = 500
-				
-				end
-				
+				setErrorHttpStatus(res, e)
+				setErrorBody(res, controller, e)
 			ensure
-			
 				SQL_master.close
 				SQL_transaction.close
-				
 			end
 			
-			[fork_res.status, fork_res.body] #Parallelの戻り値
-		
-		end
-		
-		res.status = ret.first[0]
-		res.body = ret.first[1]
-		
+			[res.status, res.body] #finishProcのresultに入る
+		}
 	end
 	
+	def createController(req, res)
+		klass = @@routes[req.path]
+
+		if klass.nil? then
+			raise Error_404.new
+		end
+		
+		controller = klass.new(req, res)
+	end
+	
+	def dispatch(controller, method)
+		case method 
+		when "GET" then
+			controller.get_handler()
+		when "POST" then
+			controller.post_handler()
+		else
+			controller.not_allow_handler()
+		end
+	end
+	
+	def setErrorHttpStatus(res, e)
+		if !e.respond_to?(:status)
+			res.status = INTERNAL_SERVER_ERROR
+			
+			return
+		end
+		
+		res.status = e.status.to_i
+	end
+	
+	def setErrorBody(res, controller, e)
+		if controller.nil?
+			res.content_type = "text/html"
+			res.body = e.message
+
+			return
+		end
+		
+		controller.add_exception_context(e)
+		controller.view()
+	end
 end
 
 s.mount('/', DispatchServlet)
-
-# Ctrl + C で停止するようにトラップを仕込む。
 trap(:INT){ s.shutdown }
-
-# サーバーを起動
 s.start
