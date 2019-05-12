@@ -30,22 +30,29 @@ gem100でモンスター一匹やるよ
 <b>所持モンスター</b>
 
 <table border="5">
-<tbody id="monsters_list">
-	<tr>
+	<thead>
+		<tr>
 		<th width="500">なまえ</th>
 		<th width="120">レア度</th>
-	</tr>
-</tbody>
+		</tr>
+	</thead>
+	<tbody id="monsters_list">
+	</tbody>
 </table>
 <br/>
 
-<script>
+<div id="range"></div>
+<input type="hidden" id="next_offset" value="0">
+<input type="hidden" id="back_offset" value="0">
 
+<input type="button" id="next" value="次の10件" onclick="get_monsters(document.getElementById('next_offset').value,10)">
+<input type="button" id="next" value="前の10件" onclick="get_monsters(document.getElementById('back_offset').value,10)"><br/>
+
+<script>
 	$(document).ready(function(){
-		get_monsters();
+		get_monsters(0,10);
 		get_wallet();
 	});
-
 </script>
 
 

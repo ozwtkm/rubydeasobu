@@ -11,6 +11,7 @@ require_relative './_util/SQL_master'
 require_relative './_util/SQL_transaction'
 require_relative './exception/Error_404'
 
+
 # httpサーバー
 s = HTTPServer.new(:BindAddress => '127.0.0.1', :DocumentRoot => ROOTPATH, :Port => 8082)
 
@@ -23,16 +24,21 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 		finishProc = Proc.new { |item, index, result|
 			res.status = result[0]
 			res.body = result[1]
+			result[2].each do |key,val|
+				res.header[key]=val
+			end
 		}
 		
 		#最大フォーク数が1(0を指定すると現在のプロセス上で実行されてしまうので注意)
 		Parallel.map(DUMMY_ITEMS, :in_prosess => 1, :finish => finishProc) {
 			begin
+				req.path_info = separate(req.path) #RESTfulにしたい。
 				controller = createController(req, res)
 				dispatch(controller, req.request_method)
 				SQL_master.commit
 				SQL_transaction.commit
 			rescue => e
+			puts e
 				setErrorHttpStatus(res, e)
 				setErrorBody(res, controller, e)
 			ensure
@@ -40,12 +46,19 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 				SQL_transaction.close
 			end
 			
-			[res.status, res.body] #finishProcのresultに入る
+			[res.status,res.body,res.header] #finishProcのresultに入る
 		}
 	end
 	
+	def separate(path)
+		path = path.split("/")
+		path.shift()
+		
+		return path
+	end
+	
 	def createController(req, res)
-		klass = @@routes[req.path]
+		klass = @@routes["/"+req.path_info.first]
 
 		if klass.nil? then
 			raise Error_404.new
@@ -82,7 +95,7 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 
 			return
 		end
-		
+
 		controller.add_exception_context(e)
 		controller.view()
 	end
@@ -90,4 +103,5 @@ end
 
 s.mount('/', DispatchServlet)
 trap(:INT){ s.shutdown }
+trap(:TERM){ s.shutdown }
 s.start

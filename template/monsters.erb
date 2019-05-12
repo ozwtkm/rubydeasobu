@@ -1,6 +1,13 @@
-<% 
-	c[:monsters].map! do |row|
-		{:name=>row.name, :rarity=>row.rarity}
+<%
+	result = {}
+
+	if !c[:e].nil? 
+		result = {:ErrorMessage=>c[:e].message}
+	end 
+
+	if !c[:monsters].nil?
+		result = c[:monsters].map do |row|
+			{:name=>row.name, :rarity=>row.rarity}
+		end
 	end
- %>
-<%= JSON.generate(c[:monsters]) %>
+%><%= JSON.generate(result) %>
