@@ -38,7 +38,6 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 				SQL_master.commit
 				SQL_transaction.commit
 			rescue => e
-			puts e
 				setErrorHttpStatus(res, e)
 				setErrorBody(res, controller, e)
 			ensure

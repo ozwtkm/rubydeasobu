@@ -4,7 +4,6 @@
 require 'webrick'
 require_relative '../_util/render'
 require_relative '../_util/validator'
-require_relative '../_util/pager'
 require_relative '../exception/Error_multi_412'
 
 class Base
