@@ -1,5 +1,6 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
+require 'logger'
 require 'parallel'
 require 'webrick'
 require 'cgi'
@@ -7,19 +8,42 @@ include WEBrick
 require_relative './_config/route'
 require_relative './_config/const'
 require_relative './controller/_baseclass'
+require_relative './_util/log'
 require_relative './_util/SQL_master'
 require_relative './_util/SQL_transaction'
 require_relative './exception/Error_404'
 
+module Output
+  def self.console_and_file(defout)
+    class << defout
+      alias_method :write_org, :write
+      def write(str)
+        STDOUT.write(str)
+        self.write_org(str)
+      end
+    end
+  end
+end
+
+f_access = File.open('/var/log/rubydeasobu/server.log', 'a')
+Output.console_and_file(f_access)
+log_access = Logger.new(f_access, 5, 1 * 1024 * 1024)
 
 # httpサーバー
-s = HTTPServer.new(:BindAddress => '127.0.0.1', :DocumentRoot => ROOTPATH, :Port => 8082)
+s = HTTPServer.new(
+	:BindAddress => '127.0.0.1', :DocumentRoot => ROOTPATH, :Port => 8082,
+	:Logger => log_access,
+	:AccessLog => [
+		[log_access, WEBrick::AccessLog::COMMON_LOG_FORMAT],
+		[log_access, WEBrick::AccessLog::REFERER_LOG_FORMAT]
+	]
+	)
 
 class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 	DUMMY_ITEMS = [nil] #配列長1の任意の配列
 	INTERNAL_SERVER_ERROR = 500
 	@@routes = Routes.get_routes
-	
+
 	def service(req, res)
 		finishProc = Proc.new { |item, index, result|
 			res.status = result[0]
@@ -28,6 +52,7 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 				res.header[key]=val
 			end
 		}
+
 		
 		#最大フォーク数が1(0を指定すると現在のプロセス上で実行されてしまうので注意)
 		Parallel.map(DUMMY_ITEMS, :in_prosess => 1, :finish => finishProc) {
@@ -38,6 +63,7 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 				SQL_master.commit
 				SQL_transaction.commit
 			rescue => e
+				Log.log(e.backtrace.join("\n"))
 				setErrorHttpStatus(res, e)
 				setErrorBody(res, controller, e)
 			ensure
@@ -100,7 +126,16 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 	end
 end
 
+def shutdown(server, logfile)
+	logfile.close
+	server.shutdown
+end
+
+Log.set_log(f_access)
 s.mount('/', DispatchServlet)
-trap(:INT){ s.shutdown }
-trap(:TERM){ s.shutdown }
+
+trap(:INT){ shutdown(s, f_access) }
+trap(:TERM){ shutdown(s, f_access) }
+
 s.start
+

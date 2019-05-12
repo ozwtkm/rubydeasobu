@@ -3,6 +3,7 @@
 
 require 'webrick'
 require_relative '../_util/render'
+require_relative '../_util/log'
 require_relative '../_util/validator'
 require_relative '../exception/Error_multi_412'
 
@@ -11,9 +12,9 @@ class Base
 def initialize(req, res)
 	@req = req
 	@res = res
-	@URLquery = {}
+	@URLquery = []
 	set_URLquery()
-	
+
 	# @tmplateはview時、render()に引数として渡すテンプレート。
 	# Baseを引き継ぐ各クラスにて対応するテンプレート名を指定すること。
 	if @template.nil?
@@ -61,16 +62,8 @@ def add_exception_context(e)
 end
 
 def set_URLquery()
-	# クソコードなのでは？
-	tmp=""
-	@req.path_info.each_with_index do |row,index|
-		if index === 0
-			next # 最初はコントローラなので無視
-		elsif index % 2 === 1
-			tmp = row
-		else
-			@URLquery[tmp]=row
-		end
+	@req.path_info.each do |row|
+		@URLquery << row
 	end
 end
 
