@@ -1,9 +1,9 @@
 
-var get_monsters = function(offset,number){
-	$.getJSON("/monsters/offset/" + offset + "/number/" + number, append_monsters_list);
+var get_monsters = function(offset){
+	$.getJSON("/monsters/" + offset, append_monsters_list);
 	
-	var next = String(Number(offset) + Number(number));
-	var back = String(Number(offset) - Number(number));
+	var next = String(Number(offset) + 10);
+	var back = String(Number(offset) - 10);
 	
 	document.getElementById('next_offset').value = next;
 	document.getElementById('back_offset').value = back;

@@ -45,12 +45,12 @@ gem100でモンスター一匹やるよ
 <input type="hidden" id="next_offset" value="0">
 <input type="hidden" id="back_offset" value="0">
 
-<input type="button" id="next" value="次の10件" onclick="get_monsters(document.getElementById('next_offset').value,10)">
-<input type="button" id="next" value="前の10件" onclick="get_monsters(document.getElementById('back_offset').value,10)"><br/>
+<input type="button" id="next" value="次の10件" onclick="get_monsters(document.getElementById('next_offset').value)">
+<input type="button" id="next" value="前の10件" onclick="get_monsters(document.getElementById('back_offset').value)"><br/>
 
 <script>
 	$(document).ready(function(){
-		get_monsters(0,10);
+		get_monsters(0);
 		get_wallet();
 	});
 </script>

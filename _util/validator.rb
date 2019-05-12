@@ -22,7 +22,6 @@ def self.validate_special_character(key, value)
 end
 
 def self.validate_SQL_error(record_count, is_multi_line: false)
-
 	if record_count === 0
 		raise Error_not_found.new
 	end
@@ -34,14 +33,12 @@ def self.validate_SQL_error(record_count, is_multi_line: false)
 	if record_count != 1
 		raise Error_over_count.new
 	end
-	
 end
 
-def self.validate_not_Naturalnumber(key, value)
+def self.validate_not_Naturalnumber(key="入力値", value)
 	if value.match(/\A[0-9]+\z/).nil?
 		raise Error_not_naturalnumber.new(key)
 	end
 end
-
 
 end

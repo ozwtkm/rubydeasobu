@@ -24,14 +24,15 @@ def view_http_header()
 end
 
 def get_handler()
-	@URLquery.each do |key,value|
-		Validator.validate_not_Naturalnumber(key,value)
-	end
+	offset = @URLquery[1]
 	
-	@context[:monsters] = Monster.get_possession_monsters(@user.id,@URLquery["number"].to_i,@URLquery["offset"].to_i)
+	Validator.validate_not_Naturalnumber(offset)
+
+	@context[:monsters] = Monster.get_possession_monsters(@user.id, 10, offset.to_i)
 
 	super
 end
+
 
 # todo
 def post_handler()
