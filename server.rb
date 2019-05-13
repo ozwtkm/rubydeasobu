@@ -27,7 +27,11 @@ end
 
 f_access = File.open('/var/log/rubydeasobu/server.log', 'a')
 Output.console_and_file(f_access)
-log_access = Logger.new(f_access, 5, 1 * 1024 * 1024)
+
+number_of_log_files = 5
+size_of_file = 1 * 1024 * 1024
+
+log_access = Logger.new(f_access, number_of_log_files, size_of_file)
 
 # httpサーバー
 s = HTTPServer.new(
@@ -37,7 +41,7 @@ s = HTTPServer.new(
 		[log_access, WEBrick::AccessLog::COMMON_LOG_FORMAT],
 		[log_access, WEBrick::AccessLog::REFERER_LOG_FORMAT]
 	]
-	)
+)
 
 class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 	DUMMY_ITEMS = [nil] #配列長1の任意の配列
