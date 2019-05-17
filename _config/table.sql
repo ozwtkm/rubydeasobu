@@ -1,8 +1,8 @@
 -- MySQL dump 10.13  Distrib 5.6.36, for Linux (x86_64)
 --
--- Host: localhost    Database: 
+-- Host: localhost    Database: master
 -- ------------------------------------------------------
--- Server version	5.6.36-log
+-- Server version	5.6.44-log
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -51,6 +51,27 @@ CREATE TABLE `gachas` (
   `gacha_name` varchar(20) DEFAULT NULL,
   PRIMARY KEY (`gacha_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `gradeup_recipes`
+--
+
+DROP TABLE IF EXISTS `gradeup_recipes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `gradeup_recipes` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(20) DEFAULT NULL,
+  `material_id` int(11) unsigned NOT NULL,
+  `required_number` int(11) unsigned NOT NULL,
+  `obtain_id` int(11) unsigned NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `material_id` (`material_id`),
+  KEY `obtain_id` (`obtain_id`),
+  CONSTRAINT `gradeup_recipes_ibfk_1` FOREIGN KEY (`material_id`) REFERENCES `monsters` (`id`),
+  CONSTRAINT `gradeup_recipes_ibfk_2` FOREIGN KEY (`obtain_id`) REFERENCES `monsters` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -126,7 +147,7 @@ CREATE TABLE `users` (
   `passwd` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unko` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -144,3 +165,14 @@ CREATE TABLE `wallets` (
   CONSTRAINT `wallets_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2019-05-14 19:47:11
