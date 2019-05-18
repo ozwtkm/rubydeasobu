@@ -1,0 +1,67 @@
+<%= render("_html_header.erb") %>
+
+<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.3.min.js"></script> 
+<script type="text/javascript" src="../rsc/gacha.js"></script>
+
+<h1>モンスター合成すんで～</h1>
+
+<h2>ノーマル2体を生贄にレア1体GET</h2>
+
+<% if c[:e]!=nil %>
+	<%= CGI.escapeHTML(c[:e].message) %><br/>
+<% end %>
+
+
+<b>レシピ一覧</b>
+
+<br/><br/>
+
+	<% c[:recipes].each do |key,value| %>
+		<%= CGI.escapeHTML(value.recipe_name) %>
+		<form action="" method="post">
+			<input type="hidden" name="recipe_id" value="<%= CGI.escapeHTML(value.recipe_id.to_s) %>">
+			<input type="submit" value="やる">
+		</form>
+	<% end %>
+
+<br/>
+
+<b>お前のgem数</b>
+<div id="gem"></div><br/>
+
+<b>お前のmoney数</b>
+<div id="money"></div><br/>
+
+<b>所持モンスター</b>
+
+<table border="5">
+	<thead>
+		<tr>
+		<th width="500">なまえ</th>
+		<th width="120">レア度</th>
+		</tr>
+	</thead>
+	<tbody id="monsters_list">
+	</tbody>
+</table>
+<br/>
+
+<div id="range"></div>
+<input type="hidden" id="next_offset" value="0">
+<input type="hidden" id="back_offset" value="0">
+
+<input type="button" id="next" value="次の10件" onclick="get_monsters(document.getElementById('next_offset').value)">
+<input type="button" id="next" value="前の10件" onclick="get_monsters(document.getElementById('back_offset').value)"><br/>
+
+
+<script>
+	$(document).ready(function(){
+		get_monsters(0);
+		get_wallet();
+	});
+</script>
+
+
+<%= render("_html_footer.erb") %>
+
+

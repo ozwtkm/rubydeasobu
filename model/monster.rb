@@ -4,7 +4,7 @@
 require_relative '../_util/SQL_master'
 require_relative '../_util/SQL_transaction'
 require_relative './basemodel'
-
+require_relative '../exception/Error_shortage_of_material'
 
 class Monster < Base_model
 	attr_reader :id, :name, :hp, :atk, :def, :exp, :money, :img_id, :rarity
@@ -66,6 +66,20 @@ def self.add_monster(user_id, monster_id)
 	statement.execute(user_id, monster_id)
 	statement.close
 end
+
+def self.delete_monster(user_id, monster_id, count)
+	sql_transaction =  SQL_transaction.instance.sql
+
+	statement = sql_transaction.prepare("delete from transaction.user_monster where user_id = ? and monster_id = ? limit ?")
+	statement.execute(user_id, monster_id, count)
+
+	if sql_transaction.affected_rows != count
+		raise Error_shortage_of_material.new
+	end
+
+	statement.close
+end
+
 
 end
 
