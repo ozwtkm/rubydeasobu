@@ -1,8 +1,11 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
-
+require 'memcache'
+require 'json'
 require_relative '../_util/SQL_master'
 require_relative '../_util/SQL_transaction'
+require_relative '../_util/serializer'
+require_relative '../_util/cache'
 require_relative './basemodel'
 require_relative '../exception/Error_shortage_of_material'
 
@@ -22,22 +25,34 @@ def initialize(monster_info)
 end
 
 def self.get_master_monsters()
+	master_monster_list = Cache.instance.get('master_monster_list')
+
+	if !master_monster_list.nil?
+		Log.log("cacheありなのでキャッシュから取得した")	
+		return master_monster_list
+	end
+	
 	sql_master = SQL_master.instance.sql
 
 	statement = sql_master.prepare("select * from master.monsters")
 	result = statement.execute()
 
 	Validator.validate_SQL_error(result.count, is_multi_line: true)
-
+	
 	master_monster_list = {}
 	result.each do |row|
 		master_monster_list[row["id"]] = Monster.new(row)
 	end
 
 	statement.close
+	
+	Cache.instance.set('master_monster_list',master_monster_list)
 
+	Log.log("cacheなしなのでセットした")
 	return master_monster_list
+	
 end
+
 
 def self.get_possession_monsters(user_id, limit=10, offset=0)
 	sql_transaction =  SQL_transaction.instance.sql
