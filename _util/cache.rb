@@ -1,6 +1,7 @@
 #!/usr/bin/ruby -Ku 
 # -*- coding: utf-8 -*-
 require 'singleton'
+require 'memcache'
 require_relative './serializer'
 
 class Cache
@@ -8,25 +9,29 @@ include Singleton
 attr_reader :client
 
 def initialize
-	@client = MemCache.new('localhost:11211')
+	@@client = MemCache.new('localhost:11211')
 end
 
 def get(key)
-	cache = @client.get(key)
+	cache = @@client.get(key)
+	
 	if cache.nil?
 		return nil
 	end
+	
 	obj = Serializer.load(cache)
 	return obj
 end
 
 def set(key, obj)
 	cache = Serializer.dump(obj)
-	@client.add(key, cache)
+	@@client.add(key, cache)
 end
 
-def close
-
+def self.close
+	if defined?(@@client)
+		@@client.reset
+	end
 end
 
 end

@@ -1,7 +1,5 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
-require 'memcache'
-require 'json'
 require_relative '../_util/SQL_master'
 require_relative '../_util/SQL_transaction'
 require_relative '../_util/serializer'

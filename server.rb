@@ -9,6 +9,7 @@ require_relative './_config/route'
 require_relative './_config/const'
 require_relative './controller/_baseclass'
 require_relative './_util/log'
+require_relative './_util/cache'
 require_relative './_util/SQL_master'
 require_relative './_util/SQL_transaction'
 require_relative './exception/Error_404'
@@ -67,10 +68,12 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 				SQL_master.commit
 				SQL_transaction.commit
 			rescue => e
+				Log.log(e)
 				Log.log(e.backtrace.join("\n"))
 				setErrorHttpStatus(res, e)
 				setErrorBody(res, controller, e)
 			ensure
+				Cache.close
 				SQL_master.close
 				SQL_transaction.close
 			end
