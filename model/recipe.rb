@@ -36,6 +36,21 @@ def self.get_recipes
 end
 
 
+def self.get_recipe(recipe_id)
+	sql_master = SQL_master.instance.sql
+	
+	statement = sql_master.prepare("select * from master.gradeup_recipes where id = ? limit 1")
+	result = statement.execute(recipe_id)
+	
+	Validator.validate_SQL_error(result.count)
+
+	recipe = Recipe.new(result.first)
+
+	statement.close
+	
+	return recipe
+end
+
 
 end
 

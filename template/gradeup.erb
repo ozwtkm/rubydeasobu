@@ -11,10 +11,10 @@
 	<%= CGI.escapeHTML(c[:e].message) %><br/>
 <% end %>
 
+<% if c[:recipes] != nil %>
 
-<b>レシピ一覧</b>
-
-<br/><br/>
+	<b>レシピ一覧</b>
+	<br/><br/>
 
 	<% c[:recipes].each do |key,value| %>
 		<%= CGI.escapeHTML(value.recipe_name) %>
@@ -23,6 +23,12 @@
 			<input type="submit" value="やる">
 		</form>
 	<% end %>
+	
+<% end %>
+
+<% if c[:recipe] != nil %>
+	<%= CGI.escapeHTML(c[:recipe].recipe_name) + "を実行したよ" %>
+<% end %>
 
 <br/>
 
