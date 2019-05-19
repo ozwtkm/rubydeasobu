@@ -26,7 +26,7 @@ module Output
   end
 end
 
-f_access = File.open('/var/log/rubydeasobu/server.log', 'a')
+f_access = File.open(PATH_LOG + 'server.log', 'a')
 Output.console_and_file(f_access)
 
 number_of_log_files = 5
@@ -36,7 +36,7 @@ log_access = Logger.new(f_access, number_of_log_files, size_of_file)
 
 # httpサーバー
 s = HTTPServer.new(
-	:BindAddress => '127.0.0.1', :DocumentRoot => ROOTPATH, :Port => 8082,
+	:BindAddress => WEBRICK_ADDRESS, :DocumentRoot => ROOTPATH, :Port => WEBRICK_PORT,
 	:Logger => log_access,
 	:AccessLog => [
 		[log_access, WEBrick::AccessLog::COMMON_LOG_FORMAT],

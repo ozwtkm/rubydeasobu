@@ -3,13 +3,14 @@
 require 'singleton'
 require 'memcache'
 require_relative './serializer'
+require_relative '../_config/const'
 
 class Cache
 include Singleton
 attr_reader :client
 
 def initialize
-	@@client = MemCache.new('localhost:11211')
+	@@client = MemCache.new(CACHE_ADDRESS + ":" + CACHE_PORT)
 end
 
 def get(key)
