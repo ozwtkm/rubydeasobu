@@ -17,5 +17,6 @@ SQL_HOST = "localhost"
 SQL_USER = "testwebrick"
 SQL_PASSWORD = "test"
 
-
+WEBSOCKET_ADDRESS = "127.0.0.1"
+WEBSOCKET_PORT = "8882"
 
