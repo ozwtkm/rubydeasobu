@@ -3,6 +3,7 @@
 
 require_relative '../_util/SQL_master'
 require_relative '../_util/SQL_transaction'
+require_relative '../_util/cache'
 require_relative './basemodel'
 
 
@@ -18,6 +19,13 @@ def initialize(recipe_info)
 end
 
 def self.get_recipes
+	recipes = Cache.instance.get("recipes")
+	
+	if !recipes.nil?
+		Log.log("cacheありなのでキャッシュからrecipesを取得した")
+		return recipes
+	end
+
 	sql_master = SQL_master.instance.sql
 	
 	statement = sql_master.prepare("select * from master.gradeup_recipes")
@@ -31,6 +39,9 @@ def self.get_recipes
 	end
 
 	statement.close
+
+	Cache.instance.set("recipes", recipes)
+	Log.log("cacheなしなのでrecipesをセットした")
 	
 	return recipes
 end
