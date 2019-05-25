@@ -38,7 +38,7 @@ def self.get_gachas()
 	return gachas
 end
 
-def self.get_gacha(gacha_id)
+def self.get_probability(gacha_id)
 	sql_master = SQL_master.instance.sql
 	
 	statement = sql_master.prepare("select monster_id, probability from master.gacha_probability where gacha_id = ? order by 'probability' desc")
@@ -61,11 +61,10 @@ def self.get_gacha(gacha_id)
 		raise Error_inconsistency_gacha_probability.new
 	end
 
-	gacha = Gacha.new(probability_range)
+	probability = Gacha.new(probability_range)
 
-	return gacha
+	return probability
 end
-
 
 # ▽ガチャのアルゴリズム説明
 # 　①確率ごとにrangeを設定。

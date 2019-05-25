@@ -15,11 +15,23 @@
 
 <h2>モンスターガチャ！</h2>
 gem100でモンスター一匹やるよ
+<br/>
 
-<form action="" method="post">
-	<input type="hidden" name="gacha_id" value="2"/>
-	<input type="submit" value="回すよ"/>
-</form>
+
+<% if c[:gachas] != nil %>
+
+	<b>レシピ一覧</b>
+	<br/>
+
+	<% c[:gachas].each do |key,value| %>
+		<%= CGI.escapeHTML(value) %>
+		<form action="" method="post">
+			<input type="hidden" name="gacha_id" value="<%= CGI.escapeHTML(key.to_s) %>">
+			<input type="submit" value="まわす">
+		</form>
+	<% end %>
+	
+<% end %>
 
 <b>お前のgem数</b>
 <div id="gem"></div><br/>
@@ -54,8 +66,6 @@ gem100でモンスター一匹やるよ
 		get_wallet();
 	});
 </script>
-
-
 
 
 <%= render("_html_footer.erb") %>

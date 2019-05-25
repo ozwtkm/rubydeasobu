@@ -14,44 +14,38 @@ require_relative '../exception/Error_shortage_of_gem'
 
 class Gacha_controller < Base_require_login
 
-# オーバーライド。
 def initialize(req, res)
-
 	@template = "gacha.erb"
-
 	super
-	
 end
 
+# オーバーライド。
+def get_handler()
+	gachas = Gacha.get_gachas()
+	@context[:gachas] = gachas
+	super
+end
 
 def control()
-
 	@wallet = Wallet.get_wallet(@user.id)
 
 	check_gem()
 	
-	@gacha = Gacha.get_gacha(@req.query["gacha_id"])
+	gacha = Gacha.get_probability(@req.query["gacha_id"])
 
-	obtain_monster_id = @gacha.execute_gacha()
+	obtain_monster_id = gacha.execute_gacha()
 
 	Monster.add_monster(@user.id, obtain_monster_id)
 
 	@wallet.sub_gem(100)
 	@wallet.save()
 	@context[:monster] = Monster.get_master_monsters[obtain_monster_id]
-
 end
-
 
 def check_gem()
-
 	if @wallet.gem < 100 then
-	
 		raise Error_shortage_of_gem.new
-	
 	end
-
 end
-
 
 end
