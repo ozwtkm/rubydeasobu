@@ -15,6 +15,7 @@ def initialize(req, res)
 	
 	@session = Procedure_session.get_session(@req.header) 
 	@user = User.get_user(@session["id"]) # id←sessionidじゃなくてuseridね。
+	@context[:user] = @user
 end
 
 end
