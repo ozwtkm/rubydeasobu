@@ -24,6 +24,20 @@ CREATE DATABASE /*!32312 IF NOT EXISTS*/ `master` /*!40100 DEFAULT CHARACTER SET
 USE `master`;
 
 --
+-- Table structure for table `dangeons`
+--
+
+DROP TABLE IF EXISTS `dangeons`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `dangeons` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(20) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `gacha_probability`
 --
 
@@ -71,7 +85,7 @@ CREATE TABLE `gradeup_recipes` (
   KEY `obtain_id` (`obtain_id`),
   CONSTRAINT `gradeup_recipes_ibfk_1` FOREIGN KEY (`material_id`) REFERENCES `monsters` (`id`),
   CONSTRAINT `gradeup_recipes_ibfk_2` FOREIGN KEY (`obtain_id`) REFERENCES `monsters` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -85,6 +99,24 @@ CREATE TABLE `imgs` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `path` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `maps`
+--
+
+DROP TABLE IF EXISTS `maps`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `maps` (
+  `dangeon_id` int(10) unsigned NOT NULL,
+  `x` int(5) unsigned NOT NULL,
+  `y` int(5) unsigned NOT NULL,
+  `z` int(5) unsigned NOT NULL,
+  `wall` int(5) unsigned NOT NULL,
+  KEY `dangeon_id` (`dangeon_id`),
+  CONSTRAINT `maps_ibfk_1` FOREIGN KEY (`dangeon_id`) REFERENCES `dangeons` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -106,7 +138,7 @@ CREATE TABLE `monsters` (
   `img_id` int(10) unsigned DEFAULT NULL,
   `rarity` int(5) unsigned NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -147,7 +179,7 @@ CREATE TABLE `users` (
   `passwd` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unko` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -175,4 +207,4 @@ CREATE TABLE `wallets` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-05-14 19:47:11
+-- Dump completed on 2019-05-22  4:08:37
