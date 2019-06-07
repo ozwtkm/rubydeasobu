@@ -12,7 +12,7 @@ class Map < Base_model
 
 def initialize(rooms)
 	@rooms = rooms
-	@player_coord = [0,0] #todo初期位置処理（roomsのxy最小値で自動設定？
+	@player_coord = [0,0]
 end
 
 
@@ -23,8 +23,17 @@ def initialize(right,left,up,down)
 	@aisle["up"] = up
 	@aisle["down"] = down
 end
+
+def self.add(dangeon_id,x,y,z,aisle)
+	sql_master = SQL_master.instance.sql
+	
+	statement = sql_master.prepare("insert into master.maps(dangeon_id,x,y,z,wall) values(?,?,?,?,?)")
+	statement.execute(dangeon_id,x,y,z,wall)
+	
+	statement.close
 end
-private_constant :Map_line
+end
+private_constant :Room
 
 
 def self.get(dangeon_id, floor)
@@ -49,24 +58,12 @@ end
 
 
 def self.add_by_instance(map)
-map.each do |row1|
-	row.each do |row2|
-		self.add_room(row2["dangeon_id"],row2["x"],row2["y"],row2["z"],row2["aisle"])
+	map.each do |row1|
+		row.each do |row2|
+			Map::Room.add(row2["dangeon_id"],row2["x"],row2["y"],row2["z"],row2["aisle"])
+		end
 	end
 end
-end
-
-private
-
-def self.add_room(dangeon_id,x,y,z,aisle)
-	sql_master = SQL_master.instance.sql
-	
-	statement = sql_master.prepare("insert into master.maps(dangeon_id,x,y,z,wall) values(?,?,?,?,?)")
-	statement.execute(dangeon_id,x,y,z,wall)
-	
-	statement.close
-end
-
 
 end
 

@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 require 'json'
 require_relative './_baseclass_require_login'
-require_relative '../model/dangeon'
-require_relative '../util/maze'
+require_relative '../model/map'
+require_relative '../util/map_util'
 
 class Admin_controller < Base_require_login
 
@@ -17,25 +17,23 @@ def control()
 	# ↓リクエストで["3",{"1","1","1","1","1","1","1","1","1","1","1","1"}]みたいなのくる
 	data = JSON.parse(@req.body)
 	
-	@num = data[0].to_i
-	@refs= data[1].to_i
+	@num = data[0]
+	@refs= data[1]
 	@dangeon_id = dataからとってくる
 	@side_refs = []
 	@vertical_refs = []
-	require_refs_count = 2*n*(n-1)
+	require_refs_count = 2*num*(num-1)
 	
 	if @refs.count != require_refs_count
 		raise
 	end
 
-	shape_refs
+	shape_refs()
 
-	maps = Map.create(@side_refs,@vertical_refs,@num) # Maputilの中のcreate関数にmarkandsweepとmapobj生成がらっぷされる
+	map = Map_util.create(@side_refs,@vertical_refs) # Maputilの中のcreate関数にmarkandsweepとmapobj生成がらっぷされる
 	
-	maps.each do |row|
-		Dangeon.add_map(@dangeon_id, row.x, row.y, row.z, row.aisle)
-	end
-
+	Map.add_by_instance(map)
+	
 end
 
 
