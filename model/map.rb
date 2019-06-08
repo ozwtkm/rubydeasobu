@@ -61,8 +61,8 @@ end
 def self.save(dangeon_id,x,y,z,aisle)
 	sql_master = SQL_master.instance.sql
 	
-	statement = sql_master.prepare("insert into master.maps(dangeon_id,x,y,z,aisle) values(?,?,?,?,?)")
-	statement.execute(dangeon_id,x,y,z,aisle)
+	statement = sql_master.prepare("insert into master.maps(dangeon_id,x,y,z,aisle) values(?,?,?,?,?) ON DUPLICATE KEY UPDATE dangeon_id=?,x=?,y=?,z=?,aisle=?")
+	statement.execute(dangeon_id,x,y,z,aisle,dangeon_id,x,y,z,aisle)
 	
 	statement.close
 end
