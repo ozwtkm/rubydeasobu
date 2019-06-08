@@ -8,6 +8,10 @@ require_relative './basemodel'
 
 
 class Map < Base_model
+UP = 1
+LEFT = 2
+DOWN = 4
+RIGHT = 8
 
 def initialize(rooms)
 	@rooms = rooms
@@ -17,9 +21,129 @@ attr_reader :rooms
 attr_accessor :player_coord
 
 
-def save_by_instance(map,dangeon_id,floor)
-	map.each do |row|
-		Map::Room.save(dangeon_id,row.x,row.y,floor,row.aisle)
+def self.create(aisles, num)
+	aisles = shape_aisles(aisles, num)
+	side_aisles = aisles["side"]
+	vertical_aisles = aisles["vertical"]
+
+	rooms = create_rooms(side_aisles, vertical_aisles)
+	
+	map = Map.new(rooms)
+	
+	return map
+end
+
+def shape_aisles(aisles, num)
+	line=0
+	result = {}
+
+	(num-1).times do
+		(num-1).times do 
+			result["side"][line].push(aisles.shift.to_i)
+		end
+		num.times do
+			result["vertical"][line].push(aisles.shift.to_i)
+		end
+		
+		line+=1
+		result["side"][line] = []
+		result["vertical"][line] = []
+	end
+
+	(num-1).times do
+		result["side"][line].push(aisles.shift.to_i)
+	end
+	
+	if result["side"][line][num-2].nil? || !aisles.last.nil?
+		raise
+	end
+	
+	return result
+end
+
+
+
+def create_rooms(side_aisles, vertical_aisles)
+	line = Float::INFINITY
+	rooms = []
+	
+	vertical_aisles.each.with_index do |row1,index1|
+		if row1.count(1) === 0
+			line = index1+1
+			break
+		end
+		
+		rooms[y] = []
+		row1.each.with_index do |row2,index2|
+			if row2.to_i === 1
+				x = index2
+				y = index1
+				
+				rooms[y][x] = create_room(rooms,x,y)
+				rooms[y+1][x] = create_room(rooms,x,y+1)
+				
+				add_aisle(rooms[y][x],aisle: DOWN)
+				add_aisle(rooms[y+1][x],aisle: UP)
+			end
+		end
+	end
+	
+	side_aisles.each.with_index do |row1,index1|
+		if index1 === line
+			break
+		end
+	
+		rooms[y] = []
+		row1.each.with_index do |row2, index2|
+			if row2.to_i === 1
+				x=index2
+				y=index1
+				
+				rooms[y][x] = create_room(rooms,x,y)
+				rooms[y][x+1] = create_room(rooms,x+1,y)
+				
+				add_aisle(rooms[y][x],aisle: RIGHT)
+				add_aisle(rooms[y][x+1],aisle: LEFT)
+			end
+		end
+	end
+	
+	return rooms
+end
+
+def create_room(rooms,x,y)
+	if rooms.select{|room| room.x === x && room.y === y}.empty?
+		return Map::Room.new(x,y)
+	end
+end
+
+def add_aisle(room,aisle:)
+	case aisle
+	when UP
+		aisle = "up"
+	when LEFT
+		aisle = "left"
+	when DOWN
+		aisle = "down"
+	when RIGHT
+		aisle = "right"
+	end
+
+	room.aisle[aisle] = true
+end
+
+
+
+
+def save(dangeon_id,floor)
+	@rooms.each.with_index do |row1,index1|
+		row1.each.with_index do |row2,index2|
+			x = index2
+			y = index1
+		
+			row.shape_to_DBformat(x,y,dangeon_id,floor)
+			Map::Room.save(dangeon_id,row.x,row.y,floor,row.aisle)
+		end
 	end
 end
 
@@ -32,10 +156,11 @@ def self.get(dangeon_id, floor)
 	statement = sql_master.prepare("select * from master.maps where dangeon_id = ? and z = ?")
 	result = statement.execute(dangeon_id,floor)
 	
-	rooms = [[]]
+	rooms = []
 	result.each do |row|
-		aisle = self.convert_aisle(row["aisle"]) #aisleのbit列を人間がわかりやすい感じにする 
-		room = Map::Room.new(aisle["right"],aisle["left"],aisle["up"],aisle["down"])
+		room = Map::Room.new()
+		room.aisle = row.aisle
+		room.convert_aisle_to_hash()
 
 		rooms[row["y"]] = []
 		rooms[row["y"]][row["x"]] = room
@@ -50,12 +175,12 @@ end
 
 
 class Room
-def initialize(right,left,up,down)
+def initialize()
 	@aisle = {}
-	@aisle["right"] = right
-	@aisle["left"] = left
-	@aisle["up"] = up
-	@aisle["down"] = down
+	@aisle["right"] = nil
+	@aisle["left"] = nil
+	@aisle["up"] = nil
+	@aisle["down"] = nil
 end
 
 def self.save(dangeon_id,x,y,z,aisle)
@@ -66,44 +191,69 @@ def self.save(dangeon_id,x,y,z,aisle)
 	
 	statement.close
 end
+
+def shape_to_DBformat(x,y,dangeon_id,floor)
+	@x = x
+	@y = y
+	@z = floor
+	@dangeon_id = dangeon_id
+	
+	convert_aisle_to_int()
+end
+
+def convert_aisle_to_int()
+	tmp_aisle = 0
+	
+	if @aisle["right"]
+		tmp_aisle += RIGHT
+	end
+	
+	if @aisle["down"]
+		tmp_aisle += DOWN
+	end
+	
+	if @aisle["left"]
+		tmp_aisle += LEFT
+	end
+	
+	if @aisle["up"]
+		tmp_aisle += UP
+	end
+
+	@aisle = tmp_aisle
 end
 
 
-
-
-
-
-private
-
-# 上から反時計回りに1248が割り当てられてる
-def self.convert_aisle(num)
-	aisle = {}
+def convert_aisle_to_hash()
+	tmp_aisle = {}
 	
-	if num >= 8
-		aisle["right"] = true
-		num -= 8
+	if @aisle >= RIGHT
+		tmp_aisle["right"] = true
+		@aisle -= RIGHT
 	end
 	
-	if num >= 4
-		aisle["down"] = true
-		num -= 4
+	if @aisle >= DOWN
+		tmp_aisle["down"] = true
+		@aisle -= DOWN
 	end
 	
-	if num >= 2
-		aisle["left"] = true
-		num -= 2
+	if @aisle >= LEFT
+		tmp_aisle["left"] = true
+		@aisle -= LEFT
 	end
 	
-	if num >= 1
-		aisle["up"] = true
-		num -= 1
+	if @aisle >= UP
+		tmp_aisle["up"] = true
+		@aisle -= UP
 	end
 	
-	if num != 0
+	if @aisle != 0
 		raise "aisleがおかしい"
 	end
 	
-	return aisle
+	@aisle = tmp_aisle
+end
+
 end
 
 end

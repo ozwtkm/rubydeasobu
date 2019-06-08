@@ -32,14 +32,11 @@ def control()
 	end
 	
 	graph = Graph.new(aisles,num)
-	map = graph.validate()
+	graph.validate()
 	
-	Map.save_by_instance(map, dangeon_id, floor)
-	
-	#a =Map.get(@dangeon_id, @floor)
+	map = Map.create(aisles, num)
+	map.save(dangeon_id,floor)
 end
-
-
 
 
 end

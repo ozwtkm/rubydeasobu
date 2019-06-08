@@ -2,10 +2,6 @@
 # -*- coding: utf-8 -*-
 
 class Graph
-UP = 1
-LEFT = 2
-DOWN = 4
-RIGHT = 8
 
 def initialize(aisles,num)
 	@side_aisles = []
@@ -13,15 +9,13 @@ def initialize(aisles,num)
 	shape_aisles(aisles,num)
 
 	@seq = 1.step
-	@marks = []
-	@nodeids = {}
 
-	@nodes = {}
-	@refs = []
+	@nodeids = {}
+	@nodes = []
+	@marks = []
 	
-	create_nodes_and_refs()
+	create_nodes()
 end
-attr_accessor :nodes, :refs
 	
 	
 #スマートなやり方あとで考える
@@ -53,7 +47,7 @@ end
 
 
 
-def create_nodes_and_refs()
+def create_nodes()
 	line = Float::INFINITY
 	
 	@vertical_aisles.each.with_index do |row1,index1|
@@ -63,14 +57,10 @@ def create_nodes_and_refs()
 		end
 
 		row1.each.with_index do |row2,index2|
-			x = index2
-			y = index1
-			
 			if row2.to_i === 1
-				create_node(x,y,aisle: DOWN)
-				create_node(x,y+1,aisle: UP)
-				
-				add_ref(@nodeids[x.to_s + "_" + y.to_s], @nodeids[x.to_s + "_" + (y+1).to_s])
+				x = index2
+				y = index1
+				handle_aisle(x,y,vertical: true)
 			end
 		end
 	end
@@ -80,91 +70,82 @@ def create_nodes_and_refs()
 		if index1 === line
 			break
 		end
-	
+
 		row1.each.with_index do |row2, index2|
-			x=index2
-			y=index1
-		
 			if row2.to_i === 1
-				create_node(x,y,aisle: RIGHT)
-				create_node(x+1,y,aisle: LEFT)
-				
-				@graph.add_ref(@nodeids[x.to_s + "_" + y.to_s], @nodeids[(x+1).to_s + "_" + y.to_s])
+				x=index2
+				y=index1
+				handle_aisle(x,y,side: true)
 			end
 		end
 	end
 end
 
 
-def create_node(x,y,aisle: )
-	if @nodeids[x.to_s + "_" + y.to_s].nil?
-		nodeid = @graph.add_node(Node.new(x,y))
-		@nodeids[x.to_s + "_" + y.to_s] = nodeid
+def handle_aisle(x,y,vertical: false,side: false)
+	current_id = @nodeids[x.to_s + "_" + y.to_s]
+	if current_id.nil?
+		current = add_node(Graph::Node.new())
 	else
-		nodeid = @nodeids[x.to_s + "_" + y.to_s]
+		current = get_node(current_id)
 	end
 
-	@graph.get_node(nodeid).aisle += aisle
+	if vertical
+		go_id = @nodeids[x.to_s + "_" + (y+1).to_s]
+	end
+
+	if side
+		go_id = @nodeids[(x+1).to_s + "_" + y.to_s]
+	end
+	
+	go = get_node(go_id)
+	go.back << current.id
+	current.go << go_id
 end
 
 
-def add_node(obj)
+def add_node()
 	id = @seq.next
 
-	@nodes[id] = obj
-
-	return id
+	added_node = Graph::Node.new(id)
+	@nodes <<  added_node
+	
+	return added_node
 end
-
-
-
-
-def add_ref(srcid,dstid)
-	@refs << [srcid,dstid]
-end
-
 
 
 def get_node(id)
-	return @nodes[id]
+	return @nodes.select{|node| node.id === id}
 end
 
 
-
 def validate()
-	if @nodeids[0_0].nil?
-		raise
-	end
-
 	mark_and_sweep(1)
 
-	nodes = []
-	@marks.each do |row|
-		nodes << @nodes[row]
+	if @mark.count != @nodes.count
+		raise
 	end
-	
-	return nodes
 end
 
 
 # 直感的にはうまくいきそうと思うものの、不足なく周回でき、かつ終了できないみたいな状態に陥らない保障が取りきれてない
 def mark_and_sweep(id)
-	go = @refs.select {|a| a[0] === id}
-	back = @refs.select {|a| a[1] === id}
-	mark = @marks.select {|a| a === id}
+	current = get_node(id)
+
+	mark = @marks.select {|markid| markid === id}
 	if mark.empty?
 		@marks << id
 	end
 	
-	if !go.empty? && @marks.select {|a| a === go[0][1]}.empty?
-		nextid = go[0][1]
-	elsif !go.empty? && !go[1].nil? && @marks.select {|a| a === go[1][1]}.empty?
-		nextid = go[1][1]
-	elsif !back.empty? 
-		if !@marks.select {|a| a === back[0][0]}.empty? && !back[1].nil?
-			nextid = back[1][0] #back[0][1]に戻らないと死ぬケースってあるか？
+	if !current.go.empty? && @marks.select {|a| a === go[0][1]}.empty?
+		nextid = current.go[0]
+	elsif !current.go.empty? && !current.go[1].nil? && @marks.select {|markid| markid === go[1]}.empty?
+		nextid = current.go[1]
+	elsif !current.back.empty? 
+		if !@marks.select {|markid| markid === current.back[0]}.empty? && !current.back[1].nil?
+			nextid = current.back[1] 
 		else
-			nextid = back[0][0]
+			nextid = current.back[0]
 		end
 	else
 		return #ここにくるのはスタート地点（[0,0]に戻ってきてかつ右も下もmark済のときのみ。）
@@ -175,13 +156,12 @@ end
 
 
 class Node
-	def initialize(x,y)
-		@x=x
-		@y=y
-		@aisle=0
+	def initialize(id)
+		@id = id
+		@go = []
+		@back = []
 	end
-	attr_accessor :aisle
-	attr_reader :x, :y
+	attr_reader :id, :go, :back
 end
 
 
