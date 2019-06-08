@@ -93,6 +93,7 @@ class Room
 		@aisle=0
 	end
 	attr_accessor :aisle
+	attr_reader :x, :y
 end
 
 

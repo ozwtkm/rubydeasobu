@@ -8,16 +8,17 @@ require_relative './basemodel'
 
 
 class Map < Base_model
-	attr_reader :
 
 def initialize(rooms)
 	@rooms = rooms
 	@player_coord = [0,0]
 end
-
+attr_reader :rooms
+attr_accessor :player_coord
 
 class Room
 def initialize(right,left,up,down)
+	@aisle = {}
 	@aisle["right"] = right
 	@aisle["left"] = left
 	@aisle["up"] = up
@@ -27,42 +28,72 @@ end
 def self.add(dangeon_id,x,y,z,aisle)
 	sql_master = SQL_master.instance.sql
 	
-	statement = sql_master.prepare("insert into master.maps(dangeon_id,x,y,z,wall) values(?,?,?,?,?)")
-	statement.execute(dangeon_id,x,y,z,wall)
+	statement = sql_master.prepare("insert into master.maps(dangeon_id,x,y,z,aisle) values(?,?,?,?,?)")
+	statement.execute(dangeon_id,x,y,z,aisle)
 	
 	statement.close
 end
 end
-private_constant :Room
-
 
 def self.get(dangeon_id, floor)
 	sql_master = SQL_master.instance.sql
 	
 	statement = sql_master.prepare("select * from master.maps where dangeon_id = ? and z = ?")
-	statement.execute(dangeon_id,floor)
+	result = statement.execute(dangeon_id,floor)
 	
-	rooms = []
+	rooms = [[]]
 	result.each do |row|
-		aisle = convert_aisle(row.aisle) #aisle��bit���l�Ԃ��킩��₷�������ɂ��� 
+		aisle = self.convert_aisle(row["aisle"]) #aisleのbit列を人間がわかりやすい感じにする 
 		room = Map::Room.new(aisle["right"],aisle["left"],aisle["up"],aisle["down"])
-		rooms[row.y.to_i][row.x.to_i] = room
+
+		rooms[row["y"]] = []
+		rooms[row["y"]][row["x"]] = room
 	end
 	
 	statement.close
-	
 	map = Map.new(rooms)
 	
 	return map
 end
 
 
-def self.add_by_instance(map)
-	map.each do |row1|
-		row.each do |row2|
-			Map::Room.add(row2["dangeon_id"],row2["x"],row2["y"],row2["z"],row2["aisle"])
-		end
+def self.add_by_instance(map,dangeon_id,floor)
+	map.each do |row|
+		Map::Room.add(dangeon_id,row.x,row.y,floor,row.aisle)
 	end
+end
+
+private
+
+# 上から反時計回りに1248が割り当てられてる
+def self.convert_aisle(num)
+	aisle = {}
+	
+	if num >= 8
+		aisle["right"] = true
+		num -= 8
+	end
+	
+	if num >= 4
+		aisle["down"] = true
+		num -= 4
+	end
+	
+	if num >= 2
+		aisle["left"] = true
+		num -= 2
+	end
+	
+	if num >= 1
+		aisle["up"] = true
+		num -= 1
+	end
+	
+	if num != 0
+		raise "aisleがおかしい"
+	end
+	
+	return aisle
 end
 
 end

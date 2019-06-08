@@ -20,7 +20,7 @@ def control()
 	@dangeon_id = data[0].to_i
 	@floor =  data[1].to_i
 	@num = data[2].to_i
-	@refs= data[3]	
+	@refs= data[3]
 
 	@side_refs = [[]]
 	@vertical_refs = [[]]
@@ -38,7 +38,9 @@ def control()
 
 	map = Map_util.create(@side_refs,@vertical_refs) # Maputilの中のcreate関数にmarkandsweepとmapobj生成がらっぷされる
 	
-	Map.add_by_instance(map)
+	Map.add_by_instance(map, @dangeon_id, @floor)
+	
+	a =Map.get(@dangeon_id, @floor)
 end
 
 
