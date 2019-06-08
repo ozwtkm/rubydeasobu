@@ -16,24 +16,15 @@ end
 attr_reader :rooms
 attr_accessor :player_coord
 
-class Room
-def initialize(right,left,up,down)
-	@aisle = {}
-	@aisle["right"] = right
-	@aisle["left"] = left
-	@aisle["up"] = up
-	@aisle["down"] = down
+
+def save_by_instance(map,dangeon_id,floor)
+	map.each do |row|
+		Map::Room.save(dangeon_id,row.x,row.y,floor,row.aisle)
+	end
 end
 
-def self.add(dangeon_id,x,y,z,aisle)
-	sql_master = SQL_master.instance.sql
-	
-	statement = sql_master.prepare("insert into master.maps(dangeon_id,x,y,z,aisle) values(?,?,?,?,?)")
-	statement.execute(dangeon_id,x,y,z,aisle)
-	
-	statement.close
-end
-end
+
+
 
 def self.get(dangeon_id, floor)
 	sql_master = SQL_master.instance.sql
@@ -57,11 +48,30 @@ def self.get(dangeon_id, floor)
 end
 
 
-def self.add_by_instance(map,dangeon_id,floor)
-	map.each do |row|
-		Map::Room.add(dangeon_id,row.x,row.y,floor,row.aisle)
-	end
+
+class Room
+def initialize(right,left,up,down)
+	@aisle = {}
+	@aisle["right"] = right
+	@aisle["left"] = left
+	@aisle["up"] = up
+	@aisle["down"] = down
 end
+
+def self.save(dangeon_id,x,y,z,aisle)
+	sql_master = SQL_master.instance.sql
+	
+	statement = sql_master.prepare("insert into master.maps(dangeon_id,x,y,z,aisle) values(?,?,?,?,?)")
+	statement.execute(dangeon_id,x,y,z,aisle)
+	
+	statement.close
+end
+end
+
+
+
+
+
 
 private
 
