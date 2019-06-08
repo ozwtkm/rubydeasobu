@@ -9,39 +9,38 @@ class Map_util
 	
 	def initialize(side_refs, vertical_refs)
 		@graph = Map_util::Graph.new
-		@roomids = []
+		@roomids = {}
 		@side_refs = side_refs
 		@vertical_refs = vertical_refs
 	end
+	attr_accessor :roomids, :graph
 		
 	def self.create(side_refs, vertical_refs)
 		mapcreater = Map_util.new(side_refs, vertical_refs)
 		
 		mapcreater.create_rooms() #参照からへやつくる
-		
+
 		if mapcreater.roomids["0_0"].nil?
 			raise # [0][0]はスタート地点として存在しなければならないとする
 		end
 		
-		map = mapcreater.graph.get_sweeped_rooms() # たどりながらnewしていき浮き島になってるroomを殺す
+		map = mapcreater.graph.get_map() # たどりながらnewしていき浮き島になってるroomを殺す
 		# 浮き島が判明したとき、raiseしてもいいが、
 		# 浮き島を除去した本島をそのまま返した方がシンプルでよいのではとおもっている。
 
 		return map
 	end
 
-private
-
 	def create_rooms()
 		line = Float::INFINITY
 		
 		@vertical_refs.each.with_index do |row1,index1|
-			if row1.count("1") === 0
-				line = index+1
+			if row1.count(1) === 0
+				line = index1+1
 				break
 			end
-			
-			row1.each do |row2,index2|
+
+			row1.each.with_index do |row2,index2|
 				x = index2
 				y = index1
 				
@@ -49,9 +48,9 @@ private
 					create_room(x,y,aisle: DOWN)
 					create_room(x,y+1,aisle: UP)
 					
-					@graph.add_ref(@roomids["x.to_s + "_" + y.to_s"], @roomids["x.to_s + "_" + (y+1).to_s"])
+					@graph.add_ref(@roomids[x.to_s + "_" + y.to_s], @roomids[x.to_s + "_" + (y+1).to_s])
 				end
-			end	
+			end
 		end
 		
 		
@@ -68,7 +67,7 @@ private
 					create_room(x,y,aisle: RIGHT)
 					create_room(x+1,y,aisle: LEFT)
 					
-					@graph.add_ref(@roomids["x.to_s + "_" + y.to_s"], @roomids["(x+1).to_s + "_" + y.to_s"])
+					@graph.add_ref(@roomids[x.to_s + "_" + y.to_s], @roomids[(x+1).to_s + "_" + y.to_s])
 				end
 			end
 		end
@@ -77,14 +76,13 @@ private
 
 	def create_room(x,y,aisle: )
 		if @roomids[x.to_s + "_" + y.to_s].nil?
-			roomid = graph.add_room(Map::Room.new(x,y))
+			roomid = @graph.add_room(Map_util::Room.new(x,y))
 			@roomids[x.to_s + "_" + y.to_s] = roomid
 		else
 			roomid = @roomids[x.to_s + "_" + y.to_s]
 		end
 
 		@graph.get_room(roomid).aisle += aisle
-		@graph.add_ref(roomid,)
 	end
 
 
@@ -94,7 +92,7 @@ class Room
 		@y=y
 		@aisle=0
 	end
-	attr_accesor :aisle
+	attr_accessor :aisle
 end
 
 
@@ -105,15 +103,14 @@ class Graph
 		@refs = []
 		@marks = []
 	end
+	attr_accessor :rooms, :refs
 
 	def add_room(roomobj)
-		@rooms[@seq] = roomobj
+		id = @seq.next
+	
+		@rooms[id] = roomobj
 
-		added_id = @seq
-
-		@seq.next
-
-		return added_id
+		return id
 	end
 
 	def add_ref(srcid,dstid)
@@ -137,27 +134,30 @@ class Graph
 
 	# 直感的にはうまくいきそうと思うものの、不足なく周回でき、かつ終了できないみたいな状態に陥らない保障が取りきれてない
 	def mark_and_sweep(id)
-		next = @refs.select {|a| a[0] === id}
+		go = @refs.select {|a| a[0] === id}
 		back = @refs.select {|a| a[1] === id}
 		mark = @marks.select {|a| a === id}
 		if mark.empty?
 			@marks << id
 		end
 		
-		if !next.empty? && @marks.select {|a| a === next[0][1]}.empty?
-			nextid = next[0][1]
-		elsif !next.empty? && !next[1].nil? && @marks.select {|a| a === next[1][1]}.empty?
-			nextid = next[1][1]
+		if !go.empty? && @marks.select {|a| a === go[0][1]}.empty?
+			nextid = go[0][1]
+		elsif !go.empty? && !go[1].nil? && @marks.select {|a| a === go[1][1]}.empty?
+			nextid = go[1][1]
 		elsif !back.empty? 
 			if !@marks.select {|a| a === back[0][0]}.empty? && !back[1].nil?
 				nextid = back[1][0] #back[0][1]に戻らないと死ぬケースってあるか？
 			else
 				nextid = back[0][0]
+			end
 		else
 			return #ここにくるのはスタート地点（[0,0]に戻ってきてかつ右も下もmark済のときのみ。）
 		end
 
 		mark_and_sweep(nextid)
 	end
+
+end
 
 end
