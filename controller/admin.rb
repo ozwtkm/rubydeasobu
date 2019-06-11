@@ -13,28 +13,14 @@ def initialize(req, res)
 end
 
 def control()
-	#後々リクエストにダンジョンIDとフロア（z）も含める。
-	# ↓リクエストで["1","1","3",["1","1","1","1","1","1","1","1","1","1","1","1"]]みたいなのくる
-	data = JSON.parse(@req.body)
-	
-	dangeon_id = data[0].to_i
-	floor =  data[1].to_i
-	num = data[2].to_i
-	aisles= data[3]
-	
-	if num < 2 || num > 100 # まあここは決めの問題ではある
-		raise
-	end
-	
-	require_refs_count = 2*num*(num-1)
-	if aisles.count != require_refs_count
-		raise
-	end
-	
-	graph = Graph.new(aisles,num)
+	aisles= JSON.parse(@req.body)
+	dangeon_id = @URLquery[0].to_i
+	floor =  @URLquery[1].to_i
+
+	graph = Graph.new(aisles)
 	graph.validate()
 	
-	map = Map.create(aisles, num)
+	map = Map.create(aisles)
 	map.save(dangeon_id,floor)
 end
 

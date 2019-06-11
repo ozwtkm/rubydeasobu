@@ -21,8 +21,10 @@ attr_reader :rooms
 attr_accessor :player_coord
 
 
-def self.create(aisles, num)
-	aisles = shape_aisles(aisles, num)
+def self.create(aisles)
+	num = calc_one_side(aisles)
+
+	aisles = shape_aisles(aisles,num)
 	side_aisles = aisles["side"]
 	vertical_aisles = aisles["vertical"]
 
@@ -32,6 +34,13 @@ def self.create(aisles, num)
 	
 	return map
 end
+
+# Graphutilで検証されたaislesのみ渡されるはずなので、
+# ちゃんと自然数になることが保証されてる
+def calc_one_side(aisles)
+	return (Math.sqrt(1+2*aisles.count)/2).to_i
+end
+
 
 def shape_aisles(aisles, num)
 	line=0
@@ -133,28 +142,27 @@ def add_aisle(room,aisle:)
 end
 
 
-
-
 def save(dangeon_id,floor)
 	@rooms.each.with_index do |row1,index1|
 		row1.each.with_index do |row2,index2|
 			x = index2
 			y = index1
 		
-			row.shape_to_DBformat(x,y,dangeon_id,floor)
-			Map::Room.save(dangeon_id,row.x,row.y,floor,row.aisle)
+			row2.shape_to_DBformat(x,y,dangeon_id,floor)
+			row2.save()
 		end
 	end
 end
 
 
-
-
 def self.get(dangeon_id, floor)
 	sql_master = SQL_master.instance.sql
 	
+	# todo memcached
 	statement = sql_master.prepare("select * from master.maps where dangeon_id = ? and z = ?")
 	result = statement.execute(dangeon_id,floor)
+	
+	Validator.validate_SQL_error(result.count, is_multi_line: true)
 	
 	rooms = []
 	result.each do |row|
@@ -162,7 +170,7 @@ def self.get(dangeon_id, floor)
 		room.aisle = row.aisle
 		room.convert_aisle_to_hash()
 
-		rooms[row["y"]] = []
+		rooms[row["y"]] = [] if rooms[row["y"]].nil?
 		rooms[row["y"]][row["x"]] = room
 	end
 	
@@ -183,11 +191,11 @@ def initialize()
 	@aisle["down"] = nil
 end
 
-def self.save(dangeon_id,x,y,z,aisle)
+def save()
 	sql_master = SQL_master.instance.sql
 	
 	statement = sql_master.prepare("insert into master.maps(dangeon_id,x,y,z,aisle) values(?,?,?,?,?) ON DUPLICATE KEY UPDATE dangeon_id=?,x=?,y=?,z=?,aisle=?")
-	statement.execute(dangeon_id,x,y,z,aisle,dangeon_id,x,y,z,aisle)
+	statement.execute(@dangeon_id,@x,@y,@z,@aisle,@dangeon_id,@x,@y,@z,@aisle)
 	
 	statement.close
 end
