@@ -3,20 +3,33 @@
 
 class Graph
 
-def initialize(aisles,num)
+
+def initialize(aisles)
+	num = calc_one_side(aisles)
+
 	@side_aisles = []
 	@vertical_aisles = []
 	shape_aisles(aisles,num)
 
-	@seq = 1.step
+	@seq_nodeid = 1.step
+	@seq_markid = 1.step
 
-	@nodeids = {}
-	@nodes = []
-	@marks = []
+	@relation = {} #mapにおけるroomに対応するNode。1roomに複数のNodeが対応する。
+	@nodes = [] 
+	@marks = {}
 	
 	create_nodes()
 end
+
+def calc_one_side(aisles)
+	num = Math.sqrt(1+2*aisles.count)/2
 	
+	if num.ceil != num
+		raise 
+	end
+	
+	return num.to_i
+end
 	
 #スマートなやり方あとで考える
 def shape_aisles(aisles,num)
@@ -83,31 +96,54 @@ end
 
 
 def handle_aisle(x,y,vertical: false,side: false)
-	current_id = @nodeids[x.to_s + "_" + y.to_s]
-	if current_id.nil?
-		current = add_node(Graph::Node.new())
-	else
-		current = get_node(current_id)
-	end
-
-	if vertical
-		go_id = @nodeids[x.to_s + "_" + (y+1).to_s]
-	end
-
-	if side
-		go_id = @nodeids[(x+1).to_s + "_" + y.to_s]
+	current = @relation[x.to_s + "_" + y.to_s]
+	
+	if current.nil?
+		markid = set_mark(x,y)
+		current = add_node(markid)
+		@relation[x.to_s + "_" + y.to_s] << current
 	end
 	
-	go = get_node(go_id)
-	go.back << current.id
-	current.go << go_id
+	if vertical
+		markid = set_mark(x,y+1)
+		child = add_node(markid)
+	
+		current.each do |row|
+			get_node(row).child_id = child.id
+			@relation[x.to_s + "_" + (y+1).to_s] << child.id
+		end
+	elsif side
+		markid = set_mark(x+1,y)
+		child = add_node(markid)
+	
+		current.each do |row|
+			get_node(row).child_id = child.id
+			@relation[(x+1).to_s + "_" + y.to_s] << child.id
+		end
+	end
 end
 
+def set_mark(x,y)
+	if @relation[x.to_s + "_" + y.to_s].nil?
+		mark = add_mark()
+	else
+		mark = @relation[x.to_s + "_" + y.to_s].first.mark_id
+	end
+	
+	return mark
+end
 
-def add_node()
-	id = @seq.next
+def add_mark()
+	id = @seq_markid.next
+	@marks[id] = false
+	
+	return id
+end
 
-	added_node = Graph::Node.new(id)
+def add_node(markid)
+	nodeid = @seq_nodeid.next
+
+	added_node = Graph::Node.new(nodeid,markid)
 	@nodes <<  added_node
 	
 	return added_node
@@ -122,46 +158,39 @@ end
 def validate()
 	mark_and_sweep(1)
 
-	if @mark.count != @nodes.count
+	if @marks.value?(false)
 		raise
 	end
 end
 
-
-# 直感的にはうまくいきそうと思うものの、不足なく周回でき、かつ終了できないみたいな状態に陥らない保障が取りきれてない
+#「mapの世界では同じroomを指す」が、graphの世界では親が異なるノードを別ノードとみなすと、
+#二分木をつくることができ、マップの探索を二分木探索に帰着でき、問題が明るくなる。
+#ただ計算量はえげつなくなる。(高さ2n-1の木になる)
+#残念ながら指数関数オーダになるのでボツかな..
+#しかし考察の余地はある？
+#あくまでmarkを拾うのが目的だから探索途中で切り上げられるケースも多そうだし..
+#幅優先探索にすれば早期に全markをたどれるかもとか
 def mark_and_sweep(id)
 	current = get_node(id)
 
-	mark = @marks.select {|markid| markid === id}
-	if mark.empty?
-		@marks << id
+	mark = @marks[current.mark_id]
+	if !mark
+		mark = true
 	end
 	
-	if !current.go.empty? && @marks.select {|a| a === go[0][1]}.empty?
-		nextid = current.go[0]
-	elsif !current.go.empty? && !current.go[1].nil? && @marks.select {|markid| markid === go[1]}.empty?
-		nextid = current.go[1]
-	elsif !current.back.empty? 
-		if !@marks.select {|markid| markid === current.back[0]}.empty? && !current.back[1].nil?
-			nextid = current.back[1] 
-		else
-			nextid = current.back[0]
-		end
-	else
-		return #ここにくるのはスタート地点（[0,0]に戻ってきてかつ右も下もmark済のときのみ。）
+	current.child_id.each do |row|
+		mark_and_sweep(row)
 	end
-
-	mark_and_sweep(nextid)
 end
 
 
 class Node
-	def initialize(id)
+	def initialize(id,mark_id)
 		@id = id
-		@go = []
-		@back = []
+		@mark_id = markid
+		@child_id = []
 	end
-	attr_reader :id, :go, :back
+	attr_reader :id, :mark_id, :child_id 
 end
 
 
