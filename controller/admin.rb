@@ -1,11 +1,11 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
 require 'json'
-require_relative './_baseclass_require_login'
+require_relative './_baseclass_require_admin'
 require_relative '../model/map'
 require_relative '../_util/graph_util'
 
-class Admin_controller < Base_require_login
+class Admin_controller < Base_require_admin
 
 def initialize(req, res)
 	@template = "admin.erb"
