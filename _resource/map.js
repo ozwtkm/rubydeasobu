@@ -44,12 +44,12 @@ function submit_mapdata(){
 		dataType: 'json',
 		data : json
 	}).done(function(data){
-		var res = $.parseJSON(data.responseText);
-		
-		$("#msg").append(res.rooms)
+		console.log(data);
+		//var res = $.parseJSON(data);
+		$("#msg").append(data.Message);
 	}).fail(function(data){
 		var res = $.parseJSON(data.responseText);
-			$("#msg").append(res.ErrorMessage);
+		$("#msg").append(res.ErrorMessage);
 	});
 }
 

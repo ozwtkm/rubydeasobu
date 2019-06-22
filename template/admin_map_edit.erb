@@ -3,11 +3,13 @@
 
 	if !c[:e].nil? 
 		result = {:ErrorMessage=>c[:e].message}
-	end 
-
-	if !c[:map].nil?
-		result = c[:monsters].map do |row|
-			{:name=>row.name, :rarity=>row.rarity}
+	elsif !c[:map].nil?
+		result = []
+		c[:map].rooms.each do |row|
+			result <<row
 		end
+	else
+		result = {:Message=>"つくったお"}
 	end
+	
 %><%= JSON.generate(result) %>
