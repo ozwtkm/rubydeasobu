@@ -29,7 +29,7 @@ def self.create_controller_class(filename)
 		classname.slice!(".rb")
 
 		# 「_hoge.rb」とか「huga.rb.xxx(一時ファイル)」を除去
-		if classname.match(/\A[0-9a-zA-Z]+_?[0-9a-zA-Z]*\z/).nil?
+		if classname.match(/\A[0-9a-zA-Z]+[_0-9a-zA-Z]*\z/).nil?
 			return
 		end
 		

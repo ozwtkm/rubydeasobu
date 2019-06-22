@@ -31,16 +31,26 @@ function submit_mapdata(){
 	//var num = document.getElementById('mapnum').value;
 	//var mapinfo = create_mapinfo();
 	var wallinfo = create_wallinfo();
+	
+	var dangeon = document.getElementById("dangeon").value
+	var floor = document.getElementById("floor").value
 
 	//var maparray = [num,mapinfo,wallinfo];
 	var json = JSON.stringify(wallinfo);
 	
 	$.ajax({
-		url: "",
+		url: "admin_map_edit/" + dangeon + "/" + floor,
 		type:'POST',
 		dataType: 'json',
 		data : json
-	})
+	}).done(function(data){
+		var res = $.parseJSON(data.responseText);
+		
+		$("#msg").append(res.rooms)
+	}).fail(function(data){
+		var res = $.parseJSON(data.responseText);
+			$("#msg").append(res.ErrorMessage);
+	});
 }
 
 function create_mapinfo(){

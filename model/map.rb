@@ -5,6 +5,7 @@ require_relative '../_util/SQL_master'
 require_relative '../_util/SQL_transaction'
 require_relative '../_util/cache'
 require_relative './basemodel'
+require_relative '../exception/Error_inconsistency_of_aisle'
 
 
 class Map < Base_model
@@ -22,13 +23,13 @@ attr_accessor :player_coord
 
 
 def self.create(aisles)
-	num = calc_one_side(aisles)
+	num = self.calc_one_side(aisles)
 
-	aisles = shape_aisles(aisles,num)
-	side_aisles = aisles["side"]
-	vertical_aisles = aisles["vertical"]
+	shaped_aisles = self.shape_aisles(aisles,num)
+	side_aisles = shaped_aisles["side"]
+	vertical_aisles = shaped_aisles["vertical"]
 
-	rooms = create_rooms(side_aisles, vertical_aisles)
+	rooms = self.create_rooms(side_aisles, vertical_aisles)
 	
 	map = Map.new(rooms)
 	
@@ -37,82 +38,75 @@ end
 
 # Graphutilで検証されたaislesのみ渡されるはずなので、
 # ちゃんと自然数になることが保証されてる
-def calc_one_side(aisles)
-	return (Math.sqrt(1+2*aisles.count)/2).to_i
+def self.calc_one_side(aisles)
+	return ((1+Math.sqrt(1+2*aisles.count))/2).to_i
 end
 
 
-def shape_aisles(aisles, num)
-	line=0
+def self.shape_aisles(aisles, num)
+	last_line = num-1
 	result = {}
+	result["side"] = []
+	result["vertical"] = []
 
-	(num-1).times do
+	(num-1).times do |index|
+		result["side"][index] = []
+		result["vertical"][index] = []
+		
 		(num-1).times do 
-			result["side"][line].push(aisles.shift.to_i)
-		end
-		num.times do
-			result["vertical"][line].push(aisles.shift.to_i)
+			result["side"][index].push(aisles.shift.to_i)
 		end
 		
-		line+=1
-		result["side"][line] = []
-		result["vertical"][line] = []
+		num.times do
+			result["vertical"][index].push(aisles.shift.to_i)
+		end
 	end
 
+	result["side"][last_line] = []
 	(num-1).times do
-		result["side"][line].push(aisles.shift.to_i)
+		result["side"][last_line].push(aisles.shift.to_i)
 	end
-	
-	if result["side"][line][num-2].nil? || !aisles.last.nil?
-		raise
-	end
-	
+
 	return result
 end
 
 
 
-def create_rooms(side_aisles, vertical_aisles)
-	line = Float::INFINITY
+def self.create_rooms(side_aisles, vertical_aisles)
 	rooms = []
 	
 	vertical_aisles.each.with_index do |row1,index1|
-		if row1.count(1) === 0
-			line = index1+1
-			break
-		end
+		rooms[index1] = [] if rooms[index1].nil?
+		rooms[index1+1] = []
+
 		
-		rooms[y] = []
 		row1.each.with_index do |row2,index2|
 			if row2.to_i === 1
 				x = index2
 				y = index1
 				
-				rooms[y][x] = create_room(rooms,x,y)
-				rooms[y+1][x] = create_room(rooms,x,y+1)
+				rooms[y][x] = self.create_room(rooms,x,y)
+				rooms[y+1][x] = self.create_room(rooms,x,y+1)
 				
-				add_aisle(rooms[y][x],aisle: DOWN)
-				add_aisle(rooms[y+1][x],aisle: UP)
+				self.add_aisle(rooms[y][x],direction: DOWN)
+				self.add_aisle(rooms[y+1][x],direction: UP)
 			end
 		end
 	end
 	
 	side_aisles.each.with_index do |row1,index1|
-		if index1 === line
-			break
-		end
+		rooms[index1] = [] if rooms[index1].nil?
 	
-		rooms[y] = []
 		row1.each.with_index do |row2, index2|
 			if row2.to_i === 1
 				x=index2
 				y=index1
 				
-				rooms[y][x] = create_room(rooms,x,y)
-				rooms[y][x+1] = create_room(rooms,x+1,y)
+				rooms[y][x] = self.create_room(rooms,x,y)
+				rooms[y][x+1] = self.create_room(rooms,x+1,y)
 				
-				add_aisle(rooms[y][x],aisle: RIGHT)
-				add_aisle(rooms[y][x+1],aisle: LEFT)
+				self.add_aisle(rooms[y][x],direction: RIGHT)
+				self.add_aisle(rooms[y][x+1],direction: LEFT)
 			end
 		end
 	end
@@ -120,47 +114,59 @@ def create_rooms(side_aisles, vertical_aisles)
 	return rooms
 end
 
-def create_room(rooms,x,y)
-	if rooms.select{|room| room.x === x && room.y === y}.empty?
-		return Map::Room.new(x,y)
+def self.create_room(rooms,x,y)
+	if rooms[y][x].nil?
+		return Map::Room.new()
 	end
+	
+	return rooms[y][x]
 end
 
-def add_aisle(room,aisle:)
-	case aisle
+
+def self.add_aisle(room,direction:)
+	case direction
 	when UP
-		aisle = "up"
+		direction = "up"
 	when LEFT
-		aisle = "left"
+		direction = "left"
 	when DOWN
-		aisle = "down"
+		direction = "down"
 	when RIGHT
-		aisle = "right"
+		direction = "right"
 	end
 
-	room.aisle[aisle] = true
+	room.aisle[direction] = true
 end
 
 
-def save(dangeon_id,floor)
+def save(dangeon_id,z)
+	# ON DUPLICATE KEY UPDATE方式だと、現状のmapの仕様では、
+	# update時、newされてない座標の既存の部屋が残存してしまうため、sava時は一回deleteすることにする
+	sql_master = SQL_master.instance.sql
+
+	statement = sql_master.prepare("delete from master.maps where dangeon_id = ? and z = ?")
+	statement.execute(dangeon_id,z)
+	
+	statement.close
+
 	@rooms.each.with_index do |row1,index1|
 		row1.each.with_index do |row2,index2|
 			x = index2
 			y = index1
 		
-			row2.shape_to_DBformat(x,y,dangeon_id,floor)
+			row2.shape_to_DBformat(x,y,dangeon_id,z)
 			row2.save()
 		end
 	end
 end
 
 
-def self.get(dangeon_id, floor)
+def self.get(dangeon_id, z)
 	sql_master = SQL_master.instance.sql
 	
 	# todo memcached
 	statement = sql_master.prepare("select * from master.maps where dangeon_id = ? and z = ?")
-	result = statement.execute(dangeon_id,floor)
+	result = statement.execute(dangeon_id,z)
 	
 	Validator.validate_SQL_error(result.count, is_multi_line: true)
 	
@@ -183,6 +189,8 @@ end
 
 
 class Room
+attr_accessor :aisle
+
 def initialize()
 	@aisle = {}
 	@aisle["right"] = nil
@@ -200,10 +208,10 @@ def save()
 	statement.close
 end
 
-def shape_to_DBformat(x,y,dangeon_id,floor)
+def shape_to_DBformat(x,y,dangeon_id,z)
 	@x = x
 	@y = y
-	@z = floor
+	@z = z
 	@dangeon_id = dangeon_id
 	
 	convert_aisle_to_int()
@@ -256,7 +264,7 @@ def convert_aisle_to_hash()
 	end
 	
 	if @aisle != 0
-		raise "aisleがおかしい"
+		raise Error_inconsistency_of_aisle.new
 	end
 	
 	@aisle = tmp_aisle

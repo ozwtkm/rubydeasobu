@@ -1,5 +1,7 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
+require_relative '../exception/Error_inconsistency_of_count'
+require_relative '../exception/Error_inconsistency_of_aisle'
 
 class Graph
 
@@ -11,64 +13,46 @@ def initialize(aisles)
 	@vertical_aisles = []
 	shape_aisles(aisles,num)
 
-	@seq_nodeid = 1.step
-	@seq_markid = 1.step
+	@relation = {} #mapにおけるroomとNodeの対応
 
-	@relation = {} #mapにおけるroomに対応するNode。1roomに複数のNodeが対応する。
-	@nodes = [] 
-	@marks = {}
-	
 	create_nodes()
 end
 
 def calc_one_side(aisles)
-	num = Math.sqrt(1+2*aisles.count)/2
-	
+	num = (1+Math.sqrt(1+2*aisles.count))/2
 	if num.ceil != num
-		raise 
+		raise Error_inconsistency_of_count.new("通路")
 	end
 	
 	return num.to_i
 end
 	
-#スマートなやり方あとで考える
-def shape_aisles(aisles,num)
-	line=0
 
-	(num-1).times do
+def shape_aisles(aisles,num)
+	last_line = num-1
+
+	(num-1).times do |index|
+		@side_aisles[index] = []
+		@vertical_aisles[index] = []
 		(num-1).times do 
-			@side_aisles[line].push(aisles.shift.to_i)
+			@side_aisles[index].push(aisles.shift.to_i)
 		end
 		num.times do
-			@vertical_aisles[line].push(aisles.shift.to_i)
+			@vertical_aisles[index].push(aisles.shift.to_i)
 		end
-		
-		line+=1
-		@side_aisles[line] = []
-		@vertical_aisles[line] = []
 	end
 
+	# n-1回のloopだと最下部のsideaislesだけ余るので例外対応
+	@side_aisles[last_line] = []
 	(num-1).times do
-		@side_aisles[line].push(aisles.shift.to_i)
-	end
-	
-	if @side_aisles[line][num-2].nil? || !aisles.last.nil?
-		raise
+		@side_aisles[last_line].push(aisles.shift.to_i)
 	end
 	
 end
 
 
-
 def create_nodes()
-	line = Float::INFINITY
-	
 	@vertical_aisles.each.with_index do |row1,index1|
-		if row1.count(1) === 0
-			line = index1+1
-			break
-		end
-
 		row1.each.with_index do |row2,index2|
 			if row2.to_i === 1
 				x = index2
@@ -80,117 +64,76 @@ def create_nodes()
 	
 	
 	@side_aisles.each.with_index do |row1,index1|
-		if index1 === line
-			break
-		end
-
 		row1.each.with_index do |row2, index2|
 			if row2.to_i === 1
 				x=index2
 				y=index1
-				handle_aisle(x,y,side: true)
+				handle_aisle(x,y,vertical: false)
 			end
 		end
 	end
 end
 
 
-def handle_aisle(x,y,vertical: false,side: false)
-	current = @relation[x.to_s + "_" + y.to_s]
-	
-	if current.nil?
-		markid = set_mark(x,y)
-		current = add_node(markid)
-		@relation[x.to_s + "_" + y.to_s] << current
+def handle_aisle(x,y,vertical: )
+	if @relation[x.to_s + "_" + y.to_s].nil?
+		@relation[x.to_s + "_" + y.to_s] = Node.new
 	end
 	
 	if vertical
-		markid = set_mark(x,y+1)
-		child = add_node(markid)
-	
-		current.each do |row|
-			get_node(row).child_id = child.id
-			@relation[x.to_s + "_" + (y+1).to_s] << child.id
+		if @relation[x.to_s + "_" + (y+1).to_s].nil?
+			@relation[x.to_s + "_" + (y+1).to_s] = Node.new
 		end
-	elsif side
-		markid = set_mark(x+1,y)
-		child = add_node(markid)
 	
-		current.each do |row|
-			get_node(row).child_id = child.id
-			@relation[(x+1).to_s + "_" + y.to_s] << child.id
-		end
-	end
-end
-
-def set_mark(x,y)
-	if @relation[x.to_s + "_" + y.to_s].nil?
-		mark = add_mark()
+		@relation[x.to_s + "_" + y.to_s].refs << @relation[x.to_s + "_" + (y+1).to_s]
+		@relation[x.to_s + "_" + (y+1).to_s].refs << @relation[x.to_s + "_" + y.to_s]
 	else
-		mark = @relation[x.to_s + "_" + y.to_s].first.mark_id
+		if @relation[(x+1).to_s + "_" + y.to_s].nil?
+			@relation[(x+1).to_s + "_" + y.to_s] = Node.new
+		end
+	
+		@relation[x.to_s + "_" + y.to_s].refs << @relation[(x+1).to_s + "_" + y.to_s]
+		@relation[(x+1).to_s + "_" + y.to_s].refs << @relation[x.to_s + "_" + y.to_s]
 	end
-	
-	return mark
 end
-
-def add_mark()
-	id = @seq_markid.next
-	@marks[id] = false
-	
-	return id
-end
-
-def add_node(markid)
-	nodeid = @seq_nodeid.next
-
-	added_node = Graph::Node.new(nodeid,markid)
-	@nodes <<  added_node
-	
-	return added_node
-end
-
-
-def get_node(id)
-	return @nodes.select{|node| node.id === id}
-end
-
 
 def validate()
-	mark_and_sweep(1)
+	# この制約は仕様の決めの問題なので別になくても良い
+	if @relation["0_0"].nil?
+		raise Error_inconsistency_of_aisle.new(start: true)
+	end
 
-	if @marks.value?(false)
-		raise
+	mark_and_sweep(@relation["0_0"])
+
+	@relation.each do |k,v|
+		if !v.is_marked
+			raise Error_inconsistency_of_aisle.new()
+		end
 	end
 end
 
-#「mapの世界では同じroomを指す」が、graphの世界では親が異なるノードを別ノードとみなすと、
-#二分木をつくることができ、マップの探索を二分木探索に帰着でき、問題が明るくなる。
-#ただ計算量はえげつなくなる。(高さ2n-1の木になる)
-#残念ながら指数関数オーダになるのでボツかな..
-#しかし考察の余地はある？
-#あくまでmarkを拾うのが目的だから探索途中で切り上げられるケースも多そうだし..
-#幅優先探索にすれば早期に全markをたどれるかもとか
-def mark_and_sweep(id)
-	current = get_node(id)
 
-	mark = @marks[current.mark_id]
-	if !mark
-		mark = true
+def mark_and_sweep(current)
+	if !current.is_marked
+		current.is_marked = true
 	end
-	
-	current.child_id.each do |row|
-		mark_and_sweep(row)
+
+	current.refs.each do |row|
+		if !row.is_marked
+			mark_and_sweep(row)
+		end
 	end
 end
 
 
 class Node
-	def initialize(id,mark_id)
-		@id = id
-		@mark_id = markid
-		@child_id = []
+	def initialize()
+		@is_marked = false
+		@refs = []
 	end
-	attr_reader :id, :mark_id, :child_id 
+	
+	attr_reader :refs
+	attr_accessor :is_marked
 end
 
 
