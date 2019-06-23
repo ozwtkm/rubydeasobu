@@ -16,23 +16,19 @@ end
 def control()
 	@aisles = JSON.parse(@req.body)
 	check_aisle()
-	aisles2 = @aisles.dup # 破壊的処理を2回やるので複製しとく
-	
+
 	dangeon_id = @URLquery[1].to_i
 	z =  @URLquery[2].to_i # フロアのこと
 
-	graph = Graph.new(@aisles)
-	graph.validate()
+	graph = Graph.new(@aisles.dup) #graphの正当性検証もnewの中で行われる
 	
-	map = Map.create(aisles2)
-	map.save(dangeon_id,z)
+	map = Map.create(@aisles,dangeon_id,z)
+	map.save()
 end
 
 def check_aisle()
-	@aisles.each do |row|
-		if row.match(/\A[0,1]\z/).nil?
-			raise Error_0or1.new("壁の値")
-		end
+	if !@aisles.all?{|x| ["0","1"].include?(x)}
+		raise Error_0or1.new("壁の値")
 	end
 end
 

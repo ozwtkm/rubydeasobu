@@ -5,20 +5,22 @@ require_relative '../exception/Error_inconsistency_of_aisle'
 
 class Graph
 
-
 def initialize(aisles)
-	num = calc_one_side(aisles)
+	num = Graph.calc_one_side(aisles)
+	shaped_aisles = Graph.shape_aisles(aisles,num)
 
-	@side_aisles = []
-	@vertical_aisles = []
-	shape_aisles(aisles,num)
-
+	@side_aisles = shaped_aisles["side"]
+	@vertical_aisles = shaped_aisles["vertical"]
+	
 	@relation = {} #mapにおけるroomとNodeの対応
-
+	
 	create_nodes()
+
+	validate()
 end
 
-def calc_one_side(aisles)
+
+def self.calc_one_side(aisles)
 	num = (1+Math.sqrt(1+2*aisles.count))/2
 	if num.ceil != num
 		raise Error_inconsistency_of_count.new("通路")
@@ -28,29 +30,36 @@ def calc_one_side(aisles)
 end
 	
 
-def shape_aisles(aisles,num)
+def self.shape_aisles(aisles, num)
 	last_line = num-1
+	result = {}
+	result["side"] = []
+	result["vertical"] = []
 
 	(num-1).times do |index|
-		@side_aisles[index] = []
-		@vertical_aisles[index] = []
+		result["side"][index] = []
+		result["vertical"][index] = []
+		
 		(num-1).times do 
-			@side_aisles[index].push(aisles.shift.to_i)
+			result["side"][index].push(aisles.shift.to_i)
 		end
+		
 		num.times do
-			@vertical_aisles[index].push(aisles.shift.to_i)
+			result["vertical"][index].push(aisles.shift.to_i)
 		end
 	end
 
 	# n-1回のloopだと最下部のsideaislesだけ余るので例外対応
-	@side_aisles[last_line] = []
+	result["side"][last_line] = []
 	(num-1).times do
-		@side_aisles[last_line].push(aisles.shift.to_i)
+		result["side"][last_line].push(aisles.shift.to_i)
 	end
-	
+
+	return result
 end
 
 
+# もうちょっと綺麗に書ける余地あり
 def create_nodes()
 	@vertical_aisles.each.with_index do |row1,index1|
 		row1.each.with_index do |row2,index2|
@@ -74,41 +83,43 @@ def create_nodes()
 	end
 end
 
-
 def handle_aisle(x,y,vertical: )
-	if @relation[x.to_s + "_" + y.to_s].nil?
-		@relation[x.to_s + "_" + y.to_s] = Node.new
+	if @relation[coord(x,y)].nil?
+		@relation[coord(x,y)] = Node.new
 	end
 	
 	if vertical
-		if @relation[x.to_s + "_" + (y+1).to_s].nil?
-			@relation[x.to_s + "_" + (y+1).to_s] = Node.new
+		if @relation[coord(x,y+1)].nil?
+			@relation[coord(x,y+1)] = Node.new
 		end
 	
-		@relation[x.to_s + "_" + y.to_s].refs << @relation[x.to_s + "_" + (y+1).to_s]
-		@relation[x.to_s + "_" + (y+1).to_s].refs << @relation[x.to_s + "_" + y.to_s]
+		@relation[coord(x,y)].refs << @relation[coord(x,y+1)]
+		@relation[coord(x,y+1)].refs << @relation[coord(x,y)]
 	else
-		if @relation[(x+1).to_s + "_" + y.to_s].nil?
-			@relation[(x+1).to_s + "_" + y.to_s] = Node.new
+		if @relation[coord(x+1,y)].nil?
+			@relation[coord(x+1,y)] = Node.new
 		end
 	
-		@relation[x.to_s + "_" + y.to_s].refs << @relation[(x+1).to_s + "_" + y.to_s]
-		@relation[(x+1).to_s + "_" + y.to_s].refs << @relation[x.to_s + "_" + y.to_s]
+		@relation[coord(x,y)].refs << @relation[coord(x+1,y)]
+		@relation[coord(x+1,y)].refs << @relation[coord(x,y)]
 	end
 end
+
+def coord(x,y)
+	return x.to_s + "_" + y.to_s
+end
+
 
 def validate()
 	# この制約は仕様の決めの問題なので別になくても良い
 	if @relation["0_0"].nil?
-		raise Error_inconsistency_of_aisle.new(start: true)
+		raise Error_inconsistency_of_aisle.new(invalid_start: true)
 	end
 
 	mark_and_sweep(@relation["0_0"])
-
-	@relation.each do |k,v|
-		if !v.is_marked
-			raise Error_inconsistency_of_aisle.new()
-		end
+	
+	if @relation.any?{|x| x === false}
+		raise Error_inconsistency_of_aisle.new()
 	end
 end
 
