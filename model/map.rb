@@ -48,8 +48,8 @@ def self.create_rooms(side_aisles, vertical_aisles, dangeon_id, z)
 				x = index2
 				y = index1
 				
-				rooms[y][x] = Map::Room.new(x,y,z,dangeon_id,aisle: {}) if rooms[y][x].nil?
-				rooms[y+1][x] = Map::Room.new(x,y+1,z,dangeon_id,aisle: {}) if rooms[y+1][x].nil?
+				rooms[y][x] = Map::Room.new(x,y,z,dangeon_id) if rooms[y][x].nil?
+				rooms[y+1][x] = Map::Room.new(x,y+1,z,dangeon_id) if rooms[y+1][x].nil?
 				
 				self.add_aisle(rooms[y][x],direction: DOWN)
 				self.add_aisle(rooms[y+1][x],direction: UP)
@@ -65,8 +65,8 @@ def self.create_rooms(side_aisles, vertical_aisles, dangeon_id, z)
 				x=index2
 				y=index1
 				
-				rooms[y][x] = Map::Room.new(x,y,z,dangeon_id,aisle: {}) if rooms[y][x].nil?
-				rooms[y][x+1] = Map::Room.new(x+1,y,z,dangeon_id,aisle: {}) if rooms[y][x+1].nil?
+				rooms[y][x] = Map::Room.new(x,y,z,dangeon_id) if rooms[y][x].nil?
+				rooms[y][x+1] = Map::Room.new(x+1,y,z,dangeon_id) if rooms[y][x+1].nil?
 				
 				self.add_aisle(rooms[y][x],direction: RIGHT)
 				self.add_aisle(rooms[y][x+1],direction: LEFT)
@@ -90,11 +90,8 @@ def save()
 	
 	statement.close
 	
-	@rooms.each.with_index do |row1,index1|
-		row1.each.with_index do |row2,index2|
-			x = index2
-			y = index1
-			
+	@rooms.each do |row1|
+		row1.each do |row2|
 			row2.save() if !row2.nil?
 		end
 	end
@@ -112,8 +109,8 @@ def self.get(dangeon_id, z)
 	
 	rooms = []
 	result.each do |row|
-		room = Map::Room.new(row.x,row.y,z,dangeon_id,aisle: row.aisle)
-		room.convert_aisle_to_hash()
+		aisle_as_hash = convert_aisle_to_hash(row.aisle)
+		room = Map::Room.new(row.x,row.y,z,dangeon_id,aisle_as_hash)
 
 		rooms[row["y"]] = [] if rooms[row["y"]].nil?
 		rooms[row["y"]][row["x"]] = room
@@ -130,7 +127,7 @@ end
 class Room
 attr_accessor :aisle
 
-def initialize(x,y,z,dangeon_id,aisle:)
+def initialize(x,y,z,dangeon_id,aisle={})
 	@x = x
 	@y = y
 	@z = z
@@ -139,67 +136,67 @@ def initialize(x,y,z,dangeon_id,aisle:)
 end
 
 def save()
-	convert_aisle_to_int()
+	aisle = convert_aisle_to_int()
 
 	sql_master = SQL_master.instance.sql
 	
 	statement = sql_master.prepare("insert into master.maps(dangeon_id,x,y,z,aisle) values(?,?,?,?,?)")
-	statement.execute(@dangeon_id,@x,@y,@z,@aisle)
+	statement.execute(@dangeon_id,@x,@y,@z,aisle)
 	
 	statement.close
 end
 
 def convert_aisle_to_int()
-	tmp_aisle = 0
+	tmp = 0
 	
 	if @aisle[RIGHT]
-		tmp_aisle += RIGHT
+		tmp += RIGHT
 	end
 	
 	if @aisle[DOWN]
-		tmp_aisle += DOWN
+		tmp += DOWN
 	end
 	
 	if @aisle[LEFT]
-		tmp_aisle += LEFT
+		tmp += LEFT
 	end
 	
 	if @aisle[UP]
-		tmp_aisle += UP
+		tmp += UP
 	end
 
-	@aisle = tmp_aisle
+	return tmp
 end
 
 
-def convert_aisle_to_hash()
+def convert_aisle_to_hash(value)
 	tmp_aisle = {}
 	
-	if @aisle >= RIGHT
+	if value >= RIGHT
 		tmp_aisle[RIGHT] = true
-		@aisle -= RIGHT
+		value -= RIGHT
 	end
 	
-	if @aisle >= DOWN
+	if value >= DOWN
 		tmp_aisle[DOWN] = true
-		@aisle -= DOWN
+		value -= DOWN
 	end
 	
-	if @aisle >= LEFT
+	if value >= LEFT
 		tmp_aisle[LEFT] = true
-		@aisle -= LEFT
+		value -= LEFT
 	end
 	
-	if @aisle >= UP
+	if value >= UP
 		tmp_aisle[UP] = true
-		@aisle -= UP
+		value -= UP
 	end
 	
-	if @aisle != 0
+	if value != 0
 		raise Error_inconsistency_of_aisle.new
 	end
 	
-	@aisle = tmp_aisle
+	return tmp_aisle
 end
 
 end

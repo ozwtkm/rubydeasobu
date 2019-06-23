@@ -20,7 +20,9 @@ def control()
 	dangeon_id = @URLquery[1].to_i
 	z =  @URLquery[2].to_i # フロアのこと
 
-	graph = Graph.new(@aisles.dup) #graphの正当性検証もnewの中で行われる
+	# 1 dupしてるのは@aislesに破壊処理が2回走るから
+	# 2 graphの正当性検証もnewの中で行われる
+	graph = Graph.new(@aisles.dup) 
 	
 	map = Map.create(@aisles,dangeon_id,z)
 	map.save()

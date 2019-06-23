@@ -112,11 +112,11 @@ end
 
 def validate()
 	# この制約は仕様の決めの問題なので別になくても良い
-	if @relation["0_0"].nil?
+	if @relation[coord(0,0)].nil?
 		raise Error_inconsistency_of_aisle.new(invalid_start: true)
 	end
 
-	mark_and_sweep(@relation["0_0"])
+	mark_and_sweep(@relation[coord(0,0)])
 	
 	if @relation.any?{|x| x === false}
 		raise Error_inconsistency_of_aisle.new()
