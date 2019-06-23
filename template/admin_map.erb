@@ -1,0 +1,71 @@
+<%= render("_html_header.erb") %>
+
+<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.3.min.js"></script> 
+<script src="rsc/map.js"></script>
+
+
+<style>
+	.map{
+		transform:scale(2,2);
+	}
+</style>
+
+<div id ="msg"></div>
+
+
+<h2>マップ生成</h2>
+小チェック有→カベが存在<br/><br/>
+一辺の長さ
+<select id="mapnum">
+	<option value="1">1</option>
+	<option value="2">2</option>
+	<option value="3">3</option>
+	<option value="4">4</option>
+	<option value="5">5</option>
+	<option value="6">6</option>
+	<option value="7">7</option>
+	<option value="8">8</option>
+	<option value="9">9</option>
+	<option value="10">10</option>
+</select><br/>
+
+ダンジョンID
+<select id="dangeon">
+	<option value="1">1</option>
+	<option value="2">2</option>
+	<option value="3">3</option>
+	<option value="4">4</option>
+	<option value="5">5</option>
+	<option value="6">6</option>
+	<option value="7">7</option>
+	<option value="8">8</option>
+	<option value="9">9</option>
+	<option value="10">10</option>
+</select><br/>
+
+階層
+<select id="floor">
+	<option value="1">1</option>
+	<option value="2">2</option>
+	<option value="3">3</option>
+	<option value="4">4</option>
+	<option value="5">5</option>
+	<option value="6">6</option>
+	<option value="7">7</option>
+	<option value="8">8</option>
+	<option value="9">9</option>
+	<option value="10">10</option>
+</select>
+
+<input type="button" value="生成" onclick="create_map(document.getElementById('mapnum').value)">
+
+<div id ="map">
+</div>
+
+
+
+<input type="button" value="送信" onclick="submit_mapdata();">
+
+
+
+<%= render("_html_footer.erb") %>

@@ -6,7 +6,7 @@ require_relative '../exception/Error_require_login'
 
 class Procedure_session
 
-def self.get_session(header)
+def self.get_session(header,admin: false)
 	if header["cookie"][0].nil? # Webrickの仕様的にheader["cookie"].classがArray
 		raise Error_require_login.new
 	end
@@ -17,6 +17,12 @@ def self.get_session(header)
 	cgi.cookies['_session_id'] = get_session_id(header["cookie"][0])
 
 	session_obj = get_session_obj(cgi)
+
+	if admin && !session_obj["admin"]
+		raise Error_require_login.new
+	elsif !admin && session_obj["admin"]
+		raise Error_require_login.new
+	end
 
 	return session_obj
 end
@@ -36,7 +42,6 @@ def self.get_session_obj(cgi)
 
 	# CGI::Session.newは失敗するとArgumentError
 	# ArgErrでなく自作のログインエラーを吐かせたい。
-	# 例外をrescueしてまたraiseするの、冗長でいやだがこれで正解なのか？
 	begin
 		session_obj = CGI::Session.new(cgi,{'new_session' => false})
 	rescue

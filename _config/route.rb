@@ -23,12 +23,13 @@ end
 
 private
 
+# todo adminは別処理にわけたい
 def self.create_controller_class(filename)
 		classname = filename.split('/').last()
 		classname.slice!(".rb")
 
 		# 「_hoge.rb」とか「huga.rb.xxx(一時ファイル)」を除去
-		if classname.match(/\A[0-9a-zA-Z]+\z/).nil?
+		if classname.match(/\A[0-9a-zA-Z]+[_0-9a-zA-Z]*\z/).nil?
 			return
 		end
 		

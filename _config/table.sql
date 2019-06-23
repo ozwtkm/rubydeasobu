@@ -24,6 +24,23 @@ CREATE DATABASE /*!32312 IF NOT EXISTS*/ `master` /*!40100 DEFAULT CHARACTER SET
 USE `master`;
 
 --
+-- Table structure for table `admin_users`
+--
+
+DROP TABLE IF EXISTS `admin_users`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `admin_users` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(20) DEFAULT NULL,
+  `salt` varchar(255) DEFAULT NULL,
+  `passwd` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unko` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `dangeons`
 --
 
@@ -34,7 +51,7 @@ CREATE TABLE `dangeons` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(20) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -114,8 +131,8 @@ CREATE TABLE `maps` (
   `x` int(5) unsigned NOT NULL,
   `y` int(5) unsigned NOT NULL,
   `z` int(5) unsigned NOT NULL,
-  `wall` int(5) unsigned NOT NULL,
-  KEY `dangeon_id` (`dangeon_id`),
+  `aisle` int(5) unsigned NOT NULL,
+  UNIQUE KEY `dangeon_id` (`dangeon_id`,`x`,`y`,`z`),
   CONSTRAINT `maps_ibfk_1` FOREIGN KEY (`dangeon_id`) REFERENCES `dangeons` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -179,7 +196,7 @@ CREATE TABLE `users` (
   `passwd` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unko` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=47 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -207,4 +224,4 @@ CREATE TABLE `wallets` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-05-22  4:08:37
+-- Dump completed on 2019-06-08  7:46:38

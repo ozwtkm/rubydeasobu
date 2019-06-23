@@ -1,0 +1,27 @@
+<%= render("_html_header.erb") %>
+<h1>管理者ログインするぞい</h1>
+<form action="" method="post">
+ユーザID<br/>
+<input type="text" name="name" value=""/><br/>
+パスワード(text属性なのは茶目っ気)<br/>
+<input type="text" name="passwd" value=""/><br/>
+<input type="submit" value="ログインするぞい"/><br/>
+</form>
+
+<% if !c[:e].nil? %>
+	<% if c[:e].class == Error_multi_412 %>
+  		<% error_list = c[:e].exceptions %>
+	<% else %>
+  		<% error_list = [c[:e]] %>
+	<% end %>
+
+	<% error_list.each do |e| %>
+		<%= CGI.escapeHTML(e.message)%><br/>
+	<% end %>
+<% end %>
+
+<% if !c[:user].nil? %>
+	<%= CGI.escapeHTML(c[:user].name) + "でログインしたよ" %><br/>
+<% end %>
+
+<%= render("_html_footer.erb") %>
