@@ -21,7 +21,7 @@ def self.get(user_id)
 	
 	Validator.validate_SQL_error(result.count)
 	
-	user = User.new(result.first)
+	user = Admin_user.new(result.first)
 
 	statement.close
 	
