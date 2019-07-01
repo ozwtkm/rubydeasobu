@@ -167,6 +167,21 @@ CREATE DATABASE /*!32312 IF NOT EXISTS*/ `transaction` /*!40100 DEFAULT CHARACTE
 USE `transaction`;
 
 --
+-- Table structure for table `battle`
+--
+
+DROP TABLE IF EXISTS `battle`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `battle` (
+  `user_id` int(10) unsigned NOT NULL,
+  `turn` int(5) unsigned NOT NULL,
+  UNIQUE KEY `user_id` (`user_id`),
+  CONSTRAINT `battle_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `user_monster`
 --
 
@@ -224,4 +239,4 @@ CREATE TABLE `wallets` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-06-08  7:46:38
+-- Dump completed on 2019-06-25  7:14:41
