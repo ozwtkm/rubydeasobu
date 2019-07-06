@@ -12,37 +12,50 @@ require_relative '../_util/documentDB'
 
 
 class Battle
+ATTACK = 0
+SKILL = 1
+ESCAPE = 2
+ITEM = 3
+AI = 4
 
-def initialize(friend,enemy)
-	@friend = friend
-	@enemy = enemy
-	@history = {}
-	@order = calculate_order()
-	@turn = 1
+NORMAL = 0
+
+
+def initialize(battle_document)
+	@friend = battle_document.friend
+	@enemy = battle_document.enemy
+	@history = battle_document.situation
+	@order = self.calculate_order()
 	@finish_flg = false
 end
 
-#battleのからむ
-#userid,turn,enemyid,partnerid,
+
 def self.get(userid)
 	sql_transaction = SQL_transaction.instance.sql
 	
-	# todo memcached
-	# turn,user_id
-	statement = sql_master.prepare("select * from transaction.battle where user_id = ?")
-	result = statement.execute(userid)
-	
-	Validator.validate_SQL_error(result.count, is_multi_line: true)
-
-
 	documentDB_client = DocumentDB.instance
 	collection = documentDB_client[:battle]
 
 	battle_document = documentDB_client.find({"userid":userid})
 
-	if result.first.turn != battle_document.lastturn
-		battle_document.delete(lastturn)
-		raise
+	if battle_documentが空(つまり1ターン目
+		insert into transaction.battle(user_id,turn) values(useid,1)
+		
+		select player_monster,partner_monster from quest
+
+		select * from monsters where id = player_monster_id or partner_monster_id
+		
+		documentDB_client.insert({iroiro})
+		battle_document = insertしたのと同じhash
+	else
+		# todo memcached
+		# turn,user_id
+		statement = sql_master.prepare("select * from transaction.battle where user_id = ? limit 1")
+		result = statement.execute(userid)
+		
+		Validator.validate_SQL_error(result.count)
+	
+		self.check_db_consistency()
 	end
 
 	battle = Battle.new(battle_document)
@@ -50,8 +63,23 @@ def self.get(userid)
 	return battle
 end
 
+#mongoの中身イメージ↓
+db.battle.insert({"user_id":1,"situation":[{"turn":1,"friend_status":{"player_status":{"hp":10,"mp":2,"atk":5,"def":2,"speed":5",money":6},"partner_status":{"hp":10,"mp":2,"atk":5,"def":2,"speed":5",money":6}},"enemy_status":{"hp":10,"mp":2,"atk":5,"def":2,"speed":5",money":6}}},{"turn":2,"before_command":[1,3],"friend_status":{"player_status":{"hp":10,"mp":2,"atk":5,"def":2,"speed":5",money":6},"partner_status":{"hp":10,"mp":2,"atk":5,"def":2,"speed":5",money":6}},"enemy_status":{"hp":10,"mp":2,"atk":5,"def":2,"speed":5",money":6}}}]})	
 
-def self.advance()
+# getのときは必ずやる処理だしコントローラじゃなくてmodel側によせたほうがいいかと？
+self.check_db_consistency(turn_documentDB,turn_SQL)
+	if turn_documentDB != turn_SQL
+		raise
+	end
+end
+
+
+def self.calculate_order()
+	すばやさから行動順をけってい
+end
+
+
+def advance()
 	
 end
 
@@ -59,6 +87,8 @@ end
 def save()
 	
 end
+
+
 
 class Friend
 	
@@ -69,11 +99,6 @@ class Enemy
 	
 end
 
-end
-
-
-
-end
 
 end
 
