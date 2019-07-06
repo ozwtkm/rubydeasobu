@@ -54,9 +54,9 @@ CREATE TABLE `appearance_place` (
   `y` int(5) unsigned NOT NULL,
   `z` int(5) unsigned NOT NULL,
   `type` int(5) unsigned NOT NULL,
-  `appearance_id` text,
+  `appearance_id` int(10) unsigned NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `dangeon_id` (`dangeon_id`),
+  UNIQUE KEY `dangeon_id` (`dangeon_id`,`x`,`y`,`z`),
   CONSTRAINT `appearance_place_ibfk_1` FOREIGN KEY (`dangeon_id`) REFERENCES `dangeons` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -216,6 +216,7 @@ CREATE TABLE `party` (
   `user_id` int(10) unsigned NOT NULL,
   `possession_monster_id` int(10) unsigned NOT NULL,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `user_id_2` (`user_id`,`possession_monster_id`),
   KEY `user_id` (`user_id`),
   KEY `monster_id` (`possession_monster_id`),
   CONSTRAINT `party_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
@@ -240,7 +241,6 @@ CREATE TABLE `quest` (
   `partner_monster` int(11) unsigned NOT NULL,
   `obtain_money` int(10) unsigned NOT NULL,
   KEY `user_id` (`user_id`),
-  KEY `dangeon_id` (`dangeon_id`),
   KEY `party_id` (`party_id`),
   CONSTRAINT `quest_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
   CONSTRAINT `quest_ibfk_3` FOREIGN KEY (`party_id`) REFERENCES `party` (`id`)
@@ -255,10 +255,11 @@ DROP TABLE IF EXISTS `quest_acquisition`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `quest_acquisition` (
-  `user_id` int(10) unsigned NOT NULL,
+  `user_id` int(11) unsigned NOT NULL,
   `appearance_id` int(10) unsigned NOT NULL,
   `status` int(1) unsigned NOT NULL,
-  KEY `user_id` (`user_id`)
+  KEY `user_id` (`user_id`),
+  CONSTRAINT `quest_acquisition_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -322,4 +323,4 @@ CREATE TABLE `wallets` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-07-05 17:27:11
+-- Dump completed on 2019-07-05 17:50:26
