@@ -24,23 +24,6 @@ CREATE DATABASE /*!32312 IF NOT EXISTS*/ `master` /*!40100 DEFAULT CHARACTER SET
 USE `master`;
 
 --
--- Table structure for table `acquisition_place`
---
-
-DROP TABLE IF EXISTS `acquisition_place`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `acquisition_place` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `x` int(5) unsigned NOT NULL,
-  `y` int(5) unsigned NOT NULL,
-  `z` int(5) unsigned NOT NULL,
-  `type` int(5) unsigned NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
 -- Table structure for table `admin_users`
 --
 
@@ -55,6 +38,27 @@ CREATE TABLE `admin_users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unko` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `appearance_place`
+--
+
+DROP TABLE IF EXISTS `appearance_place`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `appearance_place` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `dangeon_id` int(10) unsigned NOT NULL,
+  `x` int(5) unsigned NOT NULL,
+  `y` int(5) unsigned NOT NULL,
+  `z` int(5) unsigned NOT NULL,
+  `type` int(5) unsigned NOT NULL,
+  `appearance_id` text,
+  PRIMARY KEY (`id`),
+  KEY `dangeon_id` (`dangeon_id`),
+  CONSTRAINT `appearance_place_ibfk_1` FOREIGN KEY (`dangeon_id`) REFERENCES `dangeons` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -171,6 +175,8 @@ CREATE TABLE `monsters` (
   `money` int(10) unsigned DEFAULT NULL,
   `img_id` int(10) unsigned DEFAULT NULL,
   `rarity` int(5) unsigned NOT NULL,
+  `speed` int(10) unsigned DEFAULT NULL,
+  `mp` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -192,7 +198,7 @@ DROP TABLE IF EXISTS `battle`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `battle` (
   `user_id` int(10) unsigned NOT NULL,
-  `turn` int(5) unsigned NOT NULL,
+  `scene` int(10) unsigned NOT NULL,
   UNIQUE KEY `user_id` (`user_id`),
   CONSTRAINT `battle_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -208,12 +214,12 @@ DROP TABLE IF EXISTS `party`;
 CREATE TABLE `party` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` int(10) unsigned NOT NULL,
-  `monster_id` int(10) unsigned NOT NULL,
+  `possession_monster_id` int(10) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
-  KEY `monster_id` (`monster_id`),
+  KEY `monster_id` (`possession_monster_id`),
   CONSTRAINT `party_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
-  CONSTRAINT `party_ibfk_2` FOREIGN KEY (`monster_id`) REFERENCES `master`.`monsters` (`id`)
+  CONSTRAINT `party_ibfk_2` FOREIGN KEY (`possession_monster_id`) REFERENCES `user_monster` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -237,7 +243,6 @@ CREATE TABLE `quest` (
   KEY `dangeon_id` (`dangeon_id`),
   KEY `party_id` (`party_id`),
   CONSTRAINT `quest_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
-  CONSTRAINT `quest_ibfk_2` FOREIGN KEY (`dangeon_id`) REFERENCES `master`.`dangeons` (`id`),
   CONSTRAINT `quest_ibfk_3` FOREIGN KEY (`party_id`) REFERENCES `party` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -251,13 +256,9 @@ DROP TABLE IF EXISTS `quest_acquisition`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `quest_acquisition` (
   `user_id` int(10) unsigned NOT NULL,
-  `x` int(5) unsigned NOT NULL,
-  `y` int(5) unsigned NOT NULL,
-  `z` int(5) unsigned NOT NULL,
-  `type` int(5) unsigned NOT NULL,
-  `acquisition_id` int(10) unsigned NOT NULL,
-  KEY `user_id` (`user_id`),
-  CONSTRAINT `quest_acquisition_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+  `appearance_id` int(10) unsigned NOT NULL,
+  `status` int(1) unsigned NOT NULL,
+  KEY `user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -271,10 +272,12 @@ DROP TABLE IF EXISTS `user_monster`;
 CREATE TABLE `user_monster` (
   `user_id` int(11) unsigned NOT NULL,
   `monster_id` int(10) unsigned NOT NULL,
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   KEY `monster_id` (`monster_id`),
   CONSTRAINT `user_monster_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=526 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -319,4 +322,4 @@ CREATE TABLE `wallets` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-07-01  3:40:54
+-- Dump completed on 2019-07-05 17:27:11
