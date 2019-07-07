@@ -10,20 +10,21 @@ require_relative './_config/const'
 require_relative './controller/_baseclass'
 require_relative './_util/log'
 require_relative './_util/cache'
+require_relative './_util/documentDB'
 require_relative './_util/SQL_master'
 require_relative './_util/SQL_transaction'
 require_relative './exception/Error_404'
 
 module Output
-  def self.console_and_file(defout)
-    class << defout
-      alias_method :write_org, :write
-      def write(str)
-        STDOUT.write(str)
-        self.write_org(str)
-      end
-    end
-  end
+	def self.console_and_file(defout)
+		class << defout
+			alias_method :write_org, :write
+			def write(str)
+				STDOUT.write(str)
+				self.write_org(str)
+			end
+		end
+		end
 end
 
 f_access = File.open(PATH_LOG + 'server.log', 'a')
@@ -74,6 +75,7 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 				setErrorBody(res, controller, e)
 			ensure
 				Cache.close
+				DocumentDB.close
 				SQL_master.close
 				SQL_transaction.close
 			end
@@ -105,6 +107,10 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 			controller.get_handler()
 		when "POST" then
 			controller.post_handler()
+		when "PUT" then
+			controller.put_handler()
+		when "DELETE" then
+			controller.delete_handler()
 		else
 			controller.not_allow_handler()
 		end

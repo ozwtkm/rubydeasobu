@@ -25,6 +25,7 @@ def initialize(req, res)
 	@context = {}
 end
 
+# todo getもオーバーライド前提にする
 def get_handler()
 	view()
 end
@@ -34,13 +35,34 @@ def post_handler()
 	view()
 end
 
+def put_handler()
+	put_control()
+	view()
+end
+
+def delete_handler()
+	delete_control()
+	view()
+end
+
 def not_allow_handler()
 	@res.status = 405
 	@res.body = "そのmethodだめ"
 end
 
 # オーバーライド前提。
+# あとでpost_controlに命名変更する
 def control()
+	raise NotImplementedError
+end
+
+# オーバーライド前提。
+def put_control()
+	raise NotImplementedError
+end
+
+# オーバーライド前提。
+def delete_control()
 	raise NotImplementedError
 end
 
