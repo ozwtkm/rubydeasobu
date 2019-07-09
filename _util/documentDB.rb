@@ -13,6 +13,9 @@ def initialize
 	@@client = Mongo::Client.new(['127.0.0.1:27017'], database: 'ruby_quest_monsters')#todo constに引越し
 end
 
+def client
+	return @@client
+end
 
 def self.close
 	if defined?(@@client)
