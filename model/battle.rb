@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 require 'mongo'
 require 'json'
+require 'securerandom'
 require_relative '../_util/SQL_master'
 require_relative '../_util/SQL_transaction'
 require_relative './basemodel'
@@ -18,8 +19,8 @@ NORMAL = 0
 
 
 def initialize(battle_document)
-	@player = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| v[:is_friend] === 0}.values[0]) # 長すぎてキモい
-	@partner = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| v[:is_friend] === 1}.values[0])
+	@player = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| !v[:is_friend]}.values[0]) # 長すぎてキモい
+	@partner = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| v[:is_friend]}.values[0])
 	@enemy = Battle::Enemy.new(battle_document[:situation].last[:status].select {|k,v| v[:is_friend].nil?}.values[0])
 	
 	@finish_flg = false
@@ -76,12 +77,6 @@ def self.start(user_id)
 	
 	documentDB_client = DocumentDB.instance.client
 	collection = documentDB_client[:battle]
-		
-	statement = sql_transaction.prepare("insert into transaction.battle(user_id,scene) values(?,1)")
-	statement.execute(user_id)
-	statement.close
-	
-	self.debug_get_dbinfo("－－－－－－SQL 1ターン目 insert直後－－－－－－")
 	
 	statement1 = sql_transaction.prepare("select current_x,current_y,current_z,party_id,partner_monster from transaction.quest where user_id = ? limit 1")
 	result1 = statement1.execute(user_id)
@@ -91,85 +86,121 @@ def self.start(user_id)
 	result2 = statement2.execute(result1.first["party_id"])
 	Validator.validate_SQL_error(result2.count)
 
-	statement3 = sql_transaction.prepare("select appearance_id from master.appearance_place where x= ? and y = ? and z = ? and type = 1 limit 1") #type:1 → monster
-	result3 = statement3.execute(result1.first["current_x"],result1.first["current_y"],result1.first["current_z"])
-	Validator.validate_SQL_error(result3.count)#戦闘マスに来てないのに戦闘開始しようとするとここでつかまる
-
-	statement4 = sql_master.prepare("select * from master.monsters where id = ? or id = ? or id = ? limit 3")
-	result4 = statement4.execute(result1.first["partner_monster"],result2.first["monster_id"],result3.first["appearance_id"])
-	Validator.validate_SQL_error(result4.count,is_multi_line: true)
+	statement3 = sql_transaction.prepare("select monster_id from transaction.user_monster where id = ? limit 1")
+	result3 = statement3.execute(result2.first["possession_monster_id"])
+	Validator.validate_SQL_error(result3.count)
 	
-	iroiro = {
+
+	statement4 = sql_transaction.prepare("select appearance_id from master.appearance_place where x= ? and y = ? and z = ? and type = 1 limit 1") #type:1 → monster
+	result4 = statement4.execute(result1.first["current_x"],result1.first["current_y"],result1.first["current_z"])
+	Validator.validate_SQL_error(result4.count)#戦闘マスに来てないのに戦闘開始しようとするとここでつかまる
+
+	player_id = result3.first["monster_id"]
+	partner_id = result1.first["partner_monster"]
+	enemy_id = result4.first["appearance_id"]
+
+	statement5 = sql_master.prepare("select * from master.monsters where id = ? or id = ? or id = ? limit 3")
+	result5 = statement5.execute(player_id,partner_id,enemy_id)
+	Validator.validate_SQL_error(result5.count,is_multi_line: true)
+	
+	player = result5.select{|k,v| k["id"] == player_id}[0]
+	partner = result5.select{|k,v| k["id"] == partner_id}[0]
+	enemy = result5.select{|k,v| k["id"] == enemy_id}[0]
+
+	statement1.close
+	statement2.close
+	statement3.close
+	statement4.close
+	statement5.close
+
+	next_acter = self.calculate_next_acter(player,partner,enemy)
+	
+	player == next_acter ? player["is_turn"]=true : player["is_turn"]=false
+	partner == next_acter ? partner["is_turn"]=true : partner["is_turn"]=false
+	enemy == next_acter ? enemy["is_turn"]=true : enemy["is_turn"]=false
+	
+	battle_info = {
 		"user_id": 2,
 		"situation": [
 			{
 				"scene": 1,
 				"status": {
 					"player1": {
-						"acter_id":1,
-						"name": "aaaaa",
-						"hp": 10,
-						"mp": 2,
-						"atk": 5,
-						"def": 2,
-						"speed": 3,
-						"is_friend": 0,
-						"is_turn": 0
+						"name": player["name"],
+						"hp": player["hp"],
+						"mp": player["mp"],
+						"atk": player["atk"],
+						"def": player["def"],
+						"speed": player["speed"],
+						"is_friend": false,
+						"is_turn": player["is_turn"]
 					},
 					"player2": {
-						"acter_id":2,
-						"name": "bbbbb",
-						"hp": 10,
-						"mp": 2,
-						"atk": 5,
-						"def": 2,
-						"speed": 5,
-						"is_friend": 1,
-						"is_turn": 0
+						"name": partner["name"],
+						"hp": partner["hp"],
+						"mp": partner["mp"],
+						"atk": partner["atk"],
+						"def": partner["def"],
+						"speed": partner["speed"],
+						"is_friend": true,
+						"is_turn": partner["is_turn"]
 					},
 					"enemy1": {
-						"acter_id":3,
-						"name": "ccccc",
-						"hp": 10,
-						"mp": 2,
-						"atk": 5,
-						"def": 2,
-						"speed": 5,
-						"money": 6,
-						"is_turn": 1
+						"name": enemy["name"],
+						"hp": enemy["hp"],
+						"mp": enemy["mp"],
+						"atk": enemy["atk"],
+						"def": enemy["def"],
+						"speed": enemy["speed"],
+						"money": enemy["money"],
+						"is_turn": enemy["is_turn"]
 					}
 				}
 			}
 		]
 	}
 	
-	
-	collection.insert_one(iroiro)
-	battle_document = iroiro
+	collection.insert_one(battle_info)
+	battle_document = battle_info
 
 	self.debug_get_dbinfo("－－－－－－documentDB 1ターン目 insert直後－－－－－－")
 
-	statement1.close
-	statement2.close
-	statement3.close
-	statement4.close
-puts battle_document
+	statement = sql_transaction.prepare("insert into transaction.battle(user_id,scene) values(?,1)")
+	statement.execute(user_id)
+	statement.close
+	
+	self.debug_get_dbinfo("－－－－－－SQL 1ターン目 insert直後－－－－－－")
+	
 	battle = Battle.new(battle_document)
 
 	return battle
 end
 
 # scene終了時次の行動は誰か？を決定する
-def calculate_next_order()
+def self.calculate_next_acter(*args) #オブジェクトごと渡してオブジェクトごと返す
+	speed = []
+	args.each do |row|
+		speed << row["speed"]
+	end
 	
+	max_speed = speed.max
 	
-	return next_order
+	max_speed_acter = args.select{|row| row["speed"] === max_speed}
+	
+	if max_speed_acter.count != 1
+		random = SecureRandom.random_number(max_speed_acter.count)
+		next_acter = max_speed_acter[random]
+	else
+		next_acter = max_speed_acter[0]
+	end
+
+	return next_acter
 end
 
 # 1ターン目だけは特殊で、敵から行動する可能性がある
 def advance()
 	
-	calculate_next_order()
+	calculate_next_acter()
 	save()
 end
 
@@ -191,7 +222,7 @@ attr_accessor :hp, :atk, :def, :speed, :is_turn
 		@atk=document["atk"]
 		@def=document["def"]
 		@speed=document["speed"]
-		@is_frined=document["is_friend"]
+		@is_friend=document["is_friend"]
 		@is_turn=document["is_turn"]
 	end
 end
@@ -249,7 +280,7 @@ def self.debug_get_dbinfo(comment)
 		Log.log(row.to_s)
 	end
 	
-	Log.log("－－－－－－－－－－－－－－－－－－－")
+	Log.log("－－－－－－－－－－－－－－－－－－－－－－－－")
 end
 
 end
