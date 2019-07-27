@@ -20,7 +20,7 @@ def self.get_wallet(user_id)
 
 	sql_transaction =  SQL_transaction.instance.sql
 
-	statement = sql_transaction.prepare("select gem,money from transaction.wallets where user_id = ? limit 1")
+	statement = sql_transaction.prepare("select gem,money from wallets where user_id = ? limit 1")
 	result = statement.execute(user_id)
 	
 	Validator.validate_SQL_error(result.count)
@@ -38,7 +38,7 @@ def self.init(user_id)
 
 	sql_transaction =  SQL_transaction.instance.sql
 	
-	statement = sql_transaction.prepare("insert into transaction.wallets(user_id,money,gem) values(?,100,100)")
+	statement = sql_transaction.prepare("insert into wallets(user_id,money,gem) values(?,100,100)")
 	statement.execute(user_id)
 	statement.close
 
@@ -60,7 +60,7 @@ def save()
 
 	sql_transaction =  SQL_transaction.instance.sql
 
-	statement = sql_transaction.prepare("update transaction.wallets set gem = ?, money = ? where user_id = ?")
+	statement = sql_transaction.prepare("update wallets set gem = ?, money = ? where user_id = ?")
 	statement.execute(@gem, @money, @user_id)
 	statement.close
 

@@ -22,7 +22,7 @@ def self.get_gachas()
 	
 	sql_master = SQL_master.instance.sql
 	
-	statement = sql_master.prepare("select * from master.gachas")
+	statement = sql_master.prepare("select * from gachas")
 	result = statement.execute()
 	
 	Validator.validate_SQL_error(result.count, is_multi_line: true)
@@ -41,7 +41,7 @@ end
 def self.get_probability(gacha_id)
 	sql_master = SQL_master.instance.sql
 	
-	statement = sql_master.prepare("select monster_id, probability from master.gacha_probability where gacha_id = ? order by 'probability' desc")
+	statement = sql_master.prepare("select monster_id, probability from gacha_probability where gacha_id = ? order by 'probability' desc")
 	result = statement.execute(gacha_id)
 
 	Validator.validate_SQL_error(result.count, is_multi_line: true)

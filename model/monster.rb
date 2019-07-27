@@ -32,7 +32,7 @@ def self.get_master_monsters()
 	
 	sql_master = SQL_master.instance.sql
 
-	statement = sql_master.prepare("select * from master.monsters")
+	statement = sql_master.prepare("select * from monsters")
 	result = statement.execute()
 
 	Validator.validate_SQL_error(result.count, is_multi_line: true)
@@ -57,7 +57,7 @@ def self.get_possession_monsters(user_id, limit=10, offset=0)
 	
 	master_monster_list = Monster.get_master_monsters()
 	
-	statement = sql_transaction.prepare("select monster_id from transaction.user_monster where user_id = ? limit ? offset ?")
+	statement = sql_transaction.prepare("select monster_id from user_monster where user_id = ? limit ? offset ?")
 	result = statement.execute(user_id, limit, offset)
 	
 	Validator.validate_SQL_error(result.count, is_multi_line: true)
@@ -75,7 +75,7 @@ end
 def self.add_monster(user_id, monster_id)
 	sql_transaction =  SQL_transaction.instance.sql
 
-	statement = sql_transaction.prepare("insert into transaction.user_monster(user_id, monster_id) values(?,?)")
+	statement = sql_transaction.prepare("insert into user_monster(user_id, monster_id) values(?,?)")
 	statement.execute(user_id, monster_id)
 	statement.close
 end
@@ -83,7 +83,7 @@ end
 def self.delete_monster(user_id, monster_id, count)
 	sql_transaction =  SQL_transaction.instance.sql
 
-	statement = sql_transaction.prepare("delete from transaction.user_monster where user_id = ? and monster_id = ? limit ?")
+	statement = sql_transaction.prepare("delete from user_monster where user_id = ? and monster_id = ? limit ?")
 	statement.execute(user_id, monster_id, count)
 
 	if sql_transaction.affected_rows != count

@@ -16,7 +16,7 @@ end
 def self.get(user_id)
 	sql_master =  SQL_master.instance.sql
 
-	statement = sql_master.prepare("select * from master.admin_users where id = ? limit 1 for update")
+	statement = sql_master.prepare("select * from admin_users where id = ? limit 1 for update")
 	result = statement.execute(user_id)
 	
 	Validator.validate_SQL_error(result.count)
@@ -36,7 +36,7 @@ def self.add(username, passwd)
 		
 	pw_hash = Digest::SHA1.hexdigest(passwd+salt)
 	
-	statement = sql_master.prepare("insert into master.users(name,salt,passwd) values(?,?,?)")
+	statement = sql_master.prepare("insert into users(name,salt,passwd) values(?,?,?)")
 
 	begin
 		statement.execute(username, salt, pw_hash)

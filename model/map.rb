@@ -85,7 +85,7 @@ end
 def save()
 	sql_master = SQL_master.instance.sql
 
-	statement = sql_master.prepare("delete from master.maps where dangeon_id = ? and z = ?")
+	statement = sql_master.prepare("delete from maps where dangeon_id = ? and z = ?")
 	statement.execute(@dangeon_id,@z)
 	
 	statement.close
@@ -102,7 +102,7 @@ def self.get(dangeon_id, z)
 	sql_master = SQL_master.instance.sql
 	
 	# todo memcached
-	statement = sql_master.prepare("select * from master.maps where dangeon_id = ? and z = ?")
+	statement = sql_master.prepare("select * from maps where dangeon_id = ? and z = ?")
 	result = statement.execute(dangeon_id,z)
 	
 	Validator.validate_SQL_error(result.count, is_multi_line: true)
@@ -140,7 +140,7 @@ def save()
 
 	sql_master = SQL_master.instance.sql
 	
-	statement = sql_master.prepare("insert into master.maps(dangeon_id,x,y,z,aisle) values(?,?,?,?,?)")
+	statement = sql_master.prepare("insert into maps(dangeon_id,x,y,z,aisle) values(?,?,?,?,?)")
 	statement.execute(@dangeon_id,@x,@y,@z,aisle)
 	
 	statement.close

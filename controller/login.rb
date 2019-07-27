@@ -49,7 +49,7 @@ end
 def login(username, passwd)
 	sql_transaction = SQL_transaction.instance.sql
 	
-	statement = sql_transaction.prepare("select * from transaction.users where name = ? limit 1")
+	statement = sql_transaction.prepare("select * from users where name = ? limit 1")
 	result = statement.execute(username)
 	
 	if result.count == 0
