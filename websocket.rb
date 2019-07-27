@@ -27,7 +27,9 @@ EM.run {
 	EM::WebSocket.run(:host => WEBSOCKET_ADDRESS, :port => WEBSOCKET_PORT) do |ws|
 		ws.onopen { |handshake|
 			begin
-				header = handshake.headers_downcased["cookie"]
+				header = handshake.headers
+				header["cookie"]=[header["Cookie"]]#Procedure_session.get_session()をWebアプリ側と共有するにあたってのフォーマット調整
+
 				session = Procedure_session.get_session(header)
 			rescue
 				send_message("require_login", ws, connections)

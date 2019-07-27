@@ -6,12 +6,13 @@ require_relative '../exception/Error_require_login'
 
 class Procedure_session
 
+
 def self.get_session(header,admin: false)
-	if header["cookie"][0].nil? # Webrick‚ÌŽd—l“I‚Éheader["cookie"].class‚ªArray
+	if header["cookie"][0].nil? # Webrickã®ä»•æ§˜çš„ã«header["cookie"].classãŒArray
 		raise Error_require_login.new
 	end
 	
-	ARGV.replace(["abc=001&def=002"]) # ƒIƒtƒ‰ƒCƒ“ƒ‚[ƒh‰ñ”ðB
+	ARGV.replace(["abc=001&def=002"]) # ã‚ªãƒ•ãƒ©ã‚¤ãƒ³ãƒ¢ãƒ¼ãƒ‰å›žé¿ã€‚
 	cgi = CGI.new
 	
 	cgi.cookies['_session_id'] = get_session_id(header["cookie"][0])
@@ -40,8 +41,8 @@ end
 
 def self.get_session_obj(cgi)
 
-	# CGI::Session.new‚ÍŽ¸”s‚·‚é‚ÆArgumentError
-	# ArgErr‚Å‚È‚­Ž©ì‚ÌƒƒOƒCƒ“ƒGƒ‰[‚ð“f‚©‚¹‚½‚¢B
+	# CGI::Session.newã¯å¤±æ•—ã™ã‚‹ã¨ArgumentError
+	# ArgErrã§ãªãè‡ªä½œã®ãƒ­ã‚°ã‚¤ãƒ³ã‚¨ãƒ©ãƒ¼ã‚’åã‹ã›ãŸã„ã€‚
 	begin
 		session_obj = CGI::Session.new(cgi,{'new_session' => false})
 	rescue
