@@ -12,7 +12,9 @@ require_relative './_util/log'
 require_relative './_util/cache'
 require_relative './_util/SQL_master'
 require_relative './_util/SQL_transaction'
+require_relative './_util/environment'
 require_relative './exception/Error_404'
+
 
 module Output
   def self.console_and_file(defout)
@@ -62,6 +64,7 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 		#最大フォーク数が1(0を指定すると現在のプロセス上で実行されてしまうので注意)
 		Parallel.map(DUMMY_ITEMS, :in_prosess => 1, :finish => finishProc) {
 			begin
+				Environment.set_req(req) #開発環境なの？とかの情報参照用
 				req.path_info = separate(req.path) #RESTfulにしたい。
 				controller = createController(req, res)
 				dispatch(controller, req.request_method)
@@ -77,7 +80,6 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 				SQL_master.close
 				SQL_transaction.close
 			end
-			
 			[res.status,res.body,res.header] #finishProcのresultに入る
 		}
 	end

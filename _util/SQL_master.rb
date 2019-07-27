@@ -8,7 +8,12 @@ class SQL_master
 	include Singleton
 	
 	def initialize
-		@@sql_client = Mysql2::Client.new(:socket => SQL_SOCKET, :host => SQL_HOST, :username => SQL_USER, :password => SQL_PASSWORD, :encoding => 'utf8', :database => 'master',:reconnect => true)
+		database = "master"
+		if Environment.dev?
+			database = "dev_master"
+		end
+
+		@@sql_client = Mysql2::Client.new(:socket => SQL_SOCKET, :host => SQL_HOST, :username => SQL_USER, :password => SQL_PASSWORD, :encoding => 'utf8', :database => database,:reconnect => true)
 		@@sql_client.query("begin")
 	end
 	
