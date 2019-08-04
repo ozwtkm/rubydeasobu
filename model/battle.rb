@@ -7,23 +7,33 @@ require_relative '../_util/SQL_master'
 require_relative '../_util/SQL_transaction'
 require_relative './basemodel'
 require_relative '../_util/documentDB'
+require_relative './quest'
 
 class Battle
+#コマンド識別用
 ATTACK = 0
 SKILL = 1
 ESCAPE = 2
 ITEM = 3
 AI = 4
 
+# サブコマンド識別用
 NORMAL = 0
 
+#ターン内での行動管理用
+INCOMPLETE = 0
+NEXT = 1
+DONE = 2
+
 def initialize(battle_document)
+	@user_id = battle_document[:user_id]
 	@player = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| !v[:is_friend]}.values[0]) # 長すぎてキモい
 	@partner = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| v[:is_friend]}.values[0])
 	@enemy = Battle::Enemy.new(battle_document[:situation].last[:status].select {|k,v| v[:is_friend].nil?}.values[0])
 
 	@scene = battle_document[:situation].last[:scene]
 	@finish_flg = false
+	@add_enemy_flg = false
 end
 
 
@@ -53,7 +63,6 @@ self.debug_get_dbinfo("－－－－－－get直後－－－－－－")
 
 	return battle
 end
-
 
 
 def self.check_db_consistency(documentDB,sql)
@@ -90,7 +99,6 @@ def self.start(user_id)
 	result3 = statement3.execute(result2.first["possession_monster_id"])
 	Validator.validate_SQL_error(result3.count)
 
-
 	statement4 = sql_transaction.prepare("select appearance_id from master.appearance_place where x= ? and y = ? and z = ? and type = 1 limit 1") #type:1 → monster
 	result4 = statement4.execute(result1.first["current_x"],result1.first["current_y"],result1.first["current_z"])
 	Validator.validate_SQL_error(result4.count)#戦闘マスに来てないのに戦闘開始しようとするとここでつかまる
@@ -115,9 +123,9 @@ def self.start(user_id)
 
 	next_acter = self.calculate_next_acter(player,partner,enemy)
 
-	player == next_acter ? player["is_turn"]=true : player["is_turn"]=false
-	partner == next_acter ? partner["is_turn"]=true : partner["is_turn"]=false
-	enemy == next_acter ? enemy["is_turn"]=true : enemy["is_turn"]=false
+	player == next_acter ? player["turn"]=NEXT : player["turn"]=INCOMPLETE
+	partner == next_acter ? partner["turn"]=NEXT : partner["turn"]=INCOMPLETE
+	enemy == next_acter ? enemy["turn"]=NEXT : enemy["turn"]=INCOMPLETE
 
 	battle_info = {
 		"user_id": user_id,
@@ -133,7 +141,7 @@ def self.start(user_id)
 						"def": player["def"],
 						"speed": player["speed"],
 						"is_friend": false,
-						"is_turn": player["is_turn"]
+						"turn": player["turn"]
 					},
 					"player2": {
 						"name": partner["name"],
@@ -143,7 +151,7 @@ def self.start(user_id)
 						"def": partner["def"],
 						"speed": partner["speed"],
 						"is_friend": true,
-						"is_turn": partner["is_turn"]
+						"turn": partner["turn"]
 					},
 					"enemy1": {
 						"name": enemy["name"],
@@ -153,7 +161,7 @@ def self.start(user_id)
 						"def": enemy["def"],
 						"speed": enemy["speed"],
 						"money": enemy["money"],
-						"is_turn": enemy["is_turn"]
+						"turn": enemy["turn"]
 					}
 				}
 			}
@@ -174,6 +182,7 @@ def self.start(user_id)
 
 	return battle
 end
+
 
 # scene終了時次の行動は誰か？を決定する
 def self.calculate_next_acter(*args) #オブジェクトごと渡してオブジェクトごと返す
@@ -196,104 +205,134 @@ def self.calculate_next_acter(*args) #オブジェクトごと渡してオブジ
 	return next_acter
 end
 
+
 # 1ターン目だけは特殊で、敵から行動する可能性がある
-def advance()
-	acter = get_acter()
+def advance(command,subcommand)
+	acter = get_acters(type: NEXT)[0]
 
+	loop do
+		act(acter,command,subcommand)
 
+		if @finish_flg
+			break
+		end
 
-
-	if @scene === 1
-
-	else
-
+		acter = set_next_acter(acter)
+		
+		if acter != @enemy
+			break
+		end
 	end
-	calculate_next_acter()
 
-	if get_acter != @enemy 
+	if @finish_flg
+		handle_result()
+	else
 		save()
 	end
+
+	return self
 end
 
-def get_acter()
-	if @player.is_turn
-		return @player
-	elsif @partner.is_turn
-		return @partner
-	elsif @enemy.is_turn
-		return @enemy 
+
+def set_next_acter(acter)
+	candidate　= get_acters(type: INCOMPLETE)
+	next_acter = Battle.calculate_next_acter(candidate)
+
+	acter["turn"] = DONE
+
+	@player["turn"] = NEXT if @player == next_acter
+	@partner["turn"] = NEXT if @partner == next_acter
+	@enemy["turn"] = NEXT if @enemy == next_acter
+
+	return next_acter
+end
+
+
+def get_acters(type:)
+	acters = []
+
+	case type
+	when NEXT
+			acters << @player if @player.turn === NEXT
+			acters << @partner if @partner.turn === NEXT
+			acters << @enemy if @enemy.turn === NEXT
+	when INCOMPLETE
+			acters << @player if @player.turn === INCOMPLETE
+			acters << @partner if @partner.turn === INCOMPLETE
+			acters << @enemy if @enemy.turn === INCOMPLETE
+	when DONE
+			acters << @player if @player.turn === DONE
+			acters << @partner if @partner.turn === DONE
+			acters << @enemy if @enemy.turn === DONE
 	end
 
-	raise "行動番がいない"
+	return acters
 end
 
+
+def act(acter,command,subcommand)
+	if acter == @player || acter == @partner
+		player_act(acter,command,subcommand)
+	else
+		enemy_act(acter)
+	end
+
+	if [@player,@partner,@enemy].any?{|x| x.hp <= 0}
+		@finish_flg = true
+	end
+end
+
+# ランダムに味方一体を殴ってくるだけ。とりあえずは
 def enemy_act()
-	if !@finished && @situation.order === enemy
-		@enemy.act() #一旦ランダムな対象に攻撃してくるだけでよい
+	random = SecureRandom.random_number([@player,@partner].count)
+	target = [@player,@partner][random]
 
-		if @player.hp === 0 || @enemy.hp === 0
-			@finished = true
-		end
+	damage = calculate_damage(attacker: @enemy, target: target, kind: NORMAL)
+	target.hp -= damage
+	target.hp = 0 if target.hp.negative?
+end
 
-		@situation.increase_order()
+
+def player_act(acter,command,subcommand)
+	case command
+	when ATTACK then
+		damage = calculate_damage(attacker: acter, target: @enemy, kind: NORMAL)
+		@enemy.hp -= damage
+		@enemy.hp = 0 if @enemy.hp.negative?
+	when SKILL then
+
+	when ITEM then
+
+	when ESCAPE then
+
+	when AI then
+
 	end
 end
 
-def player_act()
-	if !@finished && @situation.order != @enemy
-		if @situation.order === @supporter
-			acter = @supporter
-		else
-			acter = @player
-		end
-
-		case @command
-		when ATTACK then
-			damage = acter.calculate_damage(kind: NORMAL)#敵のダメージ計算
-			@enemy.hp -= damage
-		when SKILL then
-
-		when ITEM then
-
-		when ESCAPE then
-
-		when AI then
-
-		end
-
-		if @player.hp === 0 || @enemy.hp === 0
-			@finished = true
-		end
-
-		@situation.increase_order()
+def calculate_damage(attacker: ,target: ,kind:)
+	case kind
+	when NORMAL
+		damage = attacker.atk - target.def
+		damage = 0 if damage.negative?
 	end
-end
 
+	return damage
+end
 
 def handle_result()
-	if @finished
-		@quest = Quest.new(@user.id)
+	quest = Quest.get(@user_id) # modelの中でmodelをnewするのはアリなのか？
 
-		if @enemy.hp === 0
-			add_enemy()#仲間になるかの話
-			get_reward(gold:true)#おいおいはモンスター経験値、プレイヤ経験値も計算。いったんgoldだけ
-		elsif @player.hp === 0
-			get_reward() #後々モンスター経験値
-		elsif @situation.turn === 10
-			#仕様次第。
-		end
+	if @enemy.hp <= 0
+		check_add_enemy()#仲間になるかの話
+		get_reward(gold:true)#おいおいはモンスター経験値、プレイヤ経験値も計算。いったんgoldだけ
+	elsif @player.hp <= 0
+		get_reward() #後々モンスター経験値導入
+	elsif @scene <= 30
+		#仕様次第。
 	end
 
-
-	@player.save()
-	@supporter.save()
-	@enemy.save()
-	@situation.save()
-
-	@context[:situation] = @situation
-	@context[:player] = @player
-	@contexr[:supporter] = @supporter
-	@context[:enemy] = @enemy 
+	quest.save()
 end
 
 
@@ -307,35 +346,40 @@ end
 
 def get_reward(gold: false, monster_exp: false, player_exp: false)
 	if gold
-		@quest.reward["gold"] += @enemy.gold
+		quest.reward["gold"] += @enemy.money
 	end
 
+	# あとで
 	if monster_exp
-		@quest.reward["monster_exp"] += @enemy.monster_exp
+
 	end
 
+	 # あとで
 	if player_exp
-		@quest.reward["player_exp"] += @enemy.player_exp
+
 	end
 end
-
-
-
-
-
 
 
 def save()
-	sql update
-	mongo update
+	documentDB_client = DocumentDB.instance.client
+	collection = documentDB_client[:battle]
+	
+	battle_info= {hoge} 
+
+	collection.find(user_id: @user_id).replace_one(battle_info追記)
+
+
+	sql_transaction = SQL_transaction.instance.sql
+	statement = sql_transaction.prepare("updete hoge")
+	
+
 
 end
 
-
-
 class Player
 attr_reader :name, :is_friend
-attr_accessor :hp, :atk, :def, :speed, :is_turn
+attr_accessor :hp, :atk, :def, :speed, :turn
 
 	def initialize(document)
 		@name=document["name"]
@@ -345,7 +389,7 @@ attr_accessor :hp, :atk, :def, :speed, :is_turn
 		@def=document["def"]
 		@speed=document["speed"]
 		@is_friend=document["is_friend"]
-		@is_turn=document["is_turn"]
+		@turn=document["turn"]
 	end
 end
 
@@ -362,6 +406,7 @@ attr_accessor :hp, :atk, :def, :speed
 		@def=document["def"]
 		@speed=document["speed"]
 		@money=document["money"]
+		@turn=document["turn"]
 	end
 end
 
@@ -406,95 +451,3 @@ def self.debug_get_dbinfo(comment)
 end
 
 end
-
-#mongoの中身イメージ↓
-=begin
-1reqで1scene追加されてく
-{
-	"user_id": 2,
-	"situation": [
-		{
-			"scene": 1,
-			"status": {
-				"player1": {
-					"acter_id":1,
-					"name": "aaaaa",
-					"hp": 10,
-					"mp": 2,
-					"atk": 5,
-					"def": 2,
-					"speed": 3,
-					"is_friend": 0,
-					"is_turn": 0
-				},
-				"player2": {
-					"acter_id":2,
-					"name": "bbbbb",
-					"hp": 10,
-					"mp": 2,
-					"atk": 5,
-					"def": 2,
-					"speed": 5,
-					"is_friend": 1,
-					"is_turn": 0
-				},
-				"enemy1": {
-					"acter_id":3,
-					"name": "ccccc",
-					"hp": 10,
-					"mp": 2,
-					"atk": 5,
-					"def": 2,
-					"speed": 5,
-					"money": 6,
-					"is_turn": 1
-				}
-			}
-		},
-		{
-			"scene": 2,
-			"berore":{
-				"acter":1,
-				"command":[
-					1,
-					3
-				]
-			},
-			"status": {
-				"player1": {
-					"acter_id":1,
-					"name": "aaaaa",
-					"hp": 10,
-					"mp": 2,
-					"atk": 5,
-					"def": 2,
-					"speed": 5,
-					"is_friend": 0,
-					"is_turn": 0
-				},
-				"player2": {
-					"acter_id":2,
-					"name": "bbbbb",
-					"hp": 10,
-					"mp": 2,
-					"atk": 5,
-					"def": 2,
-					"speed": 5,
-					"is_friend": 1,
-					"is_turn": 0
-				},
-				"enemy1": {
-					"acter_id":3,
-					"name": "ccccc",
-					"hp": 10,
-					"mp": 2,
-					"atk": 5,
-					"def": 2,
-					"speed": 5,
-					"money": 6
-				}
-			}
-		}
-	]
-}
-=end
