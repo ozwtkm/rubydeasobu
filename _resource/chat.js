@@ -8,7 +8,7 @@ function init() {
 	}
 	
 	var Socket = WebSocket;
-	var ws = new Socket("ws://192.168.119.128:81/unko/");
+	var ws = new Socket("ws://"+location.host+"/unko/");
 	
 	ws.onclose = function(event) {	
 		debug("Closed - code: " + event.code + ", reason: " + event.reason + ", wasClean: " + event.wasClean);

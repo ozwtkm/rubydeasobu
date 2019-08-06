@@ -28,7 +28,7 @@ def self.get_recipes
 
 	sql_master = SQL_master.instance.sql
 	
-	statement = sql_master.prepare("select * from master.gradeup_recipes")
+	statement = sql_master.prepare("select * from gradeup_recipes")
 	result = statement.execute
 	
 	Validator.validate_SQL_error(result.count, is_multi_line: true)
@@ -50,7 +50,7 @@ end
 def self.get_recipe(recipe_id)
 	sql_master = SQL_master.instance.sql
 	
-	statement = sql_master.prepare("select * from master.gradeup_recipes where id = ? limit 1")
+	statement = sql_master.prepare("select * from gradeup_recipes where id = ? limit 1")
 	result = statement.execute(recipe_id)
 	
 	Validator.validate_SQL_error(result.count)
