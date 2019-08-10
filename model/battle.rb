@@ -17,19 +17,24 @@ ESCAPE = 2
 ITEM = 3
 AI = 4
 
-# サブコマンド識別用
+# ダメージ計算用
 NORMAL = 0
+SPECIAL = 1
 
-#ターン内での行動管理用
+#ターン内での行動順管理用
 INCOMPLETE = 0
 NEXT = 1
 DONE = 2
 
 def initialize(battle_document)
 	@user_id = battle_document[:user_id]
+
 	@player = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| !v[:is_friend]}.values[0]) # 長すぎてキモい
 	@partner = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| v[:is_friend]}.values[0])
 	@enemy = Battle::Enemy.new(battle_document[:situation].last[:status].select {|k,v| v[:is_friend].nil?}.values[0])
+
+	@tmp_battle_result = {}
+	@tmp_battle_result["situation"] = []
 
 	@scene = battle_document[:situation].last[:scene]
 	@finish_flg = false
@@ -256,6 +261,10 @@ def get_acters(type:)
 			acters << @player if @player.turn === NEXT
 			acters << @partner if @partner.turn === NEXT
 			acters << @enemy if @enemy.turn === NEXT
+
+			if acters.count != 1
+				raise "順番おかしい"
+			end
 	when INCOMPLETE
 			acters << @player if @player.turn === INCOMPLETE
 			acters << @partner if @partner.turn === INCOMPLETE
@@ -276,6 +285,43 @@ def act(acter,command,subcommand)
 	else
 		enemy_act(acter)
 	end
+
+	@scene += 1
+	@tmp_battle_result["situation"] << {
+		"scene": @scene,
+		"status": {
+			"player1": {
+				"name": @player.name,
+				"hp": @player.hp,
+				"mp": @player.mp,
+				"atk": @player.atk,
+				"def": @player.def,
+				"speed": @player.speed,
+				"is_friend": false,
+				"turn": @player["turn"]
+			},
+			"player2": {
+				"name": @partner.name,
+				"hp": @partner.hp,
+				"mp": @partner.mp,
+				"atk": @partner.atk,
+				"def": @partner.def,
+				"speed": @partner.speed,
+				"is_friend": true,
+				"turn": @partner["turn"]
+			},
+			"enemy1": {
+				"name": @enemy.name,
+				"hp": @enemy.hp,
+				"mp": @enemy.mp,
+				"atk": @enemy.atk,
+				"def": @enemy.def,
+				"speed": @enemy.speed,
+				"money": @enemy.money,
+				"turn": @enemy["turn"]
+			}
+		}
+	}
 
 	if [@player,@partner,@enemy].any?{|x| x.hp <= 0}
 		@finish_flg = true
@@ -315,7 +361,9 @@ def calculate_damage(attacker: ,target: ,kind:)
 	when NORMAL
 		damage = attacker.atk - target.def
 		damage = 0 if damage.negative?
-	end
+	when SPECIAL
+	# 火炎斬りとかだとatk*1.2 - def みたいな感じになる
+	end 
 
 	return damage
 end
@@ -326,13 +374,17 @@ def handle_result()
 	if @enemy.hp <= 0
 		check_add_enemy()#仲間になるかの話
 		get_reward(gold:true)#おいおいはモンスター経験値、プレイヤ経験値も計算。いったんgoldだけ
+
+		if @scene <= 30
+			#早期Ternクリア報酬
+		end
 	elsif @player.hp <= 0
 		get_reward() #後々モンスター経験値導入
-	elsif @scene <= 30
-		#仕様次第。
 	end
 
 	quest.save()
+
+	close_battle()
 end
 
 
@@ -365,16 +417,25 @@ def save()
 	documentDB_client = DocumentDB.instance.client
 	collection = documentDB_client[:battle]
 	
-	battle_info= {hoge} 
-
-	collection.find(user_id: @user_id).replace_one(battle_info追記)
-
+	# 動作確認
+	collection.find(user_id: @user_id).replace_one(@tmp_battle_result["situation"])
 
 	sql_transaction = SQL_transaction.instance.sql
-	statement = sql_transaction.prepare("updete hoge")
+	statement = sql_transaction.prepare("update battle set scene = ? where user_id = ?")
+	statement.execute(@scene, @user_id)
+end
+
+
+def close_battle()
+	documentDB_client = DocumentDB.instance.client
+	collection = documentDB_client[:battle]
 	
+	# あとで動作確認
+	collection.remove(user_id: @user_id)
 
-
+	sql_transaction = SQL_transaction.instance.sql
+	statement = sql_transaction.prepare("delete from battle where user_id = ?")
+	statement.execute(@user_id)
 end
 
 class Player
