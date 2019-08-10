@@ -1,6 +1,18 @@
-<%= render("_html_header.erb") %>
+<%
+	result = {}
 
+	if !c[:e].nil? 
+		result = {:ErrorMessage=>c[:e].message}
+    else 
+        player = c[:battle].player
+        partner = c[:battle].partner
 
-<%= render("_html_footer.erb") %>
+        result = {
+            :player => {:name=>player.name, :hp=>player.hp, :mp=>player.mp, :atk=>player.atk, :def=>player.def, :speed=>player.speed, :turn=>player.turn},
+            :partner => {:name=>partner.name, :hp=>partner.hp, :mp=>partner.mp, :atk=>partner.atk, :def=>partner.def, :speed=>partner.speed, :turn=>partner.turn},
+            :finish_flg => c[:battle].finish_flg,
+            :add_enemy_flg => c[:battle].add_enemy_flg
+       }
 
-
+	end
+%><%= JSON.generate(result) %>

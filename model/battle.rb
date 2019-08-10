@@ -10,6 +10,8 @@ require_relative '../_util/documentDB'
 require_relative './quest'
 
 class Battle
+	attr_reader :user_id, :player, :partner, :enemy, :tmp_battle_result, :scene, :finish_flg, :add_enemy_flg
+
 #コマンド識別用
 ATTACK = 0
 SKILL = 1
@@ -26,10 +28,10 @@ INCOMPLETE = 0
 NEXT = 1
 DONE = 2
 
-def initialize(battle_document)
+def initialize(battle_document, next_next_acter :nil)
 	@user_id = battle_document[:user_id]
 
-	@player = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| !v[:is_friend]}.values[0]) # 長すぎてキモい
+	@player = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| v[:is_friend]===false}.values[0]) # 長すぎてキモい
 	@partner = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| v[:is_friend]}.values[0])
 	@enemy = Battle::Enemy.new(battle_document[:situation].last[:status].select {|k,v| v[:is_friend].nil?}.values[0])
 
@@ -43,7 +45,7 @@ end
 
 
 def self.get(user_id)
-self.debug_dbreset()
+#self.debug_dbreset()
 self.debug_get_dbinfo("－－－－－－get直後－－－－－－")
 	documentDB_client = DocumentDB.instance.client
 	collection = documentDB_client[:battle]
@@ -132,6 +134,11 @@ def self.start(user_id)
 	partner == next_acter ? partner["turn"]=NEXT : partner["turn"]=INCOMPLETE
 	enemy == next_acter ? enemy["turn"]=NEXT : enemy["turn"]=INCOMPLETE
 
+	# 敵から行動だと、プレイヤー側の初手誰が行動するかわからなくなる
+	if enemy == next_acter
+		next_next_acter = self.calculate_next_acter(player,partner)
+	end
+
 	battle_info = {
 		"user_id": user_id,
 		"situation": [
@@ -183,7 +190,7 @@ def self.start(user_id)
 
 	self.debug_get_dbinfo("－－－－－－SQL 1ターン目 insert直後－－－－－－")
 
-	battle = Battle.new(battle_info)
+	battle = Battle.new(battle_info, next_next_acter :next_next_acter:)
 
 	return battle
 end
@@ -234,8 +241,6 @@ def advance(command,subcommand)
 	else
 		save()
 	end
-
-	return self
 end
 
 
@@ -362,7 +367,7 @@ def calculate_damage(attacker: ,target: ,kind:)
 		damage = attacker.atk - target.def
 		damage = 0 if damage.negative?
 	when SPECIAL
-	# 火炎斬りとかだとatk*1.2 - def みたいな感じになる
+	# 火炎斬りとかだとatk*1.2 - def みたいな感じになる
 	end 
 
 	return damage
@@ -440,34 +445,34 @@ end
 
 class Player
 attr_reader :name, :is_friend
-attr_accessor :hp, :atk, :def, :speed, :turn
+attr_accessor :hp, :mp, :atk, :def, :speed, :turn
 
 	def initialize(document)
-		@name=document["name"]
-		@hp=document["hp"]
-		@mp=document["mp"]
-		@atk=document["atk"]
-		@def=document["def"]
-		@speed=document["speed"]
-		@is_friend=document["is_friend"]
-		@turn=document["turn"]
+		@name=document[:name]
+		@hp=document[:hp]
+		@mp=document[:mp]
+		@atk=document[:atk]
+		@def=document[:def]
+		@speed=document[:speed]
+		@is_friend=document[:is_friend]
+		@turn=document[:turn]
 	end
 end
 
 
 class Enemy
 attr_reader :name, :money
-attr_accessor :hp, :atk, :def, :speed
+attr_accessor :hp, :mp, :atk, :def, :speed
 
 	def initialize(document)
-		@name=document["name"]
-		@hp=document["hp"]
-		@mp=document["mp"]
-		@atk=document["atk"]
-		@def=document["def"]
-		@speed=document["speed"]
-		@money=document["money"]
-		@turn=document["turn"]
+		@name=document[:name]
+		@hp=document[:hp]
+		@mp=document[:mp]
+		@atk=document[:atk]
+		@def=document[:def]
+		@speed=document[:speed]
+		@money=document[:money]
+		@turn=document[:turn]
 	end
 end
 
