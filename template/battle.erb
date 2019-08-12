@@ -6,10 +6,13 @@
     else 
         player = c[:battle].player
         partner = c[:battle].partner
+        enemy = c[:battle].enemy
 
         result = {
+            :before_scene => c[:battle].scene,
             :player => {:name=>player.name, :hp=>player.hp, :mp=>player.mp, :atk=>player.atk, :def=>player.def, :speed=>player.speed, :turn=>player.turn},
             :partner => {:name=>partner.name, :hp=>partner.hp, :mp=>partner.mp, :atk=>partner.atk, :def=>partner.def, :speed=>partner.speed, :turn=>partner.turn},
+            :enemy => {:name=>enemy.name, :hp=>enemy.hp, :turn=>enemy.turn},
             :finish_flg => c[:battle].finish_flg,
             :add_enemy_flg => c[:battle].add_enemy_flg
        }

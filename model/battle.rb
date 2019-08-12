@@ -9,7 +9,7 @@ require_relative './basemodel'
 require_relative '../_util/documentDB'
 require_relative './quest'
 
-class Battle
+class Battle < Base_model
 	attr_reader :user_id, :player, :partner, :enemy, :tmp_battle_result, :scene, :finish_flg, :add_enemy_flg
 
 #コマンド識別用
@@ -25,18 +25,19 @@ SPECIAL = 1
 
 #ターン内での行動順管理用
 INCOMPLETE = 0
-NEXT = 1
-DONE = 2
+NEXT_NEXT = 1 # 1ターンめのみ使用する例外ステータス。初回行動がenemyだと、NEXTNEXTを設定しないと1ターンめに味方側の初手選択をできなくなる
+NEXT = 2
+DONE = 3
 
-def initialize(battle_document, next_next_acter :nil)
+def initialize(battle_document)
 	@user_id = battle_document[:user_id]
 
 	@player = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| v[:is_friend]===false}.values[0]) # 長すぎてキモい
 	@partner = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| v[:is_friend]}.values[0])
 	@enemy = Battle::Enemy.new(battle_document[:situation].last[:status].select {|k,v| v[:is_friend].nil?}.values[0])
 
-	@tmp_battle_result = {}
-	@tmp_battle_result["situation"] = []
+	@history = []
+	@history = battle_document[:situation]
 
 	@scene = battle_document[:situation].last[:scene]
 	@finish_flg = false
@@ -45,15 +46,15 @@ end
 
 
 def self.get(user_id)
-#self.debug_dbreset()
-self.debug_get_dbinfo("－－－－－－get直後－－－－－－")
+	#self.debug_dbreset()
+	self.debug_get_dbinfo("－－－－－－get直後－－－－－－")
 	documentDB_client = DocumentDB.instance.client
 	collection = documentDB_client[:battle]
 
 	battle_document = collection.find({"user_id":user_id})
 
 	if battle_document.count === 0
-		battle = self.start(user_id)
+		battle = Battle.start(user_id)
 	else
 		sql_transaction = SQL_transaction.instance.sql
 		statement = sql_transaction.prepare("select * from transaction.battle where user_id = ? limit 1")
@@ -61,7 +62,7 @@ self.debug_get_dbinfo("－－－－－－get直後－－－－－－")
 
 		Validator.validate_SQL_error(result.count)
 
-		self.check_db_consistency(battle_document.first, result.first)
+		Battle.check_db_consistency(battle_document.first, result.first)
 
 		statement.close
 
@@ -77,10 +78,10 @@ def self.check_db_consistency(documentDB,sql)
 	if documentDB["situation"].last["scene"] != sql["scene"]
 		documentDB_client = DocumentDB.instance.client
 		collection = documentDB_client[:battle]
-		user_id = documentDB["user_id"]
+		user_id = documentDB[:user_id]
 
 		documentDB["situation"].pop
-		collection.replace_one({"user_id":user_id},documentDB)
+		collection.replace_one({"user_id":user_id}, documentDB)
 
 		raise "poped"
 	end
@@ -128,22 +129,11 @@ def self.start(user_id)
 	statement4.close
 	statement5.close
 
-	next_acter = self.calculate_next_acter(player,partner,enemy)
-
-	player == next_acter ? player["turn"]=NEXT : player["turn"]=INCOMPLETE
-	partner == next_acter ? partner["turn"]=NEXT : partner["turn"]=INCOMPLETE
-	enemy == next_acter ? enemy["turn"]=NEXT : enemy["turn"]=INCOMPLETE
-
-	# 敵から行動だと、プレイヤー側の初手誰が行動するかわからなくなる
-	if enemy == next_acter
-		next_next_acter = self.calculate_next_acter(player,partner)
-	end
-
 	battle_info = {
 		"user_id": user_id,
 		"situation": [
 			{
-				"scene": 1,
+				"scene": 0,
 				"status": {
 					"player1": {
 						"name": player["name"],
@@ -153,7 +143,7 @@ def self.start(user_id)
 						"def": player["def"],
 						"speed": player["speed"],
 						"is_friend": false,
-						"turn": player["turn"]
+						"turn": INCOMPLETE
 					},
 					"player2": {
 						"name": partner["name"],
@@ -163,7 +153,7 @@ def self.start(user_id)
 						"def": partner["def"],
 						"speed": partner["speed"],
 						"is_friend": true,
-						"turn": partner["turn"]
+						"turn": INCOMPLETE
 					},
 					"enemy1": {
 						"name": enemy["name"],
@@ -173,39 +163,64 @@ def self.start(user_id)
 						"def": enemy["def"],
 						"speed": enemy["speed"],
 						"money": enemy["money"],
-						"turn": enemy["turn"]
+						"turn": INCOMPLETE
 					}
 				}
 			}
 		]
 	}
 
-	collection.insert_one(battle_info)
+	battle = Battle.new(battle_info)
 
+	next_acter = battle.calculate_next_acter()
+	next_acter.turn = NEXT
+
+	battle_info[:situation].last[:status].select {|k,v| v[:is_friend]===false}.values[0][:turn] = NEXT if battle.player == next_acter
+	battle_info[:situation].last[:status].select {|k,v| v[:is_friend]}.values[0][:turn] = NEXT if battle.partner == next_acter
+	battle_info[:situation].last[:status].select {|k,v| v[:is_friend].nil?}.values[0][:turn] = NEXT if battle.enemy == next_acter
+
+	# 敵から行動だと、プレイヤー側の初手誰が行動するかわからなくなるので例外的に「次の次」を計算
+	if battle.enemy == next_acter
+		next_next_acter = battle.calculate_next_acter()
+		next_next_acter.turn = NEXT_NEXT
+
+		battle_info[:situation].last[:status].select {|k,v| v[:is_friend]===false}.values[0][:turn] = NEXT_NEXT if battle.player == next_next_acter
+		battle_info[:situation].last[:status].select {|k,v| v[:is_friend]}.values[0][:turn] = NEXT_NEXT if battle.partner == next_next_acter
+		battle_info[:situation].last[:status].select {|k,v| v[:is_friend].nil?}.values[0][:turn] = NEXT_NEXT if battle.enemy == next_next_acter
+	end
+
+	collection.insert_one(battle_info)
 	self.debug_get_dbinfo("－－－－－－documentDB 1ターン目 insert直後－－－－－－")
 
-	statement = sql_transaction.prepare("insert into transaction.battle(user_id,scene) values(?,1)")
+	statement = sql_transaction.prepare("insert into transaction.battle(user_id,scene) values(?,0)")
 	statement.execute(user_id)
 	statement.close
-
 	self.debug_get_dbinfo("－－－－－－SQL 1ターン目 insert直後－－－－－－")
-
-	battle = Battle.new(battle_info, next_next_acter :next_next_acter:)
 
 	return battle
 end
 
 
-# scene終了時次の行動は誰か？を決定する
-def self.calculate_next_acter(*args) #オブジェクトごと渡してオブジェクトごと返す
+def calculate_next_acter()
+	candidate = get_acters(type: INCOMPLETE)
+
+	# ターンが一巡すると全員DONEになってるのでリフレッシュ
+	if candidate.count === 0
+		@player.turn = INCOMPLETE
+		@partner.turn = INCOMPLETE
+		@enemy.turn = INCOMPLETE
+
+		candidate = [@player,@partner,@enemy]
+	end
+
 	speed = []
-	args.each do |row|
-		speed << row["speed"]
+	candidate.each do |row|
+		speed << row.speed
 	end
 
 	max_speed = speed.max
 
-	max_speed_acter = args.select{|row| row["speed"] === max_speed}
+	max_speed_acter = candidate.select{|row| row.speed === max_speed}
 
 	if max_speed_acter.count != 1
 		random = SecureRandom.random_number(max_speed_acter.count)
@@ -220,41 +235,35 @@ end
 
 # 1ターン目だけは特殊で、敵から行動する可能性がある
 def advance(command,subcommand)
-	acter = get_acters(type: NEXT)[0]
-
 	loop do
-		act(acter,command,subcommand)
+		act(command,subcommand)
 
 		if @finish_flg
-			break
+			handle_result()
+			return
 		end
 
-		acter = set_next_acter(acter)
+		set_next_acter()
 		
-		if acter != @enemy
+		if @player.turn = NEXT || @partner.turn = NEXT
 			break
 		end
 	end
 
-	if @finish_flg
-		handle_result()
-	else
-		save()
-	end
+	save()
 end
 
 
-def set_next_acter(acter)
-	candidate　= get_acters(type: INCOMPLETE)
-	next_acter = Battle.calculate_next_acter(candidate)
+def set_next_acter()
+	get_acters(type: NEXT).turn = DONE
 
-	acter["turn"] = DONE
+	if !get_acters(type: NEXT_NEXT).nil?
+		get_acters(type: NEXT_NEXT).turn = NEXT
+		return
+	end
 
-	@player["turn"] = NEXT if @player == next_acter
-	@partner["turn"] = NEXT if @partner == next_acter
-	@enemy["turn"] = NEXT if @enemy == next_acter
-
-	return next_acter
+	next_acter = calculate_next_acter()
+	next_acter.turn = NEXT
 end
 
 
@@ -262,37 +271,39 @@ def get_acters(type:)
 	acters = []
 
 	case type
-	when NEXT
-			acters << @player if @player.turn === NEXT
-			acters << @partner if @partner.turn === NEXT
-			acters << @enemy if @enemy.turn === NEXT
+	when NEXT_NEXT
+		acters = [@player,@partner,@enemy].select {|x| x.turn === NEXT_NEXT}
 
-			if acters.count != 1
-				raise "順番おかしい"
-			end
+		return acters[0]
+	when NEXT
+		acters = [@player,@partner,@enemy].select {|x| x.turn === NEXT}
+		
+		if acters.count != 1
+			raise "次の手番がなぜか1人じゃない"
+		end
+
+		return acters[0]
 	when INCOMPLETE
-			acters << @player if @player.turn === INCOMPLETE
-			acters << @partner if @partner.turn === INCOMPLETE
-			acters << @enemy if @enemy.turn === INCOMPLETE
+		acters = [@player,@partner,@enemy].select {|x| x.turn === INCOMPLETE}
 	when DONE
-			acters << @player if @player.turn === DONE
-			acters << @partner if @partner.turn === DONE
-			acters << @enemy if @enemy.turn === DONE
+		acters = [@player,@partner,@enemy].select {|x| x.turn === DONE}
 	end
 
 	return acters
 end
 
 
-def act(acter,command,subcommand)
+def act(command,subcommand)
+	acter = get_acters(type: NEXT)
+
 	if acter == @player || acter == @partner
 		player_act(acter,command,subcommand)
 	else
-		enemy_act(acter)
+		enemy_act()
 	end
 
 	@scene += 1
-	@tmp_battle_result["situation"] << {
+	@history << {
 		"scene": @scene,
 		"status": {
 			"player1": {
@@ -303,7 +314,7 @@ def act(acter,command,subcommand)
 				"def": @player.def,
 				"speed": @player.speed,
 				"is_friend": false,
-				"turn": @player["turn"]
+				"turn": @player.turn
 			},
 			"player2": {
 				"name": @partner.name,
@@ -313,7 +324,7 @@ def act(acter,command,subcommand)
 				"def": @partner.def,
 				"speed": @partner.speed,
 				"is_friend": true,
-				"turn": @partner["turn"]
+				"turn": @partner.turn
 			},
 			"enemy1": {
 				"name": @enemy.name,
@@ -323,10 +334,11 @@ def act(acter,command,subcommand)
 				"def": @enemy.def,
 				"speed": @enemy.speed,
 				"money": @enemy.money,
-				"turn": @enemy["turn"]
+				"turn": @enemy.turn
 			}
 		}
 	}
+	puts @history.to_s + "afwafewfawef"
 
 	if [@player,@partner,@enemy].any?{|x| x.hp <= 0}
 		@finish_flg = true
@@ -340,7 +352,7 @@ def enemy_act()
 
 	damage = calculate_damage(attacker: @enemy, target: target, kind: NORMAL)
 	target.hp -= damage
-	target.hp = 0 if target.hp.negative?
+	target.hp = 0 if target.hp < 0
 end
 
 
@@ -349,7 +361,7 @@ def player_act(acter,command,subcommand)
 	when ATTACK then
 		damage = calculate_damage(attacker: acter, target: @enemy, kind: NORMAL)
 		@enemy.hp -= damage
-		@enemy.hp = 0 if @enemy.hp.negative?
+		@enemy.hp = 0 if @enemy.hp < 0
 	when SKILL then
 
 	when ITEM then
@@ -365,7 +377,7 @@ def calculate_damage(attacker: ,target: ,kind:)
 	case kind
 	when NORMAL
 		damage = attacker.atk - target.def
-		damage = 0 if damage.negative?
+		damage = 0 if damage < 0
 	when SPECIAL
 	# 火炎斬りとかだとatk*1.2 - def みたいな感じになる
 	end 
@@ -374,10 +386,8 @@ def calculate_damage(attacker: ,target: ,kind:)
 end
 
 def handle_result()
-	quest = Quest.get(@user_id) # modelの中でmodelをnewするのはアリなのか？
-
 	if @enemy.hp <= 0
-		check_add_enemy()#仲間になるかの話
+		handle_add_enemy()#仲間になるかの話
 		get_reward(gold:true)#おいおいはモンスター経験値、プレイヤ経験値も計算。いったんgoldだけ
 
 		if @scene <= 30
@@ -387,21 +397,24 @@ def handle_result()
 		get_reward() #後々モンスター経験値導入
 	end
 
-	quest.save()
-
 	close_battle()
 end
 
+# 仲間にしますか？の処理。とりあえず固定確率にしとく
+def handle_add_enemy()
+	random = SecureRandom.random_number(100) 
 
-def add_enemy()
-	random = 10
-	if random < @enemy.probability
-		@situation.is_add_monster = true
+	if random < 0 # 一旦後回し
+		@add_enemy_flg = true
+
+		# add_monster的なテーブルにinsert
 	end
 end
 
 
 def get_reward(gold: false, monster_exp: false, player_exp: false)
+	quest = Quest.get(@user_id) # modelの中でmodelをnewするのはアリなのか？
+
 	if gold
 		quest.reward["gold"] += @enemy.money
 	end
@@ -415,32 +428,39 @@ def get_reward(gold: false, monster_exp: false, player_exp: false)
 	if player_exp
 
 	end
+
+	quest.save()
 end
 
 
 def save()
 	documentDB_client = DocumentDB.instance.client
 	collection = documentDB_client[:battle]
-	
-	# 動作確認
-	collection.find(user_id: @user_id).replace_one(@tmp_battle_result["situation"])
 
 	sql_transaction = SQL_transaction.instance.sql
+	
+	collection.update_one({user_id: @user_id}, '$set' => {situation: @history})
+
 	statement = sql_transaction.prepare("update battle set scene = ? where user_id = ?")
 	statement.execute(@scene, @user_id)
+	statement.close()
+
+	Battle.debug_get_dbinfo("save実行直後")
 end
 
 
 def close_battle()
 	documentDB_client = DocumentDB.instance.client
 	collection = documentDB_client[:battle]
-	
+
 	# あとで動作確認
-	collection.remove(user_id: @user_id)
+	collection.delete_one(user_id: @user_id)
 
 	sql_transaction = SQL_transaction.instance.sql
 	statement = sql_transaction.prepare("delete from battle where user_id = ?")
 	statement.execute(@user_id)
+
+	Battle.debug_get_dbinfo("close_battle実行直後")
 end
 
 class Player
@@ -462,7 +482,7 @@ end
 
 class Enemy
 attr_reader :name, :money
-attr_accessor :hp, :mp, :atk, :def, :speed
+attr_accessor :hp, :mp, :atk, :def, :speed, :turn
 
 	def initialize(document)
 		@name=document[:name]

@@ -5,7 +5,7 @@
 		result = {:ErrorMessage=>c[:e].message}
 	end 
 
-	if !c[:monsters].nil?
+	if !c[:battle].nil?
 		result = c[:monsters].map do |row|
 			{:name=>row.name, :rarity=>row.rarity}
 		end

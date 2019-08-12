@@ -12,16 +12,17 @@ def initialize(req, res)
 	super
 	
 	@battle = Battle.get(@user.id)
+	@context[:battle] = @battle
 end
 
 # startするときはquestから叩かれるから、UIから叩かれるのはput（コマンド送って戦闘を進める）だけ
-def put_handler()
+def put_control()
 	#リクエストの想定　[1,1]　前者：コマンド　後者：コマンド詳細	
 	@json = JSON.parse(@req.body)
 	check_input_json()
 
-	@command = json[0].to_i
-	@subcommand = json[1].to_i
+	@command = @json[0].to_i
+	@subcommand = @json[1].to_i
 
 	@battle.advance(@command,@subcommand)
 
@@ -29,8 +30,8 @@ def put_handler()
 end
 
 def check_input_json()
-	if !@json.all?{|x| (1..9).to_a.include?(x)}
-		raise 
+	if !@json.all?{|x| (0..9).to_a.include?(x)}
+		raise "0-9でよろ" 
 	end
 end
 
