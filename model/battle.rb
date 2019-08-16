@@ -57,10 +57,11 @@ def self.get(user_id)
 		battle = Battle.start(user_id)
 	else
 		sql_transaction = SQL_transaction.instance.sql
-		statement = sql_transaction.prepare("select * from transaction.battle where user_id = ? limit 1")
+		statement = sql_transaction.prepare("select * from battle where user_id = ? limit 1")
 		result = statement.execute(user_id)
-
-		Validator.validate_SQL_error(result.count)
+		
+		#Validator.validate_SQL_error(result.count)
+		#SQLcountが0はcheck_db_consistencyで捕まえたいのでここでは検証しない
 
 		Battle.check_db_consistency(battle_document.first, result.first)
 
@@ -72,14 +73,19 @@ def self.get(user_id)
 	return battle
 end
 
-
+#バトル結果はdodumentDB→SQLの順にinsertするため、documentDBだけ1scene先行している可能性がある(レアケースだが
 def self.check_db_consistency(documentDB,sql)
-	#バトル結果はdodumentDB→SQLの順にinsertするため、documentDBだけ1scene先行している可能性がある(レアケースだが
-	if documentDB["situation"].last["scene"] != sql["scene"]
-		documentDB_client = DocumentDB.instance.client
-		collection = documentDB_client[:battle]
-		user_id = documentDB[:user_id]
+	documentDB_client = DocumentDB.instance.client  
+	collection = documentDB_client[:battle]
+	user_id = documentDB[:user_id]
 
+	if  sql.nil?
+		collection.delete_one({"user_id":user_id})
+
+		raise "sqlがinsertできてなかったのでmongo側をロールバック"
+	end
+
+	if documentDB["situation"].last["scene"] != sql["scene"]
 		documentDB["situation"].pop
 		collection.replace_one({"user_id":user_id}, documentDB)
 
@@ -95,19 +101,19 @@ def self.start(user_id)
 	documentDB_client = DocumentDB.instance.client
 	collection = documentDB_client[:battle]
 
-	statement1 = sql_transaction.prepare("select current_x,current_y,current_z,party_id,partner_monster from transaction.quest where user_id = ? limit 1")
+	statement1 = sql_transaction.prepare("select current_x,current_y,current_z,party_id,partner_monster from quest where user_id = ? limit 1")
 	result1 = statement1.execute(user_id)
 	Validator.validate_SQL_error(result1.count)
 
-	statement2 = sql_transaction.prepare("select possession_monster_id from transaction.party where id = ? limit 1")
+	statement2 = sql_transaction.prepare("select possession_monster_id from party where id = ? limit 1")
 	result2 = statement2.execute(result1.first["party_id"])
 	Validator.validate_SQL_error(result2.count)
 
-	statement3 = sql_transaction.prepare("select monster_id from transaction.user_monster where id = ? limit 1")
+	statement3 = sql_transaction.prepare("select monster_id from user_monster where id = ? limit 1")
 	result3 = statement3.execute(result2.first["possession_monster_id"])
 	Validator.validate_SQL_error(result3.count)
 
-	statement4 = sql_transaction.prepare("select appearance_id from master.appearance_place where x= ? and y = ? and z = ? and type = 1 limit 1") #type:1 → monster
+	statement4 = sql_master.prepare("select appearance_id from appearance_place where x= ? and y = ? and z = ? and type = 1 limit 1") #type:1 → monster
 	result4 = statement4.execute(result1.first["current_x"],result1.first["current_y"],result1.first["current_z"])
 	Validator.validate_SQL_error(result4.count)#戦闘マスに来てないのに戦闘開始しようとするとここでつかまる
 
@@ -115,7 +121,7 @@ def self.start(user_id)
 	partner_id = result1.first["partner_monster"]
 	enemy_id = result4.first["appearance_id"]
 
-	statement5 = sql_master.prepare("select * from master.monsters where id = ? or id = ? or id = ? limit 3")
+	statement5 = sql_master.prepare("select * from monsters where id = ? or id = ? or id = ? limit 3")
 	result5 = statement5.execute(player_id,partner_id,enemy_id)
 	Validator.validate_SQL_error(result5.count,is_multi_line: true)
 
@@ -179,7 +185,7 @@ def self.start(user_id)
 	battle_info[:situation].last[:status].select {|k,v| v[:is_friend]}.values[0][:turn] = NEXT if battle.partner == next_acter
 	battle_info[:situation].last[:status].select {|k,v| v[:is_friend].nil?}.values[0][:turn] = NEXT if battle.enemy == next_acter
 
-	# 敵から行動だと、プレイヤー側の初手誰が行動するかわからなくなるので例外的に「次の次」を計算
+	# 敵から行動だと、プレイヤー側の初手で誰が行動するかわからなくなるので例外的に「次の次」を計算
 	if battle.enemy == next_acter
 		next_next_acter = battle.calculate_next_acter()
 		next_next_acter.turn = NEXT_NEXT
@@ -192,7 +198,7 @@ def self.start(user_id)
 	collection.insert_one(battle_info)
 	self.debug_get_dbinfo("－－－－－－documentDB 1ターン目 insert直後－－－－－－")
 
-	statement = sql_transaction.prepare("insert into transaction.battle(user_id,scene) values(?,0)")
+	statement = sql_transaction.prepare("insert into battle(user_id,scene) values(?,0)")
 	statement.execute(user_id)
 	statement.close
 	self.debug_get_dbinfo("－－－－－－SQL 1ターン目 insert直後－－－－－－")
@@ -206,6 +212,10 @@ def calculate_next_acter()
 
 	# ターンが一巡すると全員DONEになってるのでリフレッシュ
 	if candidate.count === 0
+		if get_acters(type: DONE).count != 3
+			raise "順番が矛盾してる"
+		end
+
 		@player.turn = INCOMPLETE
 		@partner.turn = INCOMPLETE
 		@enemy.turn = INCOMPLETE
@@ -233,7 +243,7 @@ def calculate_next_acter()
 end
 
 
-# 1ターン目だけは特殊で、敵から行動する可能性がある
+# 1シーン目だけは特殊で、敵から行動する可能性がある
 def advance(command,subcommand)
 	loop do
 		act(command,subcommand)
@@ -244,8 +254,10 @@ def advance(command,subcommand)
 		end
 
 		set_next_acter()
+
+		update_history()
 		
-		if @player.turn = NEXT || @partner.turn = NEXT
+		if @player.turn === NEXT || @partner.turn === NEXT
 			break
 		end
 	end
@@ -255,8 +267,6 @@ end
 
 
 def set_next_acter()
-	get_acters(type: NEXT).turn = DONE
-
 	if !get_acters(type: NEXT_NEXT).nil?
 		get_acters(type: NEXT_NEXT).turn = NEXT
 		return
@@ -277,7 +287,6 @@ def get_acters(type:)
 		return acters[0]
 	when NEXT
 		acters = [@player,@partner,@enemy].select {|x| x.turn === NEXT}
-		
 		if acters.count != 1
 			raise "次の手番がなぜか1人じゃない"
 		end
@@ -293,16 +302,8 @@ def get_acters(type:)
 end
 
 
-def act(command,subcommand)
-	acter = get_acters(type: NEXT)
-
-	if acter == @player || acter == @partner
-		player_act(acter,command,subcommand)
-	else
-		enemy_act()
-	end
-
-	@scene += 1
+def update_history()
+	# 「シーン：@sceneでの行動"後"の状況はこうですよ」
 	@history << {
 		"scene": @scene,
 		"status": {
@@ -338,11 +339,24 @@ def act(command,subcommand)
 			}
 		}
 	}
-	puts @history.to_s + "afwafewfawef"
+
+end
+
+def act(command,subcommand)
+	@scene += 1
+	acter = get_acters(type: NEXT)
+
+	if acter == @player || acter == @partner
+		player_act(acter,command,subcommand)
+	else
+		enemy_act()
+	end
 
 	if [@player,@partner,@enemy].any?{|x| x.hp <= 0}
 		@finish_flg = true
 	end
+
+	acter.turn = DONE
 end
 
 # ランダムに味方一体を殴ってくるだけ。とりあえずは
@@ -453,7 +467,6 @@ def close_battle()
 	documentDB_client = DocumentDB.instance.client
 	collection = documentDB_client[:battle]
 
-	# あとで動作確認
 	collection.delete_one(user_id: @user_id)
 
 	sql_transaction = SQL_transaction.instance.sql
@@ -496,12 +509,11 @@ attr_accessor :hp, :mp, :atk, :def, :speed, :turn
 	end
 end
 
-private
 def self.debug_dbreset() 
 	Log.log("－－－－－－－DB RESET－－－－－－－－")
 
 	sql_transaction = SQL_transaction.instance.sql
-	statement =sql_transaction.prepare("delete from transaction.battle")
+	statement =sql_transaction.prepare("delete from battle")
 	statement.execute
 
 	documentDB_client = DocumentDB.instance.client
@@ -517,7 +529,7 @@ def self.debug_get_dbinfo(comment)
 
 	Log.log("SQL--------------")
 	sql_transaction = SQL_transaction.instance.sql
-	statement =sql_transaction.prepare("select * from transaction.battle")
+	statement =sql_transaction.prepare("select * from battle")
 	result = statement.execute
 
 	result.each do |row|
