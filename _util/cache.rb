@@ -10,7 +10,13 @@ include Singleton
 attr_reader :client
 
 def initialize
-	@@client = MemCache.new(CACHE_ADDRESS + ":" + CACHE_PORT)
+	port = "11211"
+	puts port
+	if Environment.dev?
+		port = "11212"
+	end
+puts port
+	@@client = MemCache.new(CACHE_ADDRESS + ":" + port)
 end
 
 def get(key)
