@@ -11,11 +11,10 @@ attr_reader :client
 
 def initialize
 	port = "11211"
-	puts port
 	if Environment.dev?
 		port = "11212"
 	end
-puts port
+
 	@@client = MemCache.new(CACHE_ADDRESS + ":" + port)
 end
 
