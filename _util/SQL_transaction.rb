@@ -9,7 +9,7 @@ class SQL_transaction
 	
 	def initialize
 		database = "transaction"
-		if Environment.dev?
+		if Environment.dev()
 			database = "dev_transaction"
 		end
 

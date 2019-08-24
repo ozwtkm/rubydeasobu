@@ -9,7 +9,7 @@ class SQL_master
 	
 	def initialize
 		database = "master"
-		if Environment.dev?
+		if Environment.dev()
 			database = "dev_master"
 		end
 
