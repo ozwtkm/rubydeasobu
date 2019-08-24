@@ -3,12 +3,8 @@
 
 class Const
     ROOTPATH = "/var/www/html/testruby/"
-    PATH_VIEW = "/var/www/html/testruby/template/"
-    PATH_CONTROLLER = "/var/www/html/testruby/controller/"
 
     DEV_ROOTPATH = "/var/www/html/dev/rubyquest/"
-    DEV_PATH_VIEW = "/var/www/html/dev/rubyquest/template/"
-    DEV_PATH_CONTROLLER = "/var/www/html/dev/rubyquest/controller/"
 
     SQL_SOCKET = "/var/lib/mysql/mysql.sock"
     SQL_HOST = "localhost"
