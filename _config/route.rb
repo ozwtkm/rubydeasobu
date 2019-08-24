@@ -7,7 +7,7 @@ require_relative '../controller/_chat'
 class Routes
 
 def self.get_routes
-	filenames = Dir.glob(PATH_CONTROLLER + "*.rb")
+	filenames = Dir.glob(Environment.path_controller() + "*.rb")
 
 	@@routes = {}
 
