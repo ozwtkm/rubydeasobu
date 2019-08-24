@@ -43,18 +43,17 @@ class Environment
     def self.set_variables(const)
         prefix = "PRO_" 
         prefix = "DEV_" if Environment.dev()
-        const = const.select do |row|
-            row.to_s.start_with?(prefix)
-        end
-
-        regexp = Regexp.new(prefix)
         const.each do |row|
-                variable_name = row.to_s.sub(regexp, "").downcase
-                puts variable_name
-                variable_value = Const.const_get(row)
+            if !row.to_s.start_with?(prefix)
+                next
+            end
 
-                Environment.class_variable_set("@@"+variable_name, variable_value)
+            regexp = Regexp.new("^" + prefix)
+
+            variable_name = row.to_s.sub(regexp, "").downcase
+            variable_value = Const.const_get(row)
+
+            Environment.class_variable_set("@@"+variable_name, variable_value)
         end
     end
-
 end
