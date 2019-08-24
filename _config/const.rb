@@ -5,14 +5,15 @@ ROOTPATH = "/var/www/html/testruby/"
 
 DEV_ROOTPATH = "/var/www/html/dev/rubyquest/"
 
-PATH_VIEW = ROOTPATH + "template/"
-PATH_CONTROLLER = ROOTPATH + "controller/"
-
-
 SQL_SOCKET = "/var/lib/mysql/mysql.sock"
 SQL_HOST = "localhost"
 SQL_USER = "testwebrick"
 SQL_PASSWORD = "test"
+
+DEV_SQL_SOCKET = "/var/lib/mysql/mysql.sock"
+DEV_SQL_HOST = "localhost"
+DEV_SQL_USER = "testwebrick"
+DEV_SQL_PASSWORD = "test"
 
 
 CACHE_ADDRESS = "127.0.0.1"
@@ -20,6 +21,7 @@ CACHE_PORT = "11211"
 
 DEV_CACHE_ADDRESS = "127.0.0.1"
 DEV_CACHE_PORT = "11212"
+
 
 DOCUMENTDB_ADDRESS = "127.0.0.1"
 DOCUMENTDB_PORT = "27017"

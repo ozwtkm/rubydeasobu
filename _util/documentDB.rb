@@ -13,7 +13,7 @@ def initialize
 	address = Environment.documentdb_address()
 	port = Environment.documentdb_port()
 
-	@@client = Mongo::Client.new([address + ':' + port], database: 'ruby_quest_monsters')#todo constに引越し
+	@@client = Mongo::Client.new([address + ':' + port], database: 'ruby_quest_monsters')
 end
 
 def client

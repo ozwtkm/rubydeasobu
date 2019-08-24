@@ -41,7 +41,8 @@ class Environment
     end
 
     def self.path_view()
-        @@path_view
+        Environment.check_unset()
+        return @@path_view
     end
 
     def self.path_controller()
@@ -125,14 +126,14 @@ class Environment
             @@dev = true
 
             @@rootpath = DEV_ROOTPATH
-            @@path_view = PATH_VIEW
-            @@path_controller = PATH_CONTROLLER
+            @@path_view = DEV_ROOTPATH + "template/"
+            @@path_controller = DEV_ROOTPATH + "controller/"
             @@path_log = DEV_PATH_LOG
         
-            @@sql_socket = SQL_SOCKET
-            @@sql_host = SQL_HOST
-            @@sql_user = SQL_USER
-            @@sql_password = SQL_PASSWORD
+            @@sql_socket = DEV_SQL_SOCKET
+            @@sql_host = DEV_SQL_HOST
+            @@sql_user = DEV_SQL_USER
+            @@sql_password = DEV_SQL_PASSWORD
             
             @@cache_address = DEV_CACHE_ADDRESS
             @@cache_port = DEV_CACHE_PORT
@@ -149,8 +150,8 @@ class Environment
             @@dev = false
             
             @@rootpath = ROOTPATH
-            @@path_view = PATH_VIEW
-            @@path_controller = PATH_CONTROLLER
+            @@path_view = ROOTPATH + "template/"
+            @@path_controller = ROOTPATH + "controller/"
             @@path_log = PATH_LOG
         
             @@sql_socket = SQL_SOCKET
