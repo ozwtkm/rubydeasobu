@@ -13,7 +13,12 @@ class SQL_master
 			database = "dev_master"
 		end
 
-		@@sql_client = Mysql2::Client.new(:socket => SQL_SOCKET, :host => SQL_HOST, :username => SQL_USER, :password => SQL_PASSWORD, :encoding => 'utf8', :database => database,:reconnect => true)
+		socket = Environment.sql_socket()
+		host = Environment.sql_host()
+		username = Environment.sql_user()
+		password = Environment.sql_password()
+
+		@@sql_client = Mysql2::Client.new(:socket => socket, :host => host, :username => username, :password => password, :encoding => 'utf8', :database => database,:reconnect => true)
 		@@sql_client.query("begin")
 	end
 	

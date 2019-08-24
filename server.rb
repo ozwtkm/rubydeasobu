@@ -26,10 +26,18 @@ module Output
 				self.write_org(str)
 			end
 		end
-		end
+	end
 end
 
-f_access = File.open(PATH_LOG + 'server.log', 'a')
+develop_or_production = ARGV[0]
+Environment.set(develop_or_production)
+
+address = Environment.webrick_address()
+documentroot = Environment.rootpath()
+port = Environment.webrick_port()
+path_log = Environment.path_log()
+
+f_access = File.open(path_log + 'server.log', 'a')
 Output.console_and_file(f_access)
 
 number_of_log_files = 5
@@ -39,7 +47,7 @@ log_access = Logger.new(f_access, number_of_log_files, size_of_file)
 
 # httpサーバー
 s = HTTPServer.new(
-	:BindAddress => WEBRICK_ADDRESS, :DocumentRoot => ROOTPATH, :Port => WEBRICK_PORT,
+	:BindAddress => address, :DocumentRoot => documentroot, :Port => port,
 	:Logger => log_access,
 	:AccessLog => [
 		[log_access, WEBrick::AccessLog::COMMON_LOG_FORMAT],
@@ -65,7 +73,6 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 		#最大フォーク数が1(0を指定すると現在のプロセス上で実行されてしまうので注意)
 		Parallel.map(DUMMY_ITEMS, :in_prosess => 1, :finish => finishProc) {
 			begin
-				Environment.set_req(req) #開発環境なの？とかの情報参照用
 				req.path_info = separate(req.path) #RESTfulにしたい。
 				controller = createController(req, res)
 				dispatch(controller, req.request_method)
@@ -153,4 +160,7 @@ trap(:INT){ shutdown(s, f_access) }
 trap(:TERM){ shutdown(s, f_access) }
 
 s.start
+
+
+
 

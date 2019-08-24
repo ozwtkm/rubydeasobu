@@ -10,7 +10,10 @@ include Singleton
 attr_reader :client
 
 def initialize
-	@@client = Mongo::Client.new(['127.0.0.1:27017'], database: 'ruby_quest_monsters')#todo constに引越し
+	address = Environment.documentdb_address()
+	port = Environment.documentdb_port()
+
+	@@client = Mongo::Client.new([address + ':' + port], database: 'ruby_quest_monsters')#todo constに引越し
 end
 
 def client
