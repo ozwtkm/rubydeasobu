@@ -29,7 +29,7 @@ def get_handler()
 	
 	Validator.validate_not_Naturalnumber(offset)
 
-	@context[:monsters] = Monster.get_possession_monsters(@user.id, limit, offset.to_i)
+	@context[:monsters] = Monster.get_possession_monsters(@user.id, limit:limit, offset:offset.to_i)
 
 	super
 end

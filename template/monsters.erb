@@ -5,9 +5,18 @@
 		result = {:ErrorMessage=>c[:e].message}
 	end 
 
-	if !c[:battle].nil?
-		result = c[:monsters].map do |row|
-			{:name=>row.name, :rarity=>row.rarity}
+	if !c[:monsters].nil?
+		result = c[:monsters].map do |k,v|
+			{
+				:possession_id=>k,
+				:name=>v.name, 
+				:rarity=>v.rarity,
+				:hp=>v.hp,
+				:mp=>v.mp,
+				:speed=>v.speed,
+				:atk=>v.atk,
+				:def=>v.def
+			}
 		end
 	end
 %><%= JSON.generate(result) %>

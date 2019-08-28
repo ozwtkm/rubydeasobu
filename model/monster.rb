@@ -8,12 +8,16 @@ require_relative './basemodel'
 require_relative '../exception/Error_shortage_of_material'
 
 class Monster < Base_model
-	attr_reader :id, :name, :hp, :atk, :def, :exp, :money, :img_id, :rarity
+	INITIAL_MONSTER_ID = 5
+
+	attr_reader :id, :name, :hp, :mp, :speed, :atk, :def, :exp, :money, :img_id, :rarity
 
 def initialize(monster_info)
 	@id = monster_info["id"]
 	@name = monster_info["name"]
 	@hp = monster_info["hp"]
+	@mp = monster_info["mp"]
+	@speed = monster_info["speed"]
 	@atk = monster_info["atk"]
 	@def = monster_info["def"]
 	@exp = monster_info["exp"]
@@ -52,19 +56,19 @@ def self.get_master_monsters()
 end
 
 
-def self.get_possession_monsters(user_id, limit=10, offset=0)
+def self.get_possession_monsters(user_id, limit:10, offset:0)
 	sql_transaction =  SQL_transaction.instance.sql
 	
 	master_monster_list = Monster.get_master_monsters()
 	
-	statement = sql_transaction.prepare("select monster_id from user_monster where user_id = ? limit ? offset ?")
+	statement = sql_transaction.prepare("select id, monster_id from user_monster where user_id = ? limit ? offset ?")
 	result = statement.execute(user_id, limit, offset)
 	
 	Validator.validate_SQL_error(result.count, is_multi_line: true)
 	
-	possession_monster_list = []
+	possession_monster_list = {}
 	result.each do |row|
-		possession_monster_list << master_monster_list[row["monster_id"]].clone
+		possession_monster_list[row["id"]] = master_monster_list[row["monster_id"]].clone
 	end
 	
 	statement.close
@@ -93,6 +97,18 @@ def self.delete_monster(user_id, monster_id, count)
 	statement.close
 end
 
+# ユーザ登録時だけ呼ばれる
+def self.init(user_id)
+	sql_transaction =  SQL_transaction.instance.sql
+
+	statement = sql_transaction.prepare("insert into user_monster(user_id, monster_id) values(?,?)")
+	statement.execute(user_id, 	INITIAL_MONSTER_ID)
+	possession_monster_id = statement.last_id()
+
+	statement.close
+
+	return possession_monster_id
+end
 
 end
 
