@@ -6,6 +6,7 @@ require_relative './_baseclass_require_login'
 require_relative '../_util/validator'
 
 class Party_controller < Base_require_login
+CREATED = 201
 
 # オーバーライド。
 def initialize(req,res)
@@ -50,7 +51,7 @@ def put_control()
     @parties[party_id].set(new_possession_monster_id)
     @parties[party_id].save()
 
-    @res.status = 201
+    @res.status = CREATED
     @context[:parties] = @parties
 end
 
