@@ -18,7 +18,6 @@ def initialize(rooms,dangeon_id,z)
 	@rooms = rooms
 	@dangeon_id = dangeon_id
 	@z = z
-	@player_coord = [0,0]
 end
 attr_accessor :player_coord,:rooms
 
