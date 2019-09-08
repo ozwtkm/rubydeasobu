@@ -10,6 +10,8 @@ require_relative '../_util/validator'
 
 
 class Quest < Base_model    
+attr_accessor :dangeon_info, :team_info, :current_x, :current_y, :current_z
+
 # quest状況管理用
 WALKING = 0
 BATTLE = 1
@@ -29,34 +31,27 @@ def initialize(user_id,dangeon_info,team_info,current_x,current_y,current_z)
     @user_id = user_id
 
     @dangeon_info = dangeon_info
-    @team_info =　{}
+    @team_info = team_info
 
-    @situation = WALKING # 現状の仕様なら無くても成立はする。
+    #@situation = situation # 現状の仕様なら無くても成立はする。
 
-    @current_x =tmp
-    @current_y =tmp
-    @current_z =tmp
+    @current_x = current_x
+    @current_y = current_y
+    @current_z = current_z
 end
 
 
 def self.start(user_id, partner_id, party_id, quest_id)
+    Quest.debug_reset_quest()
+
     Quest.check_start_condition(user_id, partner_id, party_id, quest_id)
 
     sql_transaction = SQL_transaction.instance.sql
- 
-/insertされてない　→　untouched と解釈すれば初期insert不要
-
-    sql_master.prepare("select * from appearance_place where dangeon_id = ?")
-    result = sql_master.execute(quest_id)
-
-    sql_transaction.prepare("insert into quest_acquisition(user_id, appearance_id, status) values(?,?,?)")
-    reslut = sql_transaction.execute(user_id, hoge, UNTOUCHED)
-/   
 
 
     dangeon_info = {}
     dangeon_info["id"] = quest_id
-    dangeon_info["map"] = Map.get(quest_id,0)
+    dangeon_info["map"] = Map.get(quest_id,1)
 
     team_info = {}
     team_info["party"] = party_id
@@ -102,7 +97,7 @@ def self.check_start_condition(user_id, partner_id, party_id, quest_id)
     sql_transaction = SQL_transaction.instance.sql
 	sql_master = SQL_master.instance.sql
 
-    statement = sql_transaction.prepare("select * from quest where user_id = ?limit 1")
+    statement = sql_transaction.prepare("select * from quest where user_id = ? limit 1")
     result = statement.execute(user_id)
 
     if result.count === 1
@@ -125,12 +120,25 @@ def self.check_start_condition(user_id, partner_id, party_id, quest_id)
     result = statement.execute(party_id)
 
     Validator.validate_SQL_error(result.count, is_multi_line: false)
+
+    statement.close()
 end
 
 
 
 def save()
 
+end
+
+# debug用
+def self.debug_reset_quest()
+    sql_transaction = SQL_transaction.instance.sql
+	sql_master = SQL_master.instance.sql
+
+    statement = sql_transaction.prepare("delete from quest")
+    statement.execute()
+
+    Log.log("Quest is reseted")
 end
 
 end

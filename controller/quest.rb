@@ -24,7 +24,6 @@ def view_http_header()
 	@res.header['Content-Type'] = "application/json; charset=UTF-8"
 end
 
-
 # クエストの開始
 def control()
 	#リクエストの想定　[134,132,1]　party id , partner_id , dangeon id	
@@ -32,10 +31,11 @@ def control()
 
 	check_post_json()
 
-	party_id = @json[0].to_i
-    quest_id = @json[1].to_i
+	partner_monster_id = @json[0].to_i()
+	party_id = @json[1].to_i()
+	quest_id = @json[2].to_i()
 
-	@quest = Quest.start(@user.id, party_id, quest_id)
+	@quest = Quest.start(@user.id, partner_monster_id, party_id, quest_id)
 	
 	@context[:quest] = @quest
 end
@@ -49,13 +49,13 @@ def put_control()
 end
 
 def check_put_json()
-	if !@json.all?{|x| (UP..LEFT).to_a.include?(x)}
+	if !@json.all?{|x| (UP..LEFT).include?(x)}
 		raise "0-3でよろ" 
 	end
 end
 
 def check_post_json()
-	if !@json.all?{|x| (1..Float::INFINITY).to_a.include?(x)}
+	if !@json.all?{|x| (1..Float::INFINITY).include?(x)}
 		raise "自然数でよろ" 
 	end
 end
