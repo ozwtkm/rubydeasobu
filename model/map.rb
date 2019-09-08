@@ -19,7 +19,7 @@ def initialize(rooms,dangeon_id,z)
 	@dangeon_id = dangeon_id
 	@z = z
 end
-attr_accessor :player_coord,:rooms
+attr_accessor :rooms
 
 def self.create(aisles,dangeon_id,z)
 	num = Graph.calc_one_side(aisles)
@@ -108,15 +108,15 @@ def self.get(dangeon_id, z)
 	
 	rooms = []
 	result.each do |row|
-		aisle_as_hash = convert_aisle_to_hash(row.aisle)
-		room = Map::Room.new(row.x,row.y,z,dangeon_id,aisle_as_hash)
+		aisle_as_hash = Map::Room.convert_aisle_to_hash(row["aisle"])
+		room = Map::Room.new(row["x"], row["y"], z, dangeon_id, aisle_as_hash)
 
 		rooms[row["y"]] = [] if rooms[row["y"]].nil?
 		rooms[row["y"]][row["x"]] = room
 	end
 	
 	statement.close
-	map = Map.new(rooms)
+	map = Map.new(rooms,dangeon_id,z)
 	
 	return map
 end
@@ -168,7 +168,7 @@ def convert_aisle_to_int()
 end
 
 
-def convert_aisle_to_hash(value)
+def self.convert_aisle_to_hash(value)
 	tmp_aisle = {}
 	
 	if value >= RIGHT
