@@ -7,6 +7,7 @@ require_relative '../_util/cache'
 require_relative './basemodel'
 require_relative '../exception/Error_inconsistency_of_aisle'
 require_relative '../_util/graph_util'
+require 'pp'
 
 class Map < Base_model
 UP = 1
@@ -111,11 +112,22 @@ def self.get(dangeon_id, z)
 		aisle_as_hash = Map::Room.convert_aisle_to_hash(row["aisle"])
 		room = Map::Room.new(row["x"], row["y"], z, dangeon_id, aisle_as_hash)
 
-		rooms[row["y"]] = [] if rooms[row["y"]].nil?
+		rooms[row["y"]] = [] if rooms[row["y"].to_i()].nil?
 		rooms[row["y"]][row["x"]] = room
+		
 	end
-	
-	statement.close
+
+	# roomsの形整え。もっと良くできる気がする
+	rooms_with = rooms.map{|x| x.size()}.max()
+	rooms.each do |row|
+		if row[rooms_with-1].nil?
+			row[rooms_with-1] = nil 
+		end
+	end
+
+	puts rooms.to_s
+
+	statement.close()
 	map = Map.new(rooms,dangeon_id,z)
 	
 	return map
@@ -125,6 +137,8 @@ end
 
 class Room
 attr_accessor :aisle
+attr_reader :x, :y, :z
+
 
 def initialize(x,y,z,dangeon_id,aisle={})
 	@x = x
