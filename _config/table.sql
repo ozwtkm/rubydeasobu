@@ -58,7 +58,7 @@ CREATE TABLE `appearance_place` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `dangeon_id` (`dangeon_id`,`x`,`y`,`z`),
   CONSTRAINT `appearance_place_ibfk_1` FOREIGN KEY (`dangeon_id`) REFERENCES `dangeons` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -88,7 +88,7 @@ CREATE TABLE `equipment` (
   `kind` int(5) unsigned NOT NULL,
   `value` int(10) DEFAULT NULL,
   KEY `id` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -170,7 +170,7 @@ CREATE TABLE `items` (
   `value` int(10) unsigned NOT NULL,
   `img_id` int(10) unsigned NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -306,7 +306,7 @@ CREATE TABLE `user_item` (
   `user_id` int(10) unsigned NOT NULL,
   `item_id` int(10) unsigned NOT NULL,
   `quantity` int(10) unsigned NOT NULL,
-  KEY `user_id` (`user_id`),
+  UNIQUE KEY `user_id` (`user_id`,`item_id`),
   CONSTRAINT `user_item_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -371,4 +371,4 @@ CREATE TABLE `wallets` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-08-20 12:52:39
+-- Dump completed on 2019-08-24 23:06:01
