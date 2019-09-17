@@ -53,9 +53,7 @@ def self.get(user_id)
 
 	battle_document = collection.find({"user_id":user_id})
 
-	if battle_document.count === 0
-		battle = Battle.start(user_id)
-	else
+	if Battle.exist?(user_id)
 		sql_transaction = SQL_transaction.instance.sql
 		statement = sql_transaction.prepare("select * from battle where user_id = ? limit 1")
 		result = statement.execute(user_id)
@@ -68,9 +66,11 @@ def self.get(user_id)
 		statement.close
 
 		battle = Battle.new(battle_document.first)
-	end
 
-	return battle
+		return battle
+	else
+		raise "Battle取って来れない"
+	end
 end
 
 #バトル結果はdodumentDB→SQLの順にinsertするため、documentDBだけ1scene先行している可能性がある(レアケースだが
@@ -94,7 +94,25 @@ def self.check_db_consistency(documentDB,sql)
 end
 
 
+def self.exist?(user_id)
+	documentDB_client = DocumentDB.instance.client
+	collection = documentDB_client[:battle]
+
+	battle_document = collection.find({"user_id":user_id})
+
+	if battle_document.count === 0
+		return false
+	end
+
+	return true
+end
+
+
 def self.start(user_id)
+	if Battle.exist?(user_id)
+		raise "目の前の戦闘に集中しなさい"
+	end
+
 	sql_transaction = SQL_transaction.instance.sql
 	sql_master = SQL_master.instance.sql
 
@@ -352,7 +370,7 @@ def act(command,subcommand)
 		enemy_act()
 	end
 
-	if [@player,@partner,@enemy].any?{|x| x.hp <= 0}
+	if [@player, @enemy].any?{|x| x.hp <= 0}
 		@finish_flg = true
 	end
 
@@ -427,10 +445,13 @@ end
 
 
 def get_reward(gold: false, monster_exp: false, player_exp: false)
-	quest = Quest.get(@user_id) # modelの中でmodelをnewするのはアリなのか？
+	sql_transaction = SQL_transaction.instance.sql
 
 	if gold
-		quest.reward["gold"] += @enemy.money
+		statement = sql_transaction.prepare("update quest set obtain_money = obtain_money + ? where user_id = ?")
+		statement.execute(@enemy.money, @user_id)
+
+		statement.close()
 	end
 
 	# あとで
@@ -442,8 +463,6 @@ def get_reward(gold: false, monster_exp: false, player_exp: false)
 	if player_exp
 
 	end
-
-	quest.save()
 end
 
 
