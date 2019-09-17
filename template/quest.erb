@@ -1,0 +1,76 @@
+<%
+	result = {}
+
+	if !c[:e].nil? 
+		result = {:ErrorMessage=>c[:e].message}
+    elsif !c[:quest].nil?
+        dangeon_info = []
+        c[:quest].dangeon_info["map"].rooms.each.with_index do |row1,y|
+            row1.each.with_index do |row2,x|
+                dangeon_info[y] = [] if dangeon_info[y].nil?
+                if !row2.nil?
+                    dangeon_info[y][x] = row2.aisle
+                else
+                    dangeon_info[y][x] = nil
+                end
+            end
+        end
+
+        walking = 0
+        item = 1
+        step = 2
+        goal = 3
+        pot = 4
+        battle = 5
+        
+
+        obj = {}
+        case c[:quest].situation
+        when battle
+            obj = {
+                "id" => c[:quest].object.id,
+                "name" => c[:quest].object.name,
+                "img_id" => c[:quest].object.img_id
+            }
+        when item
+            obj = {
+                "id" => c[:quest].object.id,
+                "name" => c[:quest].object.name,
+                "kind" => c[:quest].object.kind,
+                "value" => c[:quest].object.value,
+                "img_id" => c[:quest].object.img_id
+            }
+        when step
+            obj = {
+                "id" => c[:quest].object.id,
+                "name" => c[:quest].object.name,
+                "kind" => c[:quest].object.kind,
+                "value" => c[:quest].object.value
+            }
+        when goal
+            obj = {
+                "id" => c[:quest].object.id,
+                "name" => c[:quest].object.name,
+                "kind" => c[:quest].object.kind,
+                "value" => c[:quest].object.value
+            }
+        when pot
+            obj = {
+                "id" => c[:quest].object.id,
+                "name" => c[:quest].object.name,
+                "kind" => c[:quest].object.kind,
+                "value" => c[:quest].object.value
+            }
+        end
+
+        result = {
+            "dangeon_info" => dangeon_info,
+            "team_info" => c[:quest].team_info,
+            "x" => c[:quest].current_x,
+            "y" => c[:quest].current_y,
+            "z" => c[:quest].current_z,
+            "situation" => c[:quest].situation,
+            "object" =>obj
+        }
+	end
+%><%= JSON.generate(result) %>

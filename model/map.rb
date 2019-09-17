@@ -21,6 +21,7 @@ def initialize(rooms,dangeon_id,z)
 	@z = z
 end
 attr_accessor :rooms
+attr_reader :dangeon_id, :z
 
 def self.create(aisles,dangeon_id,z)
 	num = Graph.calc_one_side(aisles)
@@ -124,8 +125,6 @@ def self.get(dangeon_id, z)
 			row[rooms_with-1] = nil 
 		end
 	end
-
-	puts rooms.to_s
 
 	statement.close()
 	map = Map.new(rooms,dangeon_id,z)

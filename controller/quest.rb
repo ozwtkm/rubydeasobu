@@ -7,10 +7,7 @@ require_relative '../model/quest'
 
 
 class Quest_controller < Base_require_login
-UP = 0
-RIGHT = 1
-DOWN = 2
-LEFT = 3
+
 
 def initialize(req, res)
 	@template = "quest.erb"
@@ -26,39 +23,50 @@ end
 
 # クエストの開始
 def control()
-	#リクエストの想定　[134,132,1]　party id , partner_id , dangeon id	
+	#リクエストの想定　[134,132,1]　partner_id , party id , dangeon id	
 	@json = JSON.parse(@req.body)
 
-	check_post_json()
+	check_json()
 
-	partner_monster_id = @json[0].to_i()
-	party_id = @json[1].to_i()
-	quest_id = @json[2].to_i()
+	partner_monster_id = @json[0]
+	party_id = @json[1]
+	quest_id = @json[2]
 
-	@quest = Quest.start(@user.id, partner_monster_id, party_id, quest_id)
+	quest = Quest.start(@user.id, partner_monster_id, party_id, quest_id)
 	
-	@context[:quest] = @quest
+	@context[:quest] = quest
 end
 
 
 # クエストの更新。[[0-3]]みたいなの受け取って座標移動処理。必要に応じてイベント処理。
 def put_control()
-	#リクエストの想定　[1,1]　前者：コマンド　後者：コマンド詳細	
+	#リクエストの想定　[1,1]　[行動種類, 行動内容] みたいな	
 	@json = JSON.parse(@req.body)
-	check_put_json()
+
+	check_json()
+
+	action_kind = @json[0]
+	action_value = @json[1]
+
+	quest = Quest.get(@user.id)
+	quest.advance(action_kind, action_value)
+
+	@context[:quest] = quest
 end
 
-def check_put_json()
-	if !@json.all?{|x| (UP..LEFT).include?(x)}
-		raise "0-3でよろ" 
+# キャンセル用。battleなど依存関係あるもの諸々消す
+def delete_control()
+	quest = Quest.get(@user.id)
+
+	quest.cancel()
+
+	@context[:quest] = quest
+end
+
+def check_json()
+	if !@json.all?{|x| (0..Float::INFINITY).include?(x)}
+		raise "0か自然数でよろ" 
 	end
 end
-
-def check_post_json()
-	if !@json.all?{|x| (1..Float::INFINITY).include?(x)}
-		raise "自然数でよろ" 
-	end
-end
-
 
 end

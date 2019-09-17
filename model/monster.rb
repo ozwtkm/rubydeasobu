@@ -76,6 +76,15 @@ def self.get_possession_monsters(user_id, limit:10, offset:0)
 	return possession_monster_list
 end
 
+
+def self.get_specific_monster(id)
+	master_monster_list = Monster.get_master_monsters()
+
+	monster = master_monster_list[id]
+
+	return monster
+end
+
 def self.add_monster(user_id, monster_id)
 	sql_transaction =  SQL_transaction.instance.sql
 

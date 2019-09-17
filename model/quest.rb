@@ -4,28 +4,56 @@
 require_relative '../_util/SQL_master'
 require_relative '../_util/SQL_transaction'
 require_relative './basemodel'
-require_relative './map'
 require_relative '../_util/documentDB'
 require_relative '../_util/validator'
+require_relative './battle'
+require_relative './item'
+require_relative './equipment'
+require_relative './map'
+require_relative './monster'
 
 
-class Quest < Base_model    
-attr_accessor :dangeon_info, :team_info, :current_x, :current_y, :current_z
+class Quest < Base_model
+attr_accessor :dangeon_info, :team_info, :current_x, :current_y, :current_z, :situation, :object
 
-# quest状況管理用
+# 初期プレイヤ座標
+INITIAL_X = 0
+INITIAL_Y = 0
+INITIAL_Z = 1
+
+# situationとaction_kind管理用
 WALKING = 0
-BATTLE = 1
-EVENT = 2
+ITEM = 1
+STEP = 2
+GOAL = 3
+POT = 4
+BATTLE = 5
+FINISHED = 6
+CANCELED = 7
+
+# action_value 管理用
+UP = 1
+LEFT = 2
+DOWN = 4
+RIGHT = 8
+
+YES = 0
+NO = 1
 
 # acquisition用
-UNTOUCHED = 0
 ACKQUIRED = 1
-DISDISCARDED = 2
+DISCARDED = 2
+DONE = 3
 
 # appearance_placeの名前解決用。こういうの用のmasterファイル作っておきたい。
-MONSTER = 1
-ITEM = 2
-EQUIPMENT = 3
+TYPE_MONSTER = 1
+TYPE_ITEM = 2
+TYPE_EQUIPMENT = 3
+
+# equipmentのkindの名前解決用。
+KIND_STEP = 1
+KIND_GOAL = 2
+KIND_POT = 3
 
 def initialize(user_id,dangeon_info,team_info,current_x,current_y,current_z)
     @user_id = user_id
@@ -33,36 +61,36 @@ def initialize(user_id,dangeon_info,team_info,current_x,current_y,current_z)
     @dangeon_info = dangeon_info
     @team_info = team_info
 
-    #@situation = situation # 現状の仕様なら無くても成立はする。
-
     @current_x = current_x
     @current_y = current_y
     @current_z = current_z
+
+    @situation = WALKING
+    @object = nil # 今プレイヤがいる位置に何があるかをクライアントに教える用. itemmodelのインスタンスとか
 end
 
 
 def self.start(user_id, partner_id, party_id, quest_id)
-    Quest.debug_reset_quest()
-
     Quest.check_start_condition(user_id, partner_id, party_id, quest_id)
 
     sql_transaction = SQL_transaction.instance.sql
 
-
     dangeon_info = {}
     dangeon_info["id"] = quest_id
-    dangeon_info["map"] = Map.get(quest_id,1)
+    dangeon_info["map"] = Map.get(quest_id, INITIAL_Z)
 
     team_info = {}
     team_info["party"] = party_id
     team_info["partner"] = partner_id
 
     statement = sql_transaction.prepare("insert into quest(user_id,dangeon_id,current_x,current_y,current_z,party_id,partner_monster,obtain_money) values(?,?,?,?,?,?,?,?)")
-    result = statement.execute(user_id, quest_id, 0, 0, 1, party_id, partner_id, 0)
+    result = statement.execute(user_id, quest_id, INITIAL_X, INITIAL_Y, INITIAL_Z, party_id, partner_id, 0)
 
     statement.close()
 
-    quest = Quest.new(user_id, dangeon_info, team_info, 0, 0, 1)
+    quest = Quest.new(user_id, dangeon_info, team_info, INITIAL_X, INITIAL_Y, INITIAL_Z)
+
+    return quest
 end
 
 
@@ -70,23 +98,25 @@ def self.get(user_id)
     sql_transaction = SQL_transaction.instance.sql
 	sql_master = SQL_master.instance.sql
 
-    statement = sql_transaction.prepare("select * from quest where user_id = ?")
+    statement = sql_transaction.prepare("select * from quest where user_id = ? limit 1")
     result = statement.execute(user_id)
 
     Validator.validate_SQL_error(result.count, is_multi_line: false)
-
-    dangeon_info = {}
-    dangeon_info["id"] = result.first["dangeon_id"]
-    dangeon_info["map"] = Map.get(result.first["dangeon_id"],0)
-
-    team_info = {}
-    team_info["party"] = result.first["party_id"]
-    team_info["partner"] = result.first["partner_monster"]
 
     x = result.first["current_x"]
     y = result.first["current_y"]
     z = result.first["current_z"]
 
+    dangeon_info = {}
+    dangeon_info["id"] = result.first["dangeon_id"]
+    dangeon_info["map"] = Map.get(result.first["dangeon_id"], z)
+
+    team_info = {}
+    team_info["party"] = result.first["party_id"]
+    team_info["partner"] = result.first["partner_monster"]
+
+    statement.close()
+    
     quest = Quest.new(user_id, dangeon_info, team_info, x, y, z)
 
     return quest
@@ -106,7 +136,9 @@ def self.check_start_condition(user_id, partner_id, party_id, quest_id)
 
     # 追々はcondidate_partnerみたいなテーブルで検証
     statement = sql_master.prepare("select * from monsters where id = ? limit 1")
-    result = statement.execute(quest_id)
+    result = statement.execute(partner_id)
+
+    Validator.validate_SQL_error(result.count, is_multi_line: false)
 
 
     # 追々はcondidate_dangeonみたいなテーブルで検証（進行するごとに増えてく
@@ -126,9 +158,327 @@ end
 
 
 
-def save()
+def advance(action_kind, action_value)
+    case action_kind
+    when WALKING
+        validate_timing(action_kind)
 
+        validate_wall(action_value)
+
+        case action_value
+        when UP
+            @current_y -= 1
+        when RIGHT
+            @current_x += 1
+        when DOWN
+            @current_y += 1
+        when LEFT
+            @current_x -= 1
+        end
+
+        save() # handle_eventの前にsaveしとかないとバトル開始がうまく行かない
+
+        handle_event()
+    when ITEM
+        item_place_id = validate_timing(action_kind)
+
+        sql_master = SQL_master.instance.sql
+        sql_transaction = SQL_transaction.instance.sql
+
+        status = nil
+        case action_value
+        when YES
+            status = ACKQUIRED
+        when NO
+            status = DISCARDED
+        else
+            raise "何しようとしトンねん、、"
+        end
+
+        statement = sql_transaction.prepare("insert into quest_acquisition(user_id,appearance_id,status) values(?,?,?)")
+        statement.execute(@user_id, item_place_id, status)
+
+        statement.close()
+    when STEP
+        # 追々。
+        # x,y,z -> 0,0,z+1 にする。
+    when GOAL
+        validate_timing(action_kind)
+
+        case action_value
+        when YES
+            finish()
+        when NO
+            # スルーするのと一緒なので特に何も起こらない。
+        end
+    when POT
+        # 追々。
+        # とりあえずacquisitionをDONEにしておき、クエスト終了時にvalueのitemをinsert候補に加える。
+    else
+        raise "は？"
+    end
 end
+
+
+# バトル中に移動しようとするのtokaを阻止。みたいなタイミングの整合性検証
+def validate_timing(action_kind)
+    sql_transaction = SQL_transaction.instance.sql
+    sql_master = SQL_master.instance.sql
+
+    case action_kind
+    when WALKING
+        statement = sql_transaction.prepare("select * from battle where user_id = ? limit 1")
+        result = statement.execute(@user_id)
+    
+        if result.count != 0
+            raise "バトルしろチキンが"
+        end
+
+        statement.close()
+    when ITEM
+        statement = sql_master.prepare("select * from appearance_place where dangeon_id =? and x = ? and y = ? and z = ? limit 1")
+        result = statement.execute(@dangeon_info["id"], @current_x, @current_y, @current_z)
+
+        if result.count === 0 || result.first()["type"] != TYPE_ITEM
+            raise "そこアイテム無いよ"
+        end
+
+        item_place_id = result.first()["id"]
+
+        statement2 = sql_transaction.prepare("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1")
+        result2 = statement2.execute(@user_id, item_place_id)
+
+        if result2.count === 1
+            raise "もう捨てたか取ったかしてるよ"
+        end
+
+        statement.close()
+        statement2.close()
+
+        return item_place_id
+    when STEP
+        # to do
+    when GOAL
+        statement = sql_master.prepare("select * from appearance_place where dangeon_id = ? and x = ? and y = ? and z = ? limit 1")
+        result = statement.execute(@dangeon_info["id"], @current_x, @current_y, @current_z)
+    
+        if result.count === 0 || result.first()["type"] != TYPE_EQUIPMENT
+            raise "そこ装置無いよ"
+        end
+
+        @object = Equipment.get_specific_equipment(result.first["appearance_id"])
+
+        if @object.kind != KIND_GOAL
+            raise "そこゴール無いよ"
+        end
+
+        statement.close()
+    when POT
+        # to do
+    else
+        raise "何がしたいのお前"
+    end
+end
+
+
+def validate_wall(direction)
+    case direction
+    when UP
+        if @dangeon_info["map"].rooms[@current_y-1][@current_x].nil? || @current_y-1 < 0
+            raise "そこに部屋は無い"
+        end
+    when LEFT
+        if @dangeon_info["map"].rooms[@current_y][@current_x-1].nil? || @current_x-1 < 0
+            raise "そこに部屋は無い"
+        end
+    when DOWN
+        if @dangeon_info["map"].rooms[@current_y+1].nil? || @dangeon_info["map"].rooms[@current_y+1][@current_x].nil?
+            raise "そこに部屋は無い"
+        end
+    when RIGHT
+        if @dangeon_info["map"].rooms[@current_y][@current_x+1].nil?
+            raise "そこに部屋は無い"
+        end
+    else
+        raise "どこ行こうとしてんねん,,,"
+    end
+
+    if !@dangeon_info["map"].rooms[@current_y][@current_x].aisle[direction]
+        raise "そこは壁" 
+    end
+end
+
+
+def handle_event()
+    sql_master = SQL_master.instance.sql
+    sql_transaction = SQL_transaction.instance.sql
+
+    statement = sql_master.prepare("select * from appearance_place where dangeon_id = ? and x = ? and y = ? and z = ? limit 1")
+    result = statement.execute(@dangeon_info["id"], @current_x, @current_y, @current_z)
+
+    if result.count === 0
+        return
+    end
+
+    case result.first["type"]
+    when TYPE_MONSTER
+
+        statement2 = sql_transaction.prepare("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1")
+        result2 = statement2.execute(@user_id, result.first()["id"])
+
+        if result2.count === 1
+            return
+        end
+        
+        statement3 = sql_transaction.prepare("insert into quest_acquisition(user_id, appearance_id, status) values(?,?,?)")
+        statement3.execute(@user_id, result.first()["id"], DONE)
+
+        @situation = BATTLE
+        Battle.start(@user_id)
+        @object = Monster.get_specific_monster(result.first()["appearance_id"])
+
+        statement2.close()
+        statement3.close()
+
+    when TYPE_ITEM
+
+        statement2 = sql_transaction.prepare("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1")
+        result2 = statement2.execute(@user_id, result.first()["id"])
+
+        if result2.count === 1
+            return
+        end
+
+        @situation = TYPE_ITEM
+        @object = Item.get_specific_item(result.first["appearance_id"])
+
+        statement2.close()
+
+    when TYPE_EQUIPMENT
+
+        statement2 = sql_transaction.prepare("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1")
+        result2 = statement2.execute(@user_id, result.first()["id"])
+
+        if result2.count === 1
+            return
+        end
+
+        @object = Equipment.get_specific_equipment(result.first["appearance_id"])
+
+        case @object.kind
+        when KIND_STEP
+            @situation = STEP
+        when KIND_GOAL
+            @situation = GOAL
+        when KIND_POT
+            @situation = POT
+        end
+
+        statement2.close()
+
+    end
+
+    statement.close()
+end
+
+
+
+def finish()
+    # item処置。　itemのうちkindがmoneyになっているものはobtain_moneyへの変換を忘れずに。
+
+    sql_master = SQL_master.instance.sql
+    sql_transaction = SQL_transaction.instance.sql
+
+    statement = sql_transaction.prepare("select * from quest_acquisition where user_id = ? and status = ?")
+    result = statement.execute(@user_id, ACKQUIRED)
+
+    item_place_ids = []
+    statement_candidate = "?"
+    result.each_with_index do |row, i|
+        if i != 0
+            statement_candidate += " or ?"
+        end
+
+        item_place_ids << row["appearance_id"]
+    end
+
+    statement2 = sql_master.prepare("select * from appearance_place where id = " + statement_candidate)
+    result2 = statement2.execute(*item_place_ids)
+
+    # To do：　獲得アイテムのうち種類がmoneyのもの → obtain_money の変換。
+
+    statement_values = "values(?,?,?)"
+    query_values = []
+    result2.each_with_index do |row, i|
+        if i != 0
+            statement_values += ", (?,?,?)"
+        end
+
+        query_values << @user_id
+        query_values << row["appearance_id"]
+        query_values << 1
+    end
+
+    statement2 = sql_transaction.prepare("insert into transaction.user_item(user_id, item_id, quantity) " + statement_values + " on duplicate key update quantity = quantity + values(quantity)")
+    result2 = statement2.execute(*query_values)
+
+    statement3 = sql_transaction.prepare("select * from quest where user_id = ? limit 1")
+    result3 = statement3.execute(@user_id)
+
+    statement4 = sql_transaction.prepare("update wallets set money = money + ? where user_id = ? limit 1")
+    statement4.execute(result3.first["obtain_money"], @user_id)
+
+    statement5 = sql_transaction.prepare("delete from quest where user_id = ? limit 1")
+    statement5.execute(@user_id)
+
+    statement6 = sql_transaction.prepare("delete from quest_acquisition where user_id = ?")
+    statement6.execute(@user_id)
+    
+    @situation = FINISHED
+
+    statement.close()
+    statement2.close()
+    statement3.close()
+    statement4.close()
+    statement5.close()
+    statement6.close()
+end
+
+# deleteメソッドで呼ばれる用。
+def cancel()
+    sql_transaction = SQL_transaction.instance.sql
+    sql_master = SQL_master.instance.sql
+    
+    statement = sql_transaction.prepare("delete from quest where user_id = ? limit 1")
+    statement.execute(@user_id)
+
+    statement2 = sql_transaction.prepare("delete from quest_acquisition where user_id = ?")
+    statement2.execute(@user_id)
+
+    if Battle.exist?(@user_id)
+        battle = Battle.get(@user_id)
+        battle.close_battle()
+    end
+
+    @situation = CANCELED
+
+    statement.close()
+    statement2.close()
+end
+
+
+def save()
+    sql_transaction = SQL_transaction.instance.sql
+
+    statement = sql_transaction.prepare("update quest set current_x = ?, current_y = ?, current_z = ? where user_id = ?")
+    statement.execute(@current_x, @current_y, @current_z, @user_id)
+
+    statement.close()
+end
+
+
+
+
 
 # debug用
 def self.debug_reset_quest()
@@ -137,6 +487,8 @@ def self.debug_reset_quest()
 
     statement = sql_transaction.prepare("delete from quest")
     statement.execute()
+
+    statement.close()
 
     Log.log("Quest is reseted")
 end
