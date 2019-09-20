@@ -1,12 +1,4 @@
-var get_quests = function(){
-    $.getJSON("/dangeon", append_quests);
-}
 
-var append_quests = function(data){
-    $.each(data, function(index, val){
-		$("#quest").append("<input type=button value="+val+" id=onclick=start_quest("+index+")><br/>");
-	});
-}
 
 
 var get_parties = function(){
@@ -55,7 +47,6 @@ function append_parties_list(data){
 
     $(".nondisplayFrame").css('display', 'none');
     set_colorfunc("parties_list_body");
-   // set_candidatefunc("parties_list_body","candidate_party_id","possession_monster_id");
     $("#parties_list_body tr").click(function() {
         var value = $(this)[0].cells[8].innerText //タグのidをキーにしてうまいこと引っ張りたい
         $("#candidate_party_id").empty();
@@ -107,6 +98,9 @@ var do_update_party = function(){
 		$("#msg").append(res.ErrorMessage);
 	});
 }
+
+
+
 
 var get_wallet = function(){
 	$.getJSON("/wallet", append_wallet);
@@ -187,3 +181,4 @@ function append_wallet(data){
 		}
 	});
 }
+

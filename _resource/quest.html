@@ -4,23 +4,88 @@
 <link rel="shortcut icon" href="/rsc/favicon.ico"/>
 <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.3.min.js"></script> 
 <script src="/rsc/main.js"></script>
+<script src="/rsc/quest.js"></script>
+
 </head>
-<body onload="get_quests()">
+<body>
 <h1>Quest</h1>
-↓クエスト（ダンジョン）一覧<br/>
 
-<div id="quest"></div><br/>
+<div id="msg"></div>
+
+<div id="situation"></div>
+
+<div id="object"></div>
+
+<div id="coordinate"></div>
+
+<!--<canvas id="quest_canvas">
+</canvas><br/>-->
 
 
+<b>クエスト進行</b><br/>
+<input type=button value="上へ進む" onclick="go_up()"><br>
+<input type=button value="左へ進む" onclick="go_left()"><br>
+<input type=button value="下へ進む" onclick="go_down()"><br>
+<input type=button value="右へ進む" onclick="go_right()"><br>
+<br>
+<b>クエスト行動</b><br/>
+<input type=button value="アイテム拾う" onclick="get_item()"><br>
+<input type=button value="アイテム捨てる" onclick="discard_item()"><br>
+<input type=button value="階段下る" onclick=""><br>
+<input type=button value="ダンジョンを脱出する" onclick="goal()"><br>
+<input type=button value="クエスト中断" onclick="cancel()"><br>
+<br>
+<b>バトル行動</b>><br/>
+<input type=button value="攻撃" onclick="attack()">
+<br>
+
+<b>クエストログ</b>
+<div id="log"></div>
+
+<br/>
+↓クエスト（ダンジョン）を選んでね。<br/>
+<table border="5">
+    <thead>
+        <tr>
+        <th width="500">ダンジョン名</th>
+        </tr>
+    </thead>
+    <tbody id="quest_list"></tbody>
+ </table>
+
+↓クエストに使うパーティ選んでね。<br/>
+<table border="5" id="parties_list">
+    <thead>
+        <tr>
+        <th width="50">ID</th>
+        <th width="500">なまえ</th>
+        <th width="120">レア度</th>
+        <th width="120">HP</th>
+        <th width="120">MP</th>
+        <th width="120">SPEED</th>
+        <th width="120">ATK</th>
+        <th width="120">DEF</th>
+        </tr>
+    </thead>
+<tbody id="parties_list_body"></tbody>
+</table>
+
+<input type="button" value="クエスト開始" onclick="start_quest()">
+
+<div id="candidate_party_id"></div>
+<div id="candidate_quest_id"></div>
 
 
-<a href ="/rsc/select_party.html">パーティ選択</a>
+<a href ="/rsc/select_party.html">パーティ編集</a>
 
 <a href ="index">トップ</a><br/><br/>
 
 
 <script>
-
+   $(document).ready(function(){
+        get_quests();
+        get_parties();
+    });
 </script>
 </body>
 </html>
