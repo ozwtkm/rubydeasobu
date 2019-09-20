@@ -349,7 +349,7 @@ def handle_event()
             return
         end
 
-        @situation = TYPE_ITEM
+        @situation = ITEM
         @object = Item.get_specific_item(result.first["appearance_id"])
 
         statement2.close()
@@ -392,56 +392,61 @@ def finish()
     statement = sql_transaction.prepare("select * from quest_acquisition where user_id = ? and status = ?")
     result = statement.execute(@user_id, ACKQUIRED)
 
-    item_place_ids = []
-    statement_candidate = "?"
-    result.each_with_index do |row, i|
-        if i != 0
-            statement_candidate += " or ?"
+    if result.count != 0
+        item_place_ids = []
+        statement_candidate = "?"
+        result.each_with_index do |row, i|
+            if i != 0
+                statement_candidate += " or ?"
+            end
+
+            item_place_ids << row["appearance_id"]
         end
 
-        item_place_ids << row["appearance_id"]
-    end
+        statement2 = sql_master.prepare("select * from appearance_place where id = " + statement_candidate)
+        result2 = statement2.execute(*item_place_ids)
 
-    statement2 = sql_master.prepare("select * from appearance_place where id = " + statement_candidate)
-    result2 = statement2.execute(*item_place_ids)
+        # To do：　獲得アイテムのうち種類がmoneyのもの → obtain_money の変換。
 
-    # To do：　獲得アイテムのうち種類がmoneyのもの → obtain_money の変換。
+        statement_values = "values(?,?,?)"
+        query_values = []
+        result2.each_with_index do |row, i|
+            if i != 0
+                statement_values += ", (?,?,?)"
+            end
 
-    statement_values = "values(?,?,?)"
-    query_values = []
-    result2.each_with_index do |row, i|
-        if i != 0
-            statement_values += ", (?,?,?)"
+            query_values << @user_id
+            query_values << row["appearance_id"]
+            query_values << 1
         end
 
-        query_values << @user_id
-        query_values << row["appearance_id"]
-        query_values << 1
+        statement3 = sql_transaction.prepare("insert into transaction.user_item(user_id, item_id, quantity) " + statement_values + " on duplicate key update quantity = quantity + values(quantity)")
+        result3 = statement3.execute(*query_values)
+
+        statement2.close()
+        statement3.close()
+
     end
 
-    statement2 = sql_transaction.prepare("insert into transaction.user_item(user_id, item_id, quantity) " + statement_values + " on duplicate key update quantity = quantity + values(quantity)")
-    result2 = statement2.execute(*query_values)
+    statement4 = sql_transaction.prepare("select * from quest where user_id = ? limit 1")
+    result4 = statement4.execute(@user_id)
 
-    statement3 = sql_transaction.prepare("select * from quest where user_id = ? limit 1")
-    result3 = statement3.execute(@user_id)
+    statement5 = sql_transaction.prepare("update wallets set money = money + ? where user_id = ? limit 1")
+    statement5.execute(result4.first["obtain_money"], @user_id)
 
-    statement4 = sql_transaction.prepare("update wallets set money = money + ? where user_id = ? limit 1")
-    statement4.execute(result3.first["obtain_money"], @user_id)
-
-    statement5 = sql_transaction.prepare("delete from quest where user_id = ? limit 1")
-    statement5.execute(@user_id)
-
-    statement6 = sql_transaction.prepare("delete from quest_acquisition where user_id = ?")
+    statement6 = sql_transaction.prepare("delete from quest where user_id = ? limit 1")
     statement6.execute(@user_id)
+
+    statement7 = sql_transaction.prepare("delete from quest_acquisition where user_id = ?")
+    statement7.execute(@user_id)
     
     @situation = FINISHED
 
     statement.close()
-    statement2.close()
-    statement3.close()
     statement4.close()
     statement5.close()
     statement6.close()
+    statement7.close()
 end
 
 # deleteメソッドで呼ばれる用。
