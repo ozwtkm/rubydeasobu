@@ -76,6 +76,53 @@ var get_monsters = function(offset){
 }
 
 
+var get_items = function(offset){
+	$.getJSON("/item/" + offset, append_items_list);
+	
+	var next = String(Number(offset) + 10);
+	var back = String(Number(offset) - 10);
+	
+	document.getElementById('item_next_offset').value = next;
+	document.getElementById('item_back_offset').value = back;
+	
+	document.getElementById('item_range').innerText = String(Number(offset)+1) + "～" + next + "を表示中";
+}
+
+
+
+
+function append_items_list(data){
+    $('#item_list').empty();
+
+	$.each(data, function(index, val){
+        var content = "<tr>";
+
+		$.each(val, function(index, val){
+			switch(index){
+				case "name":
+                    content += "<td align='left'>" + val + "</td>";	
+					break;
+				case "kind":
+                    content += "<td align='center'>" + convert_item_kind(val) + "</td>";
+                    break;
+                case "value":
+                    content +="<td align='center'>" + val + "</td>";
+                    break;
+                case "quantity":
+                    content +="<td align='center'>" + val + "</td>";
+                    break;                
+                case "possession_id":
+                    content += "<td id='possession_item_id' class='nondisplayFrame'>" + val + "</td>";
+                    break;
+			}
+		});
+
+        content += "</tr>";
+        $("#item_list").append(content);
+	});
+}
+
+
 var do_update_party = function(){
     var possession_monster_id = $("input#possession_monster_id")[0].value;
     var party_id = $("input#party_id")[0].value;
@@ -168,6 +215,17 @@ function convert_rarity(rarity){
 
     return correspondence[rarity]
 }
+
+
+function convert_item_kind(kind){
+    var item_correspondence={
+        "2": "HP回復",
+        "1": "バフ"
+    }
+
+    return item_correspondence[kind]
+}
+
 
 function append_wallet(data){
 	$.each(data, function(index, val){

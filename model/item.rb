@@ -55,13 +55,27 @@ def self.get_specific_item(id)
     return item
 end
 
-# kakikake
+
 def self.get_possession_items(user_id, limit:10, offset:0)
 	sql_transaction =  SQL_transaction.instance.sql
 	
-    master_item_list = Item.get_master_monsters()
-	
+    master_item_list = Item.get_master_items()
 
+    statement = sql_transaction.prepare("select * from user_item where user_id = ? limit ? offset ?")
+	result = statement.execute(user_id, limit, offset)
+	
+	Validator.validate_SQL_error(result.count, is_multi_line: true)
+	
+	possession_item_list = {}
+	result.each do |row|
+        possession_item_list[row["item_id"]] = {}
+        possession_item_list[row["item_id"]]["object"] = master_item_list[row["item_id"]].clone()
+        possession_item_list[row["item_id"]]["quantity"] = row["quantity"]
+	end
+	
+	statement.close()
+
+    return possession_item_list
 end
 
 
