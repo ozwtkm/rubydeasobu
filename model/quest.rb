@@ -11,6 +11,8 @@ require_relative './item'
 require_relative './equipment'
 require_relative './map'
 require_relative './monster'
+require_relative '../_util/cache'
+
 
 
 class Quest < Base_model
@@ -134,12 +136,11 @@ def self.check_start_condition(user_id, partner_id, party_id, quest_id)
         raise "既に別クエスト実施中"
     end
 
-    # 追々はcondidate_partnerみたいなテーブルで検証
-    statement = sql_master.prepare("select * from monsters where id = ? limit 1")
-    result = statement.execute(partner_id)
-
-    Validator.validate_SQL_error(result.count, is_multi_line: false)
-
+    partner_candidate_list = Quest.get_partner_candidate(user_id)
+    
+    if !partner_candidate_list.any?{|x| x === partner_id}
+        raise "そいつは連れていけない"
+    end
 
     # 追々はcondidate_dangeonみたいなテーブルで検証（進行するごとに増えてく
     statement = sql_master.prepare("select * from dangeons where id = ? limit 1")
@@ -449,6 +450,7 @@ def finish()
     statement7.close()
 end
 
+
 # deleteメソッドで呼ばれる用。
 def cancel()
     sql_transaction = SQL_transaction.instance.sql
@@ -472,6 +474,53 @@ def cancel()
 end
 
 
+# フレンドが実装されたらフレンドリストから取得する様にする
+def self.get_partner_candidate(user_id)
+    partner_candidate_list = Cache.instance.get(user_id.to_s + 'partner_candidate_list')
+    # コントローラで記号は弾かれてるのでinjectionはできない
+
+	if !partner_candidate_list.nil?
+		Log.log("cacheありなのでキャッシュからpartner_candidate_list取得した")
+		return partner_candidate_list
+    end
+    
+    sql_transaction = SQL_transaction.instance.sql
+    sql_master = SQL_master.instance.sql
+    
+    # orderbyrand()の妥当性は要調査
+    statement = sql_transaction.prepare("select * from partner_candidate where user_id != ? order by rand() limit 5")
+    result = statement.execute(user_id)
+
+    partner_candidate_list = Array.new(5)
+    result.each_with_index do |row, i|
+        partner_candidate_list[i] = row["monster_id"]
+    end
+
+    if partner_candidate_list.count(nil) != 0
+        statement2 = sql_master.prepare("select * from monsters order by rand() limit ?")
+        result2 = statement2.execute(partner_candidate_list.count(nil))
+
+        result2.each_with_index do |row, i|
+            partner_candidate_list[-(i+1)] = row["id"]
+        end
+    
+        statement2.close()
+    end
+
+    if partner_candidate_list.count(nil) != 0
+        raise "正しくパートナー候補リスト作れてない"
+    end
+
+    statement.close()
+
+    Cache.instance.set(user_id.to_s + 'partner_candidate_list', partner_candidate_list)
+
+	Log.log("cacheなしなのでpartner_candidate_listセットした")
+
+    return partner_candidate_list
+end
+
+
 def save()
     sql_transaction = SQL_transaction.instance.sql
 
@@ -480,9 +529,6 @@ def save()
 
     statement.close()
 end
-
-
-
 
 
 # debug用
