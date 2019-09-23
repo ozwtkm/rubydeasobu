@@ -1,0 +1,19 @@
+<%
+	result = {}
+
+	if !c[:e].nil? 
+		result = {:ErrorMessage=>c[:e].message}
+	end 
+
+	if !c[:item].nil?
+		result = c[:item].map do |k,v|
+			{
+				:possession_id=>v["object"].id,
+				:name=>v["object"].name, 
+                :kind=>v["object"].kind,
+                :value=>v["object"].value,
+                :quantity=>v["quantity"]
+			}
+		end
+	end
+%><%= JSON.generate(result) %>
