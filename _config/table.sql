@@ -238,6 +238,21 @@ CREATE TABLE `battle` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `partner_candidate`
+--
+
+DROP TABLE IF EXISTS `partner_candidate`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `partner_candidate` (
+  `user_id` int(11) unsigned NOT NULL,
+  `monster_id` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`user_id`),
+  CONSTRAINT `partner_candidate_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `party`
 --
 
@@ -371,4 +386,4 @@ CREATE TABLE `wallets` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-08-24 23:06:01
+-- Dump completed on 2019-08-27 18:51:06
