@@ -5,9 +5,9 @@ require 'json'
 require_relative './_baseclass_require_login'
 require_relative '../model/quest'
 
-
 class Quest_controller < Base_require_login
-
+CREATED = 201
+RESET_CONTENT = 205
 
 def initialize(req, res)
 	@template = "quest.erb"
@@ -35,6 +35,8 @@ def control()
 	quest = Quest.start(@user.id, partner_monster_id, party_id, quest_id)
 	
 	@context[:quest] = quest
+
+	@res.status = CREATED
 end
 
 
@@ -52,6 +54,8 @@ def put_control()
 	quest.advance(action_kind, action_value)
 
 	@context[:quest] = quest
+
+	@res.status = CREATED
 end
 
 # キャンセル用。battleなど依存関係あるもの諸々消す
@@ -61,6 +65,8 @@ def delete_control()
 	quest.cancel()
 
 	@context[:quest] = quest
+
+	@res.status = RESET_CONTENT
 end
 
 def check_json()
