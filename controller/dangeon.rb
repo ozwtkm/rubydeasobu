@@ -13,6 +13,9 @@ def initialize(req, res)
 	super
     
     @dangeon = Dangeon.get_list()
+end
+
+def get_control()
     @context[:dangeons] = @dangeon
 end
 

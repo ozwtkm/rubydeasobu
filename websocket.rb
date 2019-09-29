@@ -5,7 +5,9 @@ require 'em-websocket'
 require 'cgi'
 require 'cgi/session'
 require_relative './_util/procedure_session'
+require_relative './_util/environment'
 require_relative './_config/const'
+
 
 # セッション変数をwebsocketに渡すためにwebsocketにインスタンス変数を追加する。
 module Ex_connection
@@ -21,10 +23,16 @@ mutex = Mutex.new
 
 connections = {}
 
+develop_or_production = ARGV[0]
+Environment.set(develop_or_production)
+
+host = Environment.websocket_address()
+port = Environment.websocket_port()
+
 EM.run {
 	using Ex_connection
 	
-	EM::WebSocket.run(:host => WEBSOCKET_ADDRESS, :port => WEBSOCKET_PORT) do |ws|
+	EM::WebSocket.run(:host => host, :port => port) do |ws|
 		ws.onopen { |handshake|
 			begin
 				header = handshake.headers

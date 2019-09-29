@@ -17,15 +17,15 @@ def initialize(req,res)
 	super
 end
 
-def post_handler()
+def post_control()
 	ARGV.replace(["abc=001&def=002"]) # オフラインモード回避。
 	@cgi = CGI.new
 
-	super
-end
+	json = JSON.parse(@req.body)
+	@username = json[0]
+	@passwd = json[1]
 
-def control()
-	query = {:ユーザ名 => @req.query["name"], :パスワード => @req.query["passwd"]}
+	query = {:ユーザ名 => @username, :パスワード => @passwd}
 	exceptions = []
 	
 	query.each do |key,value|
@@ -41,16 +41,16 @@ def control()
 		raise Error_multi_412.new(exceptions)
 	end
 	
-	user = login(@req.query["name"], @req.query["passwd"])
+	user = login()
 	
 	@context[:user] = user
 end
 
-def login(username, passwd)
+def login()
 	sql_transaction = SQL_transaction.instance.sql
 	
 	statement = sql_transaction.prepare("select * from users where name = ? limit 1")
-	result = statement.execute(username)
+	result = statement.execute(@username)
 	
 	if result.count == 0
 		raise Error_login.new
@@ -58,20 +58,20 @@ def login(username, passwd)
 	
 	userinfo = result.first
 
-	pw_hash = Digest::SHA1.hexdigest(passwd + userinfo["salt"])
+	pw_hash = Digest::SHA1.hexdigest(@passwd + userinfo["salt"])
 	
 	if pw_hash != userinfo["passwd"]
 		raise Error_login.new
 	end
 	
-	user = User.new({"id" => userinfo["id"], "name" => username})
+	user = User.new({"id" => userinfo["id"], "name" => @username})
 
-	statement.close
+	statement.close()
 
 	session = CGI::Session.new(@cgi,{"new_session" => true})
 	session['name'] = user.name # Note: キャッシュ。更新忘れ注意。
 	session['id'] = user.id
-	session.close
+	session.close()
 
 	@res.header['Set-cookie'] = "session_id=" + session.session_id()
 

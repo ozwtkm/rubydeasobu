@@ -161,6 +161,3 @@ trap(:TERM){ shutdown(s, f_access) }
 
 s.start
 
-
-
-

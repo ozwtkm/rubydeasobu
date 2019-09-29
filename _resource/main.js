@@ -1,5 +1,11 @@
+var get_userinfo = function(){
+    $.getJSON("/user", append_user_info);
+}
 
-
+function append_user_info(data){
+    $('#userinfo').empty();
+    $('#userinfo').append(data.username + "でログイン中");
+ }
 
 var get_parties = function(){
     $.getJSON("/party", append_parties_list);

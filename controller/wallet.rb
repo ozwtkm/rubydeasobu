@@ -15,58 +15,13 @@ class Wallet_controller < Base_require_login
 
 # オーバーライド。
 def initialize(req,res)
-
 	@template = "wallet.erb"
 
 	super
-	
 end
 
-
-# オーバーライド
-def view_http_header()
-
-	@res.header['Content-Type'] = "application/json; charset=UTF-8"
-
-end
-
-
-def get_handler()
-
+def get_control()
 	@context[:wallet] = Wallet.get_wallet(@user.id)
-
-	super
-
-end
-
-
-# todo
-def post_handler()
-
-	super
-
-end
-
-# todo
-def delete_handler()
-
-	super
-
-end
-
-
-# todo
-def put_handler()
-
-	super
-
-end
-
-
-def control()
-
-	
-
 end
 
 

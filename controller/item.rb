@@ -16,42 +16,13 @@ def initialize(req,res)
 	super
 end
 
-# オーバーライド
-def view_http_header()
-	@res.header['Content-Type'] = "application/json; charset=UTF-8"
-end
-
-def get_handler()
+def get_control()
 	offset = @URLquery[1]
 	limit = 10
 	
 	Validator.validate_not_Naturalnumber(offset)
 
 	@context[:item] = Item.get_possession_items(@user.id, limit:limit, offset:offset.to_i)
-
-	super
 end
-
-
-# todo
-def post_handler()
-	super
-end
-
-# todo
-def delete_handler()
-
-end
-
-# todo
-def put_handler()
-
-end
-
-# todo
-def control()
-
-end
-
 
 end

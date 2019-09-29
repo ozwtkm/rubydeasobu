@@ -19,27 +19,38 @@ end
 
 
 # オーバーライド
-def get_handler()
-	recipes = Recipe.get_recipes
+def get_control()
+	recipes = Recipe.get_recipes()
+
 	@context[:recipes] = recipes
-	
-	super
 end
 
 
-def control()
-	@recipe = Recipe.get_recipe(@req.query["recipe_id"].to_i)
+def post_control()	
+	@json = JSON.parse(@req.body)
+	check_json()
+
+	recipe_id = @json[0]
+
+	@recipe = Recipe.get_recipe(recipe_id)
 	
-	run_gradeup
+	run_gradeup()
 	
-	@context[:recipe] = @recipe
+	@context[:monster] = Monster.get_specific_monster(@recipe.obtain_id)
 end
 
 
-# 合成の仕様が今後複雑化すると行数増えるからcontrol()から分離した。
-def run_gradeup
+# これcontrollerの仕事か？
+def run_gradeup()
 	Monster.delete_monster(@user.id, @recipe.material_id, @recipe.required_number) # required_numberを満たすかはmodel側で検証
 	Monster.add_monster(@user.id, @recipe.obtain_id)
+end
+
+
+def check_json()
+	if !@json.all?{|x| (0..Float::INFINITY).include?(x)}
+		raise "0か自然数でよろ" 
+	end
 end
 
 

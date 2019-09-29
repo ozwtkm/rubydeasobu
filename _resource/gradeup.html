@@ -1,0 +1,51 @@
+<html>
+<head>
+<meta http-equiv="Content-type" content="text/html; charset=UTF-8"/>
+<link rel="shortcut icon" href="/rsc/favicon.ico"/>
+<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.3.min.js"></script> 
+<script src="/rsc/recipe.js"></script>
+<script src="/rsc/main.js"></script>
+<h1>モンスター合成</h1>
+<body>
+<div id="msg"></div><br/>
+
+<h2>合成</h2>
+雑魚モンスターを減らして良いモンスターをGET<br>
+
+<b>合成レシピ一覧</b>
+<table border="5">
+    <thead>
+        <tr>
+        <th width="500">レシピ名</th>
+        </tr>
+    </thead>
+    <tbody id="recipe_list"></tbody>
+ </table>
+<br/>
+
+<br/>
+<input type=button value="合成実行" onclick="execute_gradeup()">
+<br/>
+
+
+<b>お前のgem数</b>
+<div id="gem"></div><br/>
+
+<b>お前のmoney数</b>
+<div id="money"></div><br/>
+
+
+<div id="candidate_recipe_id"></div>
+
+<a href="/rsc/index.html">トップ</a><br/>
+<a href="/rsc/mypage.html">マイページ</a><br/>
+
+<script>
+        $(document).ready(function(){
+             get_recipes();
+             get_wallet();
+         });
+</script>
+
+</body>
+</html>

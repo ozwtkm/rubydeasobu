@@ -15,14 +15,8 @@ def initialize(req, res)
 	super
 end
 
-
-# オーバーライド
-def view_http_header()
-	@res.header['Content-Type'] = "application/json; charset=UTF-8"
-end
-
 # クエストの開始
-def control()
+def post_control()
 	#リクエストの想定　[134,132,1]　partner_id , party id , dangeon id	
 	@json = JSON.parse(@req.body)
 

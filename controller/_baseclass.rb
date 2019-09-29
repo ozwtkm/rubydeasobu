@@ -25,13 +25,13 @@ def initialize(req, res)
 	@context = {}
 end
 
-# todo getもオーバーライド前提にする
 def get_handler()
+	get_control()
 	view()
 end
 
 def post_handler()
-	control()
+	post_control()
 	view()
 end
 
@@ -51,8 +51,12 @@ def not_allow_handler()
 end
 
 # オーバーライド前提。
-# あとでpost_controlに命名変更する
-def control()
+def get_control()
+	raise NotImplementedError
+end
+
+# オーバーライド前提。
+def post_control()
 	raise NotImplementedError
 end
 
@@ -72,7 +76,7 @@ def view()
 end
 
 def view_http_header()
-	@res.header['Content-Type'] = "text/html; charset=UTF-8"
+	@res.header['Content-Type'] = "application/json; charset=UTF-8"
 end
 
 def view_http_body()

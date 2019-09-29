@@ -35,11 +35,10 @@ function submit_mapdata(){
 	var dangeon = document.getElementById("dangeon").value
 	var floor = document.getElementById("floor").value
 
-	//var maparray = [num,mapinfo,wallinfo];
 	var json = JSON.stringify(wallinfo);
 	
 	$.ajax({
-		url: "admin_map_edit/" + dangeon + "/" + floor,
+		url: "/admin_map/" + dangeon + "/" + floor,
 		type:'POST',
 		dataType: 'json',
 		data : json
@@ -80,7 +79,7 @@ function create_wallinfo(){
 			walls[i].value=1;
 		}
 		
-		wallinfo.push(walls[i].value);
+		wallinfo.push(Number(walls[i].value));
 	}
 	
 	return wallinfo;

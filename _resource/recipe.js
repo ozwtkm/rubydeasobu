@@ -1,12 +1,12 @@
 
 
-var get_gachas = function(){
-    $.getJSON("/gacha", append_gacha_list);
+var get_recipes = function(){
+    $.getJSON("/gradeup", append_recipe_list);
 }
 
 
 
-function append_gacha_list(data){
+function append_recipe_list(data){
 	$('#gache_list').empty();
 
 
@@ -19,41 +19,41 @@ function append_gacha_list(data){
 					content += "<td align='center'>" + val2 + "</td>";
 					break;
 				case "id":
-					content += "<td id='gacha_id' class='nondisplayFrame'>" + val2 + "</td>";
+					content += "<td id='recipe_id' class='nondisplayFrame'>" + val2 + "</td>";
 					break;
 			}
 		});
 
 		content += "</tr>";
 
-		$("#gacha_list").append(content);
+		$("#recipe_list").append(content);
 	});
 
 	$(".nondisplayFrame").css('display', 'none');
 
-    set_colorfunc("gacha_list");
+    set_colorfunc("recipe_list");
 
-    $("#gacha_list tr").click(function() {
+    $("#recipe_list tr").click(function() {
         var value = $(this)[0].cells[0].innerText //タグのidをキーにしてうまいこと引っ張りたい
-        $("#candidate_gacha_id").empty();
-        $("#candidate_gacha_id").append("<input type='hidden' id='gacha_id' value='" + value + "'>");
+        $("#candidate_recipe_id").empty();
+        $("#candidate_recipe_id").append("<input type='hidden' id='recipe_id' value='" + value + "'>");
     });
 }
 
 
-var execute_gacha = function(){
-    var gacha_id = Number($("input#gacha_id")[0].value);
+var execute_gradeup = function(){
+    var recipe_id = Number($("input#recipe_id")[0].value);
 
-    var array = [gacha_id];
+    var array = [recipe_id];
 
 	var json = JSON.stringify(array);
 
     $.ajax({
-		url: "/gacha",
+		url: "/gradeup",
 		type:'POST',
 		dataType: 'json',
 		data : json
-    }).done(handle_gacha_result).fail(function(data){
+    }).done(handle_gradeup_result).fail(function(data){
         $("#msg").empty();
 
         var res = $.parseJSON(data.responseText);
@@ -64,7 +64,7 @@ var execute_gacha = function(){
 }
 
 
-var handle_gacha_result = function(data){
+var handle_gradeup_result = function(data){
 	$("#msg").empty();
 	var rarity = convert_rarity(data.rarity);
 

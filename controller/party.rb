@@ -17,15 +17,8 @@ def initialize(req,res)
     @parties = Party.get(@user.id)
 end
 
-# オーバーライド
-def view_http_header()
-	@res.header['Content-Type'] = "application/json; charset=UTF-8"
-end
-
-def get_handler()
+def get_control()
     @context[:parties] = @parties
-
-	super
 end
 
 # ユーザ作成時にinitされるので叩かれない想定。

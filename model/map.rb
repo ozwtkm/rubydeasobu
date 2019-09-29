@@ -31,10 +31,13 @@ def self.create(aisles,dangeon_id,z)
 	vertical_aisles = shaped_aisles["vertical"]
 
 	rooms = self.create_rooms(side_aisles, vertical_aisles, dangeon_id, z)
-	map = Map.new(rooms,dangeon_id,z)
+	map = Map.new(rooms, dangeon_id, z)
+
+	validate_appearance_place(map)
 	
 	return map
 end
+
 
 def self.create_rooms(side_aisles, vertical_aisles, dangeon_id, z)
 	rooms = []
@@ -76,6 +79,22 @@ def self.create_rooms(side_aisles, vertical_aisles, dangeon_id, z)
 	end
 	
 	return rooms
+end
+
+
+def self.validate_appearance_place(map)
+	sql_master = SQL_master.instance.sql
+
+	statement = sql_master.prepare("select * from appearance_place where dangeon_id = ? and z = ?")
+	result  = statement.execute(map.dangeon_id, map.z)
+
+	Validator.validate_SQL_error(result.count, is_multi_line: true)
+
+	result.each do |row|
+		if map.rooms[row["y"]][row["x"]].nil?
+			raise row["x"].to_s + "　" + row["y"].to_s + "は島になってないとだめ"
+		end
+	end
 end
 
 def self.add_aisle(room,direction:)
