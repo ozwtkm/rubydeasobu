@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 require_relative './const'
-require_relative '../controller/_chat'
 
 class Routes
 
@@ -14,9 +13,6 @@ def self.get_routes
 	filenames.each do |row|
 		Routes.create_controller_class(row)
 	end
-
-	# 例外対応
-	@@routes["/websocket"] = Chat
 
 	return @@routes
 end
