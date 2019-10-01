@@ -36,8 +36,8 @@ end
 def self.init(user_id)
 	sql_transaction =  SQL_transaction.instance.sql
 	
-	statement = sql_transaction.prepare("insert into wallets(user_id,money,gem) values(?,100,100)")
-	statement.execute(user_id)
+	statement = sql_transaction.prepare("insert into wallets(user_id,money,gem) values(?,?,?)")
+	statement.execute(user_id, INITIAL_MONEY, INITIAL_GEM)
 	statement.close()
 
 	wallet = Wallet.new({"gem"=>INITIAL_GEM, "money"=>INITIAL_MONEY}, user_id)

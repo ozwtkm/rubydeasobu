@@ -96,8 +96,12 @@ end
 def self.delete_monster(user_id, monster_id, count)
 	sql_transaction =  SQL_transaction.instance.sql
 
-	statement = sql_transaction.prepare("delete from user_monster where user_id = ? and monster_id = ? limit ?")
-	statement.execute(user_id, monster_id, count)
+	begin
+		statement = sql_transaction.prepare("delete from user_monster where user_id = ? and monster_id = ? limit ?")
+		statement.execute(user_id, monster_id, count)
+	rescue
+		raise Error_shortage_of_material.new #party選択に含めてるモンスターを素材にしようとした時ここで怒る
+	end
 
 	if sql_transaction.affected_rows != count
 		raise Error_shortage_of_material.new

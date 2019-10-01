@@ -421,7 +421,7 @@ def finish()
             query_values << 1
         end
 
-        statement3 = sql_transaction.prepare("insert into transaction.user_item(user_id, item_id, quantity) " + statement_values + " on duplicate key update quantity = quantity + values(quantity)")
+        statement3 = sql_transaction.prepare("insert into user_item(user_id, item_id, quantity) " + statement_values + " on duplicate key update quantity = quantity + values(quantity)")
         result3 = statement3.execute(*query_values)
 
         statement2.close()
