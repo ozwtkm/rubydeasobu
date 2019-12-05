@@ -2,7 +2,7 @@
 	result = {}
 
 	if !c[:e].nil? 
-		result = {:ErrorMessage=>c[:e].message}
+		result[:ErrorMessage] = c[:e].message
     else
         result = c[:parties].map do |k, v|
             {
