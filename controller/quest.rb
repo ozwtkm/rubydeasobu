@@ -13,15 +13,13 @@ def initialize(req, res)
 	@template = "quest.erb"
 
 	super
+
+	validate_input() # これbaseclassに引っ越した方が良さそう
 end
 
 # クエストの開始
 def post_control()
-	#リクエストの想定　[134,132,1]　partner_id , party id , dangeon id	
-	@json = JSON.parse(@req.body)
-
-	check_json()
-
+	# [partnerid,partyid,questid]という形でくる
 	partner_monster_id = @json[0]
 	party_id = @json[1]
 	quest_id = @json[2]
@@ -37,10 +35,6 @@ end
 # クエストの更新。[[0-3]]みたいなの受け取って座標移動処理。必要に応じてイベント処理。
 def put_control()
 	#リクエストの想定　[1,1]　[行動種類, 行動内容] みたいな	
-	@json = JSON.parse(@req.body)
-
-	check_json()
-
 	action_kind = @json[0]
 	action_value = @json[1]
 
@@ -63,9 +57,33 @@ def delete_control()
 	@res.status = RESET_CONTENT
 end
 
-def check_json()
-	if !@json.all?{|x| (0..Float::INFINITY).include?(x)}
-		raise "0か自然数でよろ" 
+
+def validate_input()
+	case @req.request_method
+	when "GET"
+		# 何もしない
+	when "POST"
+		begin
+			@json = JSON.parse(@req.body)
+			
+			raise if @json.class != Array || @json.count != 3
+		rescue
+			raise "JSON形式(3要素の配列)でよろ"
+		end
+
+		@json.each { |x| Validator.validate_not_Naturalnumber(x) }
+	when "PUT"
+		begin
+			@json = JSON.parse(@req.body)
+			
+			raise if @json.class != Array || @json.count != 2
+		rescue
+			raise "JSON形式(2要素の配列)でよろ"
+		end
+
+		@json.each { |x| Validator.validate_not_Naturalnumber_and_not_0(x) }
+	when "DELETE"
+		# 何もしない
 	end
 end
 

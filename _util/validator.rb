@@ -36,8 +36,19 @@ def self.validate_SQL_error(record_count, is_multi_line: false)
 end
 
 def self.validate_not_Naturalnumber(key="入力値", value)
-	if value.match(/\A[0-9]+\z/).nil?
-		raise Error_not_naturalnumber.new(key)
+	base = 10
+	# Integer型はver2.4~で、それ以前はfixnumとbignumに分離することに注意
+	if value.class != Integer || Integer(value.to_s, base) <= 0
+		raise key + "は自然数でよろ"
+	end
+end
+
+
+def self.validate_not_Naturalnumber_and_not_0(key="入力値", value)
+	base = 10
+	# Integer型はver2.4~で、それ以前はfixnumとbignumに分離することに注意
+	if value.class != Integer || Integer(value.to_s, base) < 0
+		raise key + "は0または自然数でよろ"
 	end
 end
 

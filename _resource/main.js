@@ -130,8 +130,8 @@ function append_items_list(data){
 
 
 var do_update_party = function(){
-    var possession_monster_id = $("input#possession_monster_id")[0].value;
-    var party_id = $("input#party_id")[0].value;
+    var possession_monster_id = Number($("input#possession_monster_id")[0].value);
+    var party_id = Number($("input#party_id")[0].value);
     var array = [party_id, possession_monster_id];
 
     var json = JSON.stringify(array);
