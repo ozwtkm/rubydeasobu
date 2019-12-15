@@ -12,6 +12,7 @@ require_relative './equipment'
 require_relative './map'
 require_relative './monster'
 require_relative '../_util/cache'
+require 'securerandom'
 
 
 
@@ -43,7 +44,7 @@ YES = 0
 NO = 1
 
 # acquisition用
-ACKQUIRED = 1
+ACQUIRED = 1
 DISCARDED = 2
 DONE = 3
 
@@ -189,7 +190,7 @@ def advance(action_kind, action_value)
         status = nil
         case action_value
         when YES
-            status = ACKQUIRED
+            status = ACQUIRED
         when NO
             status = DISCARDED
         else
@@ -391,7 +392,7 @@ def finish()
     sql_transaction = SQL_transaction.instance.sql
 
     statement = sql_transaction.prepare("select * from quest_acquisition where user_id = ? and status = ?")
-    result = statement.execute(@user_id, ACKQUIRED)
+    result = statement.execute(@user_id, ACQUIRED)
 
     if result.count != 0
         item_place_ids = []
@@ -475,7 +476,7 @@ end
 
 
 # フレンドが実装されたらフレンドリストから取得する様にする
-def self.get_partner_candidate(user_id)
+def self.create_partner_candidate(user_id)
     partner_candidate_list = Cache.instance.get(user_id.to_s + 'partner_candidate_list')
     # コントローラで記号は弾かれてるのでinjectionはできない
 
@@ -483,35 +484,37 @@ def self.get_partner_candidate(user_id)
 		Log.log("cacheありなのでキャッシュからpartner_candidate_list取得した")
 		return partner_candidate_list
     end
-    
+
     sql_transaction = SQL_transaction.instance.sql
-    sql_master = SQL_master.instance.sql
+
+    # これは良くない気がするが、最大値を知らないと乱数でのwhere in時に取得され得ないレコードが発生しうる
+    statement = sql_transaction.prepare("select max(user_id) from partner_candidate")
+    result = statement.execute()
+
+    max = result.first["max(user_id)"]
     
-    # orderbyrand()の妥当性は要調査
-    statement = sql_transaction.prepare("select * from partner_candidate where user_id != ? order by rand() limit 5")
-    result = statement.execute(user_id)
+    partner_candidate_list = []
+    number_of_candidate = 5 # 仕様で決められてるパートナー候補数。
+    number_of_random = 50 # 50は適当
+    generated_random = [] # wherein済なものを省くための履歴
+    randoms_for_wherein = [] # select文に渡す配列
 
-    partner_candidate_list = Array.new(5)
-    result.each_with_index do |row, i|
-        partner_candidate_list[i] = row["monster_id"]
-    end
-
-    if partner_candidate_list.count(nil) != 0
-        statement2 = sql_master.prepare("select * from monsters order by rand() limit ?")
-        result2 = statement2.execute(partner_candidate_list.count(nil))
-
-        result2.each_with_index do |row, i|
-            partner_candidate_list[-(i+1)] = row["id"]
+    loop do
+        number_of_random.times do
+            randoms_for_wherein << SecureRandom.random_number(max) + 1
         end
-    
-        statement2.close()
-    end
 
-    if partner_candidate_list.count(nil) != 0
-        raise "正しくパートナー候補リスト作れてない"
-    end
+        randoms_for_wherein -= generated_random
+        generated_random += randoms_for_wherein
 
-    statement.close()
+        partner_candidate_list += get_partner_candidate(number_of_candidate, randoms_for_wherein)
+
+        if partner_candidate_list.count === number_of_candidate
+            break
+        end
+
+        number_of_candidate -= partner_candidate_list.count
+    end
 
     Cache.instance.set(user_id.to_s + 'partner_candidate_list', partner_candidate_list)
 
@@ -519,6 +522,35 @@ def self.get_partner_candidate(user_id)
 
     return partner_candidate_list
 end
+
+
+def self.get_partner_candidate(number_of_candidate, randoms_for_wherein)
+    sql_transaction = SQL_transaction.instance.sql
+
+    query = "select * from partner_candidate where user_id in ("
+    number_of_random = randoms_for_wherein.count
+    candidate_array_for_return = []
+
+    number_of_random.times do |i|
+        i+1 === number_of_random ? query+="?" : query+="?,"
+    end
+
+    query += ") limit "
+    query += number_of_random.to_s
+
+    statement = sql_transaction.prepare(query)
+    result = statement.execute(*randoms_for_wherein)
+
+    result.each_with_index do |row, i|
+        candidate_array_for_return << row["monster_id"] unless row["monster_id"].nil?
+        break if i+1 === number_of_candidate
+    end
+
+    statement.close()
+
+    candidate_array_for_return
+end
+
 
 
 def save()
