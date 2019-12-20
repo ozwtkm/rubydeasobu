@@ -14,7 +14,7 @@ def initialize(req,res)
 
     super
 
-    @parties = Party.get(@user.id)
+	@parties = Party.get(@user.id)
 
     validate_input() # あとでbaseclassに引っ越し
 end
@@ -37,12 +37,13 @@ def put_control()
     party_id = @json[0].to_i
     new_possession_monster_id = @json[1].to_i
 
-    @parties[party_id].set(new_possession_monster_id)
+    @parties[party_id].set(@user.id, new_possession_monster_id)
     @parties[party_id].save()
 
     @res.status = CREATED
     @context[:parties] = @parties
 end
+
 
 
 
@@ -60,6 +61,8 @@ def validate_input()
 		end
 
 		@json.each { |x| Validator.validate_not_Naturalnumber(x) }
+
+		raise "それお前のpartyじゃない" if @parties[@json[0.to_i]].nil?
 	when "DELETE"
 	end
 end
