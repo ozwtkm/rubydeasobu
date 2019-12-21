@@ -22,9 +22,9 @@ def post_control()
 	# [partnerid,partyid,questid]という形でくる
 	partner_monster_id = @json[0]
 	party_id = @json[1]
-	quest_id = @json[2]
+	dangeon_id = @json[2]
 
-	quest = Quest.start(@user.id, partner_monster_id, party_id, quest_id)
+	quest = Quest.start(@user.id, partner_monster_id, party_id, dangeon_id)
 	
 	@context[:quest] = quest
 

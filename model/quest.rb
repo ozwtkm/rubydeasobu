@@ -73,21 +73,21 @@ def initialize(user_id,dangeon_info,team_info,current_x,current_y,current_z)
 end
 
 
-def self.start(user_id, partner_id, party_id, quest_id)
-    Quest.check_start_condition(user_id, partner_id, party_id, quest_id)
+def self.start(user_id, partner_id, party_id, dangeon_id)
+    Quest.check_start_condition(user_id, partner_id, party_id, dangeon_id)
 
     sql_transaction = SQL_transaction.instance.sql
 
     dangeon_info = {}
-    dangeon_info["id"] = quest_id
-    dangeon_info["map"] = Map.get(quest_id, INITIAL_Z)
+    dangeon_info["id"] = dangeon_id
+    dangeon_info["map"] = Map.get(dangeon_id, INITIAL_Z)
 
     team_info = {}
     team_info["party"] = party_id
     team_info["partner"] = partner_id
 
     statement = sql_transaction.prepare("insert into quest(user_id,dangeon_id,current_x,current_y,current_z,party_id,partner_monster,obtain_money) values(?,?,?,?,?,?,?,?)")
-    result = statement.execute(user_id, quest_id, INITIAL_X, INITIAL_Y, INITIAL_Z, party_id, partner_id, 0)
+    result = statement.execute(user_id, dangeon_id, INITIAL_X, INITIAL_Y, INITIAL_Z, party_id, partner_id, 0)
 
     statement.close()
 
@@ -126,7 +126,7 @@ def self.get(user_id)
 end
 
 
-def self.check_start_condition(user_id, partner_id, party_id, quest_id)
+def self.check_start_condition(user_id, partner_id, party_id, dangeon_id)
     sql_transaction = SQL_transaction.instance.sql
 	sql_master = SQL_master.instance.sql
 
@@ -145,7 +145,7 @@ def self.check_start_condition(user_id, partner_id, party_id, quest_id)
 
     # 追々はcondidate_dangeonみたいなテーブルで検証（進行するごとに増えてく
     statement = sql_master.prepare("select * from dangeons where id = ? limit 1")
-    result = statement.execute(quest_id)
+    result = statement.execute(dangeon_id)
 
     Validator.validate_SQL_error(result.count, is_multi_line: false)
    
