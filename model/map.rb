@@ -1,13 +1,11 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
 
-require_relative '../_util/SQL_master'
-require_relative '../_util/SQL_transaction'
+require_relative '../_util/sqltool'
 require_relative '../_util/cache'
 require_relative './basemodel'
 require_relative '../exception/Error_inconsistency_of_aisle'
 require_relative '../_util/graph_util'
-require 'pp'
 
 class Map < Base_model
 UP = 1
@@ -119,12 +117,17 @@ end
 
 
 def self.get(dangeon_id, z)
-	sql_master = SQL_master.instance.sql
-	
-	# todo memcached
-	statement = sql_master.prepare("select * from maps where dangeon_id = ? and z = ?")
-	result = statement.execute(dangeon_id,z)
-	
+	result = SQL.master("select * from maps where dangeon_id = ? and z = ?", [dangeon_id, z])
+	# [{"dangeon_id"=>1, "x"=>0, "y"=>0, "z"=>1, "aisle"=>12},
+	# {"dangeon_id"=>1, "x"=>0, "y"=>1, "z"=>1, "aisle"=>5},
+	# {"dangeon_id"=>1, "x"=>0, "y"=>2, "z"=>1, "aisle"=>9},
+ 	# {"dangeon_id"=>1, "x"=>1, "y"=>0, "z"=>1, "aisle"=>14},
+ 	# {"dangeon_id"=>1, "x"=>1, "y"=>1, "z"=>1, "aisle"=>1},
+ 	# {"dangeon_id"=>1, "x"=>1, "y"=>2, "z"=>1, "aisle"=>10},
+ 	# {"dangeon_id"=>1, "x"=>2, "y"=>0, "z"=>1, "aisle"=>6},
+ 	# {"dangeon_id"=>1, "x"=>2, "y"=>1, "z"=>1, "aisle"=>5},
+ 	# {"dangeon_id"=>1, "x"=>2, "y"=>2, "z"=>1, "aisle"=>3}]
+
 	Validator.validate_SQL_error(result.count, is_multi_line: true)
 	
 	rooms = []
@@ -134,25 +137,17 @@ def self.get(dangeon_id, z)
 
 		rooms[row["y"]] = [] if rooms[row["y"].to_i()].nil?
 		rooms[row["y"]][row["x"]] = room
-		
 	end
 
-	# roomsの形整え。もっと良くできる気がする
-	rooms_with = rooms.map{|x| x.size()}.max()
-	rooms.each do |row|
-		if row[rooms_with-1].nil?
-			row[rooms_with-1] = nil 
-		end
-	end
+	SQL.close_statement()
 
-	statement.close()
 	map = Map.new(rooms,dangeon_id,z)
-	
+
 	return map
 end
 
 
-
+# dangeon_idいらないかも
 class Room
 attr_accessor :aisle
 attr_reader :x, :y, :z
