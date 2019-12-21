@@ -150,8 +150,8 @@ def self.check_start_condition(user_id, partner_id, party_id, quest_id)
     Validator.validate_SQL_error(result.count, is_multi_line: false)
    
 
-    statement = sql_transaction.prepare("select * from party where id = ? limit 1")
-    result = statement.execute(party_id)
+    statement = sql_transaction.prepare("select * from party where id = ? and user_id = ? limit 1")
+    result = statement.execute(party_id, user_id)
 
     Validator.validate_SQL_error(result.count, is_multi_line: false)
 
