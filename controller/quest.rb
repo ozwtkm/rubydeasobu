@@ -6,6 +6,7 @@ require_relative './_baseclass_require_login'
 require_relative '../model/quest'
 
 class Quest_controller < Base_require_login
+OK = 200
 CREATED = 201
 RESET_CONTENT = 205
 
@@ -28,7 +29,7 @@ def post_control()
 	
 	@context[:quest] = quest
 
-	@res.status = CREATED
+	@res.status = OK
 end
 
 
@@ -43,7 +44,7 @@ def put_control()
 
 	@context[:quest] = quest
 
-	@res.status = CREATED
+	@res.status = OK
 end
 
 # キャンセル用。battleなど依存関係あるもの諸々消す
@@ -51,8 +52,6 @@ def delete_control()
 	quest = Quest.get(@user.id)
 
 	quest.cancel()
-
-	@context[:quest] = quest
 
 	@res.status = RESET_CONTENT
 end
