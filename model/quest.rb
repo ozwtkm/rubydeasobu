@@ -137,7 +137,7 @@ def self.check_start_condition(user_id, partner_id, party_id, dangeon_id)
         raise "既に別クエスト実施中"
     end
 
-    partner_candidate_list = Quest.get_partner_candidate(user_id)
+    partner_candidate_list = Quest.create_partner_candidate(user_id)
     
     if !partner_candidate_list.any?{|x| x === partner_id}
         raise "そいつは連れていけない"
@@ -454,14 +454,8 @@ end
 
 # deleteメソッドで呼ばれる用。
 def cancel()
-    sql_transaction = SQL_transaction.instance.sql
-    sql_master = SQL_master.instance.sql
-    
-    statement = sql_transaction.prepare("delete from quest where user_id = ? limit 1")
-    statement.execute(@user_id)
-
-    statement2 = sql_transaction.prepare("delete from quest_acquisition where user_id = ?")
-    statement2.execute(@user_id)
+    SQL.transaction("delete from quest where user_id = ?", @user_id)
+    SQL.transaction("delete from quest_acquisition where user_id = ?", @user_id)
 
     if Battle.exist?(@user_id)
         battle = Battle.get(@user_id)
@@ -470,8 +464,7 @@ def cancel()
 
     @situation = CANCELED
 
-    statement.close()
-    statement2.close()
+    SQL.close_statement()
 end
 
 
