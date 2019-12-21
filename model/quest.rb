@@ -286,7 +286,7 @@ end
 def validate_wall(direction)
     case direction
     when UP
-        if @dangeon_info["map"].rooms[@current_y-1][@current_x].nil? || @current_y-1 < 0
+        if @current_y-1 < 0 || @dangeon_info["map"].rooms[@current_y-1][@current_x].nil?
             raise "そこに部屋は無い"
         end
     when LEFT
