@@ -19,6 +19,8 @@ def initialize(req, res)
 	@template = "gacha.erb"
 
 	super
+
+	validate_input() # これbaseclassに引っ越した方が良さそう
 end
 
 # オーバーライド。
@@ -30,8 +32,6 @@ end
 
 
 def post_control()
-	@json = JSON.parse(@req.body)
-	check_input_json()
 	gacha_id = @json[0]
 
 	@wallet = Wallet.get_wallet(@user.id)
@@ -55,12 +55,25 @@ def validate_gem_amount()
 	end
 end
 
-# utilに引っ越したい
-def check_input_json()
-	if !@json.all?{|x| (0..9).to_a.include?(x)}
-		raise "0-9でよろ" 
+def validate_input()
+	case @req.request_method
+	when "GET"
+	when "POST"
+		begin
+			@json = JSON.parse(@req.body)
+			
+			raise if @json.class != Array || @json.count != 1
+		rescue
+			raise "JSON形式(1要素の配列)でよろ"
+		end
+
+		@json.each { |x| Validator.validate_not_Naturalnumber(x) }
+	when "PUT"
+	when "DELETE"
 	end
 end
+
+
 
 
 end
