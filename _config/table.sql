@@ -268,7 +268,7 @@ CREATE TABLE `party` (
   KEY `monster_id` (`possession_monster_id`),
   CONSTRAINT `party_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
   CONSTRAINT `party_ibfk_2` FOREIGN KEY (`possession_monster_id`) REFERENCES `user_monster` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -305,7 +305,7 @@ CREATE TABLE `quest_acquisition` (
   `user_id` int(11) unsigned NOT NULL,
   `appearance_id` int(10) unsigned NOT NULL,
   `status` int(1) unsigned NOT NULL,
-  KEY `user_id` (`user_id`),
+  UNIQUE KEY `unique` (`user_id`,`appearance_id`),
   CONSTRAINT `quest_acquisition_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -341,7 +341,7 @@ CREATE TABLE `user_monster` (
   KEY `user_id` (`user_id`),
   KEY `monster_id` (`monster_id`),
   CONSTRAINT `user_monster_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=535 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=565 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -358,7 +358,7 @@ CREATE TABLE `users` (
   `passwd` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unko` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=60 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -386,4 +386,4 @@ CREATE TABLE `wallets` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-08-27 18:51:06
+-- Dump completed on 2019-12-03 13:19:10
