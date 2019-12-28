@@ -23,7 +23,7 @@ class SQL
 
             if defined?(result.count)
                 if result.count === 1
-                    return result.first
+                    return [result.first] # 配列で返った方が統一的に扱えて嬉しい
                 elsif result.count > 1
                     return result.map {|x| x}
                 end
@@ -46,7 +46,7 @@ class SQL
 
             if defined?(result.count)
                 if result.count === 1
-                    return result.first
+                    return [result.first]
                 elsif result.count > 1
                     return result.map {|x| x}
                 end
