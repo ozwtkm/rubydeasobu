@@ -133,7 +133,7 @@ def self.check_start_condition(user_id, partner_id, party_id, dangeon_id)
     statement = sql_transaction.prepare("select * from quest where user_id = ? limit 1")
     result = statement.execute(user_id)
 
-    if result.count === 1
+    if result.count >= 1
         raise "既に別クエスト実施中"
     end
 
@@ -250,7 +250,7 @@ def validate_timing(action_kind)
         statement2 = sql_transaction.prepare("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1")
         result2 = statement2.execute(@user_id, item_place_id)
 
-        if result2.count === 1
+        if result2.count >= 1
             raise "もう捨てたか取ったかしてるよ"
         end
 
@@ -328,7 +328,7 @@ def handle_event()
         statement2 = sql_transaction.prepare("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1")
         result2 = statement2.execute(@user_id, result.first()["id"])
 
-        if result2.count === 1
+        if result2.count >= 1
             return
         end
         
@@ -347,7 +347,7 @@ def handle_event()
         statement2 = sql_transaction.prepare("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1")
         result2 = statement2.execute(@user_id, result.first()["id"])
 
-        if result2.count === 1
+        if result2.count >= 1
             return
         end
 
@@ -361,7 +361,7 @@ def handle_event()
         statement2 = sql_transaction.prepare("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1")
         result2 = statement2.execute(@user_id, result.first()["id"])
 
-        if result2.count === 1
+        if result2.count >= 1
             return
         end
 
