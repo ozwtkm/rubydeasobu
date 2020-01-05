@@ -82,6 +82,10 @@ def self.get_specific_monster(id)
 
 	monster = master_monster_list[id]
 
+	if monster.nil?
+		raise "id#{id}からモンスター取ってこれない"
+	end
+
 	return monster
 end
 
