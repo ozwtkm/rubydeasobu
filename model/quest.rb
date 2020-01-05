@@ -18,6 +18,7 @@ require 'securerandom'
 
 class Quest < Base_model
 attr_accessor :dangeon_info, :team_info, :current_x, :current_y, :current_z, :situation, :object
+attr_reader :user_id
 
 # 初期プレイヤ座標
 INITIAL_X = 0
@@ -163,31 +164,110 @@ end
 def advance(action_kind, action_value)
     case action_kind
     when WALKING
-        validate_timing(action_kind)
+        handler = Quest::Walking_action_handler.new(self)
+    when ITEM
+        handler = Quest::Item_action_handler.new(self)
+    when STEP
+        handler = Quest::Step_action_handler.new(self)
+        # 追々実装。
+        # x,y,z -> 0,0,z+1 にする。
+    when GOAL
+        handler = Quest::Goal_action_handler.new(self)
+    when POT
+        handler = Quest::Pot_action_handler.new(self)
+        # 追々。
+        # とりあえずacquisitionをDONEにしておき、クエスト終了時にvalueのitemをinsert候補に加える。
+    else
+        raise "は？"
+    end
 
-        validate_wall(action_value)
+    handler.handle_action(action_value)
+end
+
+
+
+class Base_action_handler
+    def initialize(quest)
+        @quest = quest
+    end
+
+    def handle_action(action_value)
+        validate_timing()
+        do_action(action_value)
+    end
+
+    private
+
+    def validate_timing()
+        raise NotimplementError
+    end
+
+    def do_action(action_value)
+        raise NotimplementError
+    end
+end
+
+
+class Walking_action_handler < Base_action_handler
+    def validate_timing()
+        result = SQL.transaction("select * from battle where user_id = ? limit 1", @quest.user_id)
+        
+        if result.count != 0
+            raise "バトルしろチキンが"
+        end
+
+        SQL.close_statement()
+    end
+
+    def do_action(action_value)
+        @quest.validate_wall(action_value)
 
         case action_value
         when UP
-            @current_y -= 1
+            @quest.current_y -= 1
         when RIGHT
-            @current_x += 1
+            @quest.current_x += 1
         when DOWN
-            @current_y += 1
+            @quest.current_y += 1
         when LEFT
-            @current_x -= 1
+            @quest.current_x -= 1
         end
 
-        save() # handle_eventの前にsaveしとかないとバトル開始がうまく行かない
+        @quest.save() # handle_eventの前にsaveしとかないとバトル開始がうまく行かない
 
-        handle_event()
-    when ITEM
-        item_place_id = validate_timing(action_kind)
+        @quest.handle_event()
+    end
+end
 
-        sql_master = SQL_master.instance.sql
-        sql_transaction = SQL_transaction.instance.sql
 
-        status = nil
+class Item_action_handler < Base_action_handler
+    # validate_timingで取得したitemplaceidを再利用したいためオーバーライドしてる
+    def handle_action(action_value)
+        item_place_id = validate_timing()
+        do_action(action_value, item_place_id)
+    end
+
+    def validate_timing()
+        result = SQL.master("select * from appearance_place where dangeon_id =? and x = ? and y = ? and z = ? limit 1",[@quest.dangeon_info["id"], @quest.current_x, @quest.current_y, @quest.current_z])
+
+        if result.count === 0 || result[0]["type"] != TYPE_ITEM
+            raise "そこアイテム無いよ"
+        end
+
+        item_place_id = result[0]["id"]
+
+        result = SQL.transaction("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1", [@quest.user_id, item_place_id])
+
+        if result.count >= 1
+            raise "もう捨てたか取ったかしてるよ"
+        end
+
+        SQL.close_statement()
+
+        return item_place_id
+    end
+
+    def do_action(action_value, item_place_id)
         case action_value
         when YES
             status = ACQUIRED
@@ -197,89 +277,46 @@ def advance(action_kind, action_value)
             raise "何しようとしトンねん、、"
         end
 
-        statement = sql_transaction.prepare("insert into quest_acquisition(user_id,appearance_id,status) values(?,?,?)")
-        statement.execute(@user_id, item_place_id, status)
-
-        statement.close()
-    when STEP
-        # 追々。
-        # x,y,z -> 0,0,z+1 にする。
-    when GOAL
-        validate_timing(action_kind)
-
-        case action_value
-        when YES
-            finish()
-        when NO
-            # スルーするのと一緒なので特に何も起こらない。
-        end
-    when POT
-        # 追々。
-        # とりあえずacquisitionをDONEにしておき、クエスト終了時にvalueのitemをinsert候補に加える。
-    else
-        raise "は？"
+        SQL.transaction("insert into quest_acquisition(user_id,appearance_id,status) values(?,?,?)", [@quest.user_id, item_place_id, status])
+        SQL.close_statement()
     end
 end
 
 
-# バトル中に移動しようとするのtokaを阻止。みたいなタイミングの整合性検証
-def validate_timing(action_kind)
-    sql_transaction = SQL_transaction.instance.sql
-    sql_master = SQL_master.instance.sql
 
-    case action_kind
-    when WALKING
-        statement = sql_transaction.prepare("select * from battle where user_id = ? limit 1")
-        result = statement.execute(@user_id)
+class Step_action_handler < Base_action_handler
+    # todo
+end
+
+class Goal_action_handler < Base_action_handler
+    def validate_timing()
+        result = SQL.master("select * from appearance_place where dangeon_id = ? and x = ? and y = ? and z = ? limit 1", [@quest.dangeon_info["id"], @quest.current_x, @quest.current_y, @quest.current_z])
     
-        if result.count != 0
-            raise "バトルしろチキンが"
-        end
-
-        statement.close()
-    when ITEM
-        statement = sql_master.prepare("select * from appearance_place where dangeon_id =? and x = ? and y = ? and z = ? limit 1")
-        result = statement.execute(@dangeon_info["id"], @current_x, @current_y, @current_z)
-
-        if result.count === 0 || result.first()["type"] != TYPE_ITEM
-            raise "そこアイテム無いよ"
-        end
-
-        item_place_id = result.first()["id"]
-
-        statement2 = sql_transaction.prepare("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1")
-        result2 = statement2.execute(@user_id, item_place_id)
-
-        if result2.count >= 1
-            raise "もう捨てたか取ったかしてるよ"
-        end
-
-        statement.close()
-        statement2.close()
-
-        return item_place_id
-    when STEP
-        # to do
-    when GOAL
-        statement = sql_master.prepare("select * from appearance_place where dangeon_id = ? and x = ? and y = ? and z = ? limit 1")
-        result = statement.execute(@dangeon_info["id"], @current_x, @current_y, @current_z)
-    
-        if result.count === 0 || result.first()["type"] != TYPE_EQUIPMENT
+        if result.count === 0 || result[0]["type"] != TYPE_EQUIPMENT
             raise "そこ装置無いよ"
         end
 
-        @object = Equipment.get_specific_equipment(result.first["appearance_id"])
+        @quest.object = Equipment.get_specific_equipment(result[0]["appearance_id"])
 
-        if @object.kind != KIND_GOAL
+        if @quest.object.kind != KIND_GOAL
             raise "そこゴール無いよ"
         end
 
-        statement.close()
-    when POT
-        # to do
-    else
-        raise "何がしたいのお前"
+        SQL.close_statement()
     end
+
+    def do_action(action_value)
+        case action_value
+        when YES
+            @quest.finish()
+        when NO
+            # スルーするのと一緒なので特に何も起こらない。
+        end
+    end
+end
+
+class Pot_action_handler < Base_action_handler
+    # todo
 end
 
 
