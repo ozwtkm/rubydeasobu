@@ -11,7 +11,7 @@ require_relative './quest'
 require 'pry'
 
 class Battle < Base_model
-	attr_reader :user_id, :player, :partner, :enemy, :tmp_battle_result, :scene, :finish_flg, :add_enemy_flg
+	attr_accessor :user_id, :player, :partner, :enemy, :tmp_battle_result, :scene, :finish_flg, :add_enemy_flg
 
 #コマンド識別用
 ATTACK = 0
@@ -30,18 +30,28 @@ NEXT_NEXT = 1 # 1ターンめのみ使用する例外ステータス。初回行
 NEXT = 2
 DONE = 3
 
-def initialize(battle_document)
-	@user_id = battle_document[:user_id]
-
-	@player = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| v[:is_partner]===false}.values[0]) # 長すぎてキモい
-	@partner = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| v[:is_partner]}.values[0])
-	@enemy = Battle::Enemy.new(battle_document[:situation].last[:status].select {|k,v| v[:is_partner].nil?}.values[0])
-
-	@history = battle_document[:situation]
-
-	@scene = battle_document[:situation].last[:scene]
+def initialize(battle_document=nil)
+	@user_id = nil
+	@player = nil
+	@partner = nil
+	@enemy = nil
+	@history = nil
+	@scene = nil
 	@finish_flg = false
 	@add_enemy_flg = false
+
+
+	unless battle_document.nil?
+		@user_id = battle_document[:user_id]
+
+		@player = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| v[:is_partner]===false}.values[0]) # 長すぎてキモい
+		@partner = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| v[:is_partner]}.values[0])
+		@enemy = Battle::Enemy.new(battle_document[:situation].last[:status].select {|k,v| v[:is_partner].nil?}.values[0])
+	
+		@history = battle_document[:situation]
+	
+		@scene = battle_document[:situation].last[:scene]
+	end
 end
 
 
@@ -113,85 +123,123 @@ def self.start(user_id, player_id, partner_id, enemy_id)
 		raise "目の前の戦闘に集中しなさい"
 	end
 
-	documentDB_client = DocumentDB.instance.client
-	collection = documentDB_client[:battle]
+	battle = Battle.new()
+
+	battle.user_id = user_id
 
 	# ここでのSQLエラーはmonsterモデル内で吐かれる
 	player = Monster.get_specific_monster(player_id)
 	partner = Monster.get_specific_monster(partner_id)
 	enemy = Monster.get_specific_monster(enemy_id)
 
+	hash_for_player_initialize = {
+		:name => player.name,
+		:hp => player.hp,
+		:mp => player.mp,
+		:atk => player.atk,
+		:def => player.def,
+		:speed => player.speed,
+		:is_partner => false,
+		:turn => INCOMPLETE
+	}
+
+	hash_for_partner_initialize = {
+		:name => partner.name,
+		:hp => partner.hp,
+		:mp => partner.mp,
+		:atk => partner.atk,
+		:def => partner.def,
+		:speed => partner.speed,
+		:is_partner => true,
+		:turn => INCOMPLETE
+	}
+
+	hash_for_enemy_initialize = {
+		:name => enemy.name,
+		:hp => enemy.hp,
+		:mp => enemy.mp,
+		:atk => enemy.atk,
+		:def => enemy.def,
+		:speed => enemy.speed,
+		:money => enemy.money,
+		:turn => INCOMPLETE
+	}
+
+	battle.player = Battle::Player.new(hash_for_player_initialize)
+	battle.partner = Battle::Player.new(hash_for_partner_initialize)
+	battle.enemy = Battle::Enemy.new(hash_for_enemy_initialize)
+
+	next_acter = battle.calculate_next_acter()
+	next_acter.turn = NEXT
+
+	# 敵から行動だと、プレイヤー側の初手で誰が行動するかわからなくなるので例外的に「次の次」を計算
+	if battle.enemy == next_acter
+		next_next_acter = battle.calculate_next_acter()
+		next_next_acter.turn = NEXT_NEXT
+	end
+
+	battle.insert_document()
+
+	#self.debug_get_dbinfo("－－－－－－documentDB 1ターン目 insert直後－－－－－－")
+
+	SQL.transaction("insert into battle(user_id,scene) values(?,0)", user_id)
+
+	#self.debug_get_dbinfo("－－－－－－SQL 1ターン目 insert直後－－－－－－")
+
+	SQL.close_statement
+
+	return battle
+end
+
+
+def insert_document()
+	documentDB_client = DocumentDB.instance.client
+	collection = documentDB_client[:battle]
+
 	battle_info = {
-		"user_id": user_id,
+		"user_id": @user_id,
 		"situation": [
 			{
 				"scene": 0,
 				"status": {
 					"player1": {
-						"name": player.name,
-						"hp": player.hp,
-						"mp": player.mp,
-						"atk": player.atk,
-						"def": player.def,
-						"speed": player.speed,
-						"is_partner": false,
-						"turn": INCOMPLETE
+						"name": @player.name,
+						"hp": @player.hp,
+						"mp": @player.mp,
+						"atk": @player.atk,
+						"def": @player.def,
+						"speed": @player.speed,
+						"is_partner": @player.is_partner,
+						"turn": @player.turn
 					},
 					"player2": {
-						"name": partner.name,
-						"hp": partner.hp,
-						"mp": partner.mp,
-						"atk": partner.atk,
-						"def": partner.def,
-						"speed": partner.speed,
-						"is_partner": true,
-						"turn": INCOMPLETE
+						"name": @partner.name,
+						"hp": @partner.hp,
+						"mp": @partner.mp,
+						"atk": @partner.atk,
+						"def": @partner.def,
+						"speed": @partner.speed,
+						"is_partner": @partner.is_partner,
+						"turn": @partner.turn
 					},
 					"enemy1": {
-						"name": enemy.name,
-						"hp": enemy.hp,
-						"mp": enemy.mp,
-						"atk": enemy.atk,
-						"def": enemy.def,
-						"speed": enemy.speed,
-						"money": enemy.money,
-						"turn": INCOMPLETE
+						"name": @enemy.name,
+						"hp": @enemy.hp,
+						"mp": @enemy.mp,
+						"atk": @enemy.atk,
+						"def": @enemy.def,
+						"speed": @enemy.speed,
+						"money": @enemy.money,
+						"turn": @enemy.turn
 					}
 				}
 			}
 		]
 	}
 
-	battle = Battle.new(battle_info)
-
-	next_acter = battle.calculate_next_acter()
-	next_acter.turn = NEXT
-
-	battle_info[:situation].last[:status].select {|k,v| v[:is_partner]===false}.values[0][:turn] = NEXT if battle.player == next_acter
-	battle_info[:situation].last[:status].select {|k,v| v[:is_partner]}.values[0][:turn] = NEXT if battle.partner == next_acter
-	battle_info[:situation].last[:status].select {|k,v| v[:is_partner].nil?}.values[0][:turn] = NEXT if battle.enemy == next_acter
-
-	# 敵から行動だと、プレイヤー側の初手で誰が行動するかわからなくなるので例外的に「次の次」を計算
-	if battle.enemy == next_acter
-		next_next_acter = battle.calculate_next_acter()
-		next_next_acter.turn = NEXT_NEXT
-
-		battle_info[:situation].last[:status].select {|k,v| v[:is_partner]===false}.values[0][:turn] = NEXT_NEXT if battle.player == next_next_acter
-		battle_info[:situation].last[:status].select {|k,v| v[:is_partner]}.values[0][:turn] = NEXT_NEXT if battle.partner == next_next_acter
-		battle_info[:situation].last[:status].select {|k,v| v[:is_partner].nil?}.values[0][:turn] = NEXT_NEXT if battle.enemy == next_next_acter
-	end
-
 	collection.insert_one(battle_info)
-	self.debug_get_dbinfo("－－－－－－documentDB 1ターン目 insert直後－－－－－－")
-
-	SQL.transaction("insert into battle(user_id,scene) values(?,0)", user_id)
-
-	self.debug_get_dbinfo("－－－－－－SQL 1ターン目 insert直後－－－－－－")
-
-	SQL.close_statement
-
-	return battle
 end
+
 
 
 def calculate_next_acter()
