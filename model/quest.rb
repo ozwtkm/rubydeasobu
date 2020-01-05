@@ -325,23 +325,30 @@ def handle_event()
     case result.first["type"]
     when TYPE_MONSTER
 
-        statement2 = sql_transaction.prepare("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1")
-        result2 = statement2.execute(@user_id, result.first()["id"])
+        quest_acquisition = SQL.transaction("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1", [@user_id, result.first()["id"]])
 
-        if result2.count >= 1
+        if quest_acquisition.count >= 1 # イベント消化済みかの確認
             return
         end
         
-        statement3 = sql_transaction.prepare("insert into quest_acquisition(user_id, appearance_id, status) values(?,?,?)")
-        statement3.execute(@user_id, result.first()["id"], DONE)
+        SQL.transaction("insert into quest_acquisition(user_id, appearance_id, status) values(?,?,?)", [@user_id, result.first()["id"], DONE])
 
         @situation = BATTLE
-        Battle.start(@user_id)
         @object = Monster.get_specific_monster(result.first()["appearance_id"])
+        
+        player_monster = SQL.transaction("select * from party where id = ?", @team_info["party"])
+        Validator.validate_SQL_error(player_monster.count, is_multi_line: false)
+        player_monster_possession_id = player_monster[0]["possession_monster_id"]
+        player_monster_correspondence = SQL.transaction("select * from user_monster where id = ?", player_monster_possession_id)
+        Validator.validate_SQL_error(player_monster_correspondence.count, is_multi_line: false)
 
-        statement2.close()
-        statement3.close()
+        player_monster_id = player_monster_correspondence[0]["monster_id"]
+        partner_monster_id = @team_info["partner"]
+        enemy_monster_id = @object.id
 
+        Battle.start(@user_id, player_monster_id, partner_monster_id, enemy_monster_id)
+
+        SQL.close_statement()
     when TYPE_ITEM
 
         statement2 = sql_transaction.prepare("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1")

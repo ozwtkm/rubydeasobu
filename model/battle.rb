@@ -3,11 +3,12 @@
 require 'mongo'
 require 'json'
 require 'securerandom'
-require_relative '../_util/SQL_master'
-require_relative '../_util/SQL_transaction'
+require_relative '../_util/sqltool'
 require_relative './basemodel'
 require_relative '../_util/documentDB'
 require_relative './quest'
+
+require 'pry'
 
 class Battle < Base_model
 	attr_reader :user_id, :player, :partner, :enemy, :tmp_battle_result, :scene, :finish_flg, :add_enemy_flg
@@ -107,51 +108,19 @@ def self.exist?(user_id)
 	return true
 end
 
-
-def self.start(user_id)
+# questmodelから叩かれる。
+def self.start(user_id, player_id, partner_id, enemy_id)
 	if Battle.exist?(user_id)
 		raise "目の前の戦闘に集中しなさい"
 	end
 
-	sql_transaction = SQL_transaction.instance.sql
-	sql_master = SQL_master.instance.sql
-
 	documentDB_client = DocumentDB.instance.client
 	collection = documentDB_client[:battle]
 
-	statement1 = sql_transaction.prepare("select current_x,current_y,current_z,party_id,partner_monster from quest where user_id = ? limit 1")
-	result1 = statement1.execute(user_id)
-	Validator.validate_SQL_error(result1.count)
-
-	statement2 = sql_transaction.prepare("select possession_monster_id from party where id = ? limit 1")
-	result2 = statement2.execute(result1.first["party_id"])
-	Validator.validate_SQL_error(result2.count)
-
-	statement3 = sql_transaction.prepare("select monster_id from user_monster where id = ? limit 1")
-	result3 = statement3.execute(result2.first["possession_monster_id"])
-	Validator.validate_SQL_error(result3.count)
-
-	statement4 = sql_master.prepare("select appearance_id from appearance_place where x= ? and y = ? and z = ? and type = 1 limit 1") #type:1 → monster
-	result4 = statement4.execute(result1.first["current_x"],result1.first["current_y"],result1.first["current_z"])
-	Validator.validate_SQL_error(result4.count)#戦闘マスに来てないのに戦闘開始しようとするとここでつかまる
-
-	player_id = result3.first["monster_id"]
-	partner_id = result1.first["partner_monster"]
-	enemy_id = result4.first["appearance_id"]
-
-	statement5 = sql_master.prepare("select * from monsters where id = ? or id = ? or id = ? limit 3")
-	result5 = statement5.execute(player_id,partner_id,enemy_id)
-	Validator.validate_SQL_error(result5.count,is_multi_line: true)
-
-	player = result5.select{|k,v| k["id"] == player_id}[0]
-	partner = result5.select{|k,v| k["id"] == partner_id}[0]
-	enemy = result5.select{|k,v| k["id"] == enemy_id}[0]
-
-	statement1.close
-	statement2.close
-	statement3.close
-	statement4.close
-	statement5.close
+	# ここでのSQLエラーはmonsterモデル内で吐かれる
+	player = Monster.get_specific_monster(player_id)
+	partner = Monster.get_specific_monster(partner_id)
+	enemy = Monster.get_specific_monster(enemy_id)
 
 	battle_info = {
 		"user_id": user_id,
@@ -160,33 +129,33 @@ def self.start(user_id)
 				"scene": 0,
 				"status": {
 					"player1": {
-						"name": player["name"],
-						"hp": player["hp"],
-						"mp": player["mp"],
-						"atk": player["atk"],
-						"def": player["def"],
-						"speed": player["speed"],
+						"name": player.name,
+						"hp": player.hp,
+						"mp": player.mp,
+						"atk": player.atk,
+						"def": player.def,
+						"speed": player.speed,
 						"is_friend": false,
 						"turn": INCOMPLETE
 					},
 					"player2": {
-						"name": partner["name"],
-						"hp": partner["hp"],
-						"mp": partner["mp"],
-						"atk": partner["atk"],
-						"def": partner["def"],
-						"speed": partner["speed"],
+						"name": partner.name,
+						"hp": partner.hp,
+						"mp": partner.mp,
+						"atk": partner.atk,
+						"def": partner.def,
+						"speed": partner.speed,
 						"is_friend": true,
 						"turn": INCOMPLETE
 					},
 					"enemy1": {
-						"name": enemy["name"],
-						"hp": enemy["hp"],
-						"mp": enemy["mp"],
-						"atk": enemy["atk"],
-						"def": enemy["def"],
-						"speed": enemy["speed"],
-						"money": enemy["money"],
+						"name": enemy.name,
+						"hp": enemy.hp,
+						"mp": enemy.mp,
+						"atk": enemy.atk,
+						"def": enemy.def,
+						"speed": enemy.speed,
+						"money": enemy.money,
 						"turn": INCOMPLETE
 					}
 				}
@@ -216,10 +185,11 @@ def self.start(user_id)
 	collection.insert_one(battle_info)
 	self.debug_get_dbinfo("－－－－－－documentDB 1ターン目 insert直後－－－－－－")
 
-	statement = sql_transaction.prepare("insert into battle(user_id,scene) values(?,0)")
-	statement.execute(user_id)
-	statement.close
+	SQL.transaction("insert into battle(user_id,scene) values(?,0)", user_id)
+
 	self.debug_get_dbinfo("－－－－－－SQL 1ターン目 insert直後－－－－－－")
+
+	SQL.close_statement
 
 	return battle
 end
