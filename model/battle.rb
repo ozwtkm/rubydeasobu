@@ -33,11 +33,10 @@ DONE = 3
 def initialize(battle_document)
 	@user_id = battle_document[:user_id]
 
-	@player = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| v[:is_friend]===false}.values[0]) # 長すぎてキモい
-	@partner = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| v[:is_friend]}.values[0])
-	@enemy = Battle::Enemy.new(battle_document[:situation].last[:status].select {|k,v| v[:is_friend].nil?}.values[0])
+	@player = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| v[:is_partner]===false}.values[0]) # 長すぎてキモい
+	@partner = Battle::Player.new(battle_document[:situation].last[:status].select {|k,v| v[:is_partner]}.values[0])
+	@enemy = Battle::Enemy.new(battle_document[:situation].last[:status].select {|k,v| v[:is_partner].nil?}.values[0])
 
-	@history = []
 	@history = battle_document[:situation]
 
 	@scene = battle_document[:situation].last[:scene]
@@ -135,7 +134,7 @@ def self.start(user_id, player_id, partner_id, enemy_id)
 						"atk": player.atk,
 						"def": player.def,
 						"speed": player.speed,
-						"is_friend": false,
+						"is_partner": false,
 						"turn": INCOMPLETE
 					},
 					"player2": {
@@ -145,7 +144,7 @@ def self.start(user_id, player_id, partner_id, enemy_id)
 						"atk": partner.atk,
 						"def": partner.def,
 						"speed": partner.speed,
-						"is_friend": true,
+						"is_partner": true,
 						"turn": INCOMPLETE
 					},
 					"enemy1": {
@@ -168,18 +167,18 @@ def self.start(user_id, player_id, partner_id, enemy_id)
 	next_acter = battle.calculate_next_acter()
 	next_acter.turn = NEXT
 
-	battle_info[:situation].last[:status].select {|k,v| v[:is_friend]===false}.values[0][:turn] = NEXT if battle.player == next_acter
-	battle_info[:situation].last[:status].select {|k,v| v[:is_friend]}.values[0][:turn] = NEXT if battle.partner == next_acter
-	battle_info[:situation].last[:status].select {|k,v| v[:is_friend].nil?}.values[0][:turn] = NEXT if battle.enemy == next_acter
+	battle_info[:situation].last[:status].select {|k,v| v[:is_partner]===false}.values[0][:turn] = NEXT if battle.player == next_acter
+	battle_info[:situation].last[:status].select {|k,v| v[:is_partner]}.values[0][:turn] = NEXT if battle.partner == next_acter
+	battle_info[:situation].last[:status].select {|k,v| v[:is_partner].nil?}.values[0][:turn] = NEXT if battle.enemy == next_acter
 
 	# 敵から行動だと、プレイヤー側の初手で誰が行動するかわからなくなるので例外的に「次の次」を計算
 	if battle.enemy == next_acter
 		next_next_acter = battle.calculate_next_acter()
 		next_next_acter.turn = NEXT_NEXT
 
-		battle_info[:situation].last[:status].select {|k,v| v[:is_friend]===false}.values[0][:turn] = NEXT_NEXT if battle.player == next_next_acter
-		battle_info[:situation].last[:status].select {|k,v| v[:is_friend]}.values[0][:turn] = NEXT_NEXT if battle.partner == next_next_acter
-		battle_info[:situation].last[:status].select {|k,v| v[:is_friend].nil?}.values[0][:turn] = NEXT_NEXT if battle.enemy == next_next_acter
+		battle_info[:situation].last[:status].select {|k,v| v[:is_partner]===false}.values[0][:turn] = NEXT_NEXT if battle.player == next_next_acter
+		battle_info[:situation].last[:status].select {|k,v| v[:is_partner]}.values[0][:turn] = NEXT_NEXT if battle.partner == next_next_acter
+		battle_info[:situation].last[:status].select {|k,v| v[:is_partner].nil?}.values[0][:turn] = NEXT_NEXT if battle.enemy == next_next_acter
 	end
 
 	collection.insert_one(battle_info)
@@ -302,7 +301,7 @@ def update_history()
 				"atk": @player.atk,
 				"def": @player.def,
 				"speed": @player.speed,
-				"is_friend": false,
+				"is_partner": false,
 				"turn": @player.turn
 			},
 			"player2": {
@@ -312,7 +311,7 @@ def update_history()
 				"atk": @partner.atk,
 				"def": @partner.def,
 				"speed": @partner.speed,
-				"is_friend": true,
+				"is_partner": true,
 				"turn": @partner.turn
 			},
 			"enemy1": {
@@ -466,7 +465,7 @@ def close_battle()
 end
 
 class Player
-attr_reader :name, :is_friend
+attr_reader :name, :is_partner
 attr_accessor :hp, :mp, :atk, :def, :speed, :turn
 
 	def initialize(document)
@@ -476,7 +475,7 @@ attr_accessor :hp, :mp, :atk, :def, :speed, :turn
 		@atk=document[:atk]
 		@def=document[:def]
 		@speed=document[:speed]
-		@is_friend=document[:is_friend]
+		@is_partner=document[:is_partner]
 		@turn=document[:turn]
 	end
 end
