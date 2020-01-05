@@ -302,8 +302,10 @@ end
 
 
 def set_next_acter()
-	if !get_acters(type: NEXT_NEXT).nil?
-		get_acters(type: NEXT_NEXT).turn = NEXT
+	next_next_acter = get_acters(type: NEXT_NEXT)
+
+	unless next_next_acter.nil?
+		next_next_acter.turn = NEXT
 		return
 	end
 
