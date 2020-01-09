@@ -8,7 +8,6 @@ require_relative './basemodel'
 require_relative '../_util/documentDB'
 require_relative './quest'
 
-require 'pry'
 
 class Battle < Base_model
 	attr_accessor :user_id, :player, :partner, :enemy, :tmp_battle_result, :scene, :finish_flg, :add_enemy_flg
@@ -56,61 +55,95 @@ end
 
 
 def self.get(user_id)
-	#self.debug_dbreset()
-	self.debug_get_dbinfo("－－－－－－get直後－－－－－－")
-	documentDB_client = DocumentDB.instance.client
-	collection = documentDB_client[:battle]
+	dbinfo = Battle.get_db_info(user_id)
+	document = dbinfo[:document]
+	sql = dbinfo[:sql]
 
-	battle_document = collection.find({"user_id":user_id})
-
-	if Battle.exist?(user_id)
-		sql_transaction = SQL_transaction.instance.sql
-		statement = sql_transaction.prepare("select * from battle where user_id = ? limit 1")
-		result = statement.execute(user_id)
-		
-		#Validator.validate_SQL_error(result.count)
-		#SQLcountが0はcheck_db_consistencyで捕まえたいのでここでは検証しない
-
-		Battle.check_db_consistency(battle_document.first, result.first)
-
-		statement.close
-
-		battle = Battle.new(battle_document.first)
-
-		return battle
-	else
-		raise "Battle取って来れない"
+	if document.nil?
+		raise "Battle取ってこれない"
 	end
+
+	battle = Battle.new(document)
+
+	battle
 end
 
-#バトル結果はdodumentDB→SQLの順にinsertするため、documentDBだけ1scene先行している可能性がある(レアケースだが
-def self.check_db_consistency(documentDB,sql)
+
+
+
+
+# 各関数はDB情報が欲しい時、直接SQLやmongoから取得するのではなく、こいつを叩くようにする。
+# そうすることで、常にself.check_db_consistencyが叩かれるので、
+# それぞれの関数で都度意識することなくDBの生合成を維持できる。
+def self.get_db_info(user_id)
 	documentDB_client = DocumentDB.instance.client  
 	collection = documentDB_client[:battle]
-	user_id = documentDB[:user_id]
 
-	if  sql.nil?
-		collection.delete_one({"user_id":user_id})
+	document = collection.find({"user_id":user_id})
+	sql = SQL.transaction("select * from battle where user_id = ?", user_id)
 
-		raise "sqlがinsertできてなかったのでmongo側をロールバック"
-	end
+	Battle.check_db_consistency(document, sql)
 
-	if documentDB["situation"].last["scene"] != sql["scene"]
-		documentDB["situation"].pop
-		collection.replace_one({"user_id":user_id}, documentDB)
+	dbinfo = {
+		document: document.first,
+		sql: sql[0]
+	}
 
-		raise "poped"
+	dbinfo
+end
+
+
+#→新規「mongo→sql」、更新「mogno→sql」、削除「mongo→sql」という処理順番を守るようにすると、DBの状態で何が起きたかわかる
+#＊mongoはあるがsqlがない　→ 新規作成時にエラーが起きたとわかる
+#c　→ ターン更新時にエラーが起きたとわかる
+#＊mongoはないがsqlがある　→ 削除時にエラーが起きたとわかる	　　
+def self.check_db_consistency(document, sql)
+	if document.count === 0
+		# ＊mongoはないがsqlがある　→ 削除時にエラーが起きた
+		if sql.count != 0
+			SQL.transaction("delete from battle where user_id = ?", user_id)
+			SQL.close_statement
+	
+			raise "sql側を消し損なってたのでsql消しといたよ"
+		end
+	else
+		# ＊mongoはあるがsqlがない　→ 新規作成時にエラーが起きた
+		if sql.count === 0
+			SQL.close_statement
+			collection.delete_one({"user_id":user_id})
+	
+			raise "sqlがinsertできてなかったのでmongo側をロールバック"
+		end
+
+		# ＊mongoもsqlもあるが、mongoのターンの方が未来
+		if document.first["situation"].last["scene"] > sql[0]["scene"]
+			SQL.close_statement
+			document.first["situation"].pop
+			collection.replace_one({"user_id":user_id}, document.first)
+	
+			raise "ターン更新時エラーになってたっぽいのでmogoをpoped"
+		end
+
+		# 「mongo→SQLの順に処理する」という決まりを徹底しておけばこのパターンは起こりえないため、本来は検証する必要はないが、
+		# ヒューマンエラーなどを考慮し実際的な保険として一応しておく。
+		if document.first["situation"].last["scene"] < sql[0]["scene"]
+			# ここに来る時点でバグいこと確定なので小賢しいことせずバトル自体リセットする
+			collection.delete_one(user_id: user_id)
+			SQL.transaction("delete from battle where user_id = ?", user_id)
+			SQL.close_statement
+
+			raise "なぜかSQLが先行してるというありえない状況だったのでバトルリセット"
+		end
+
+		# todo：仕様上はありえないけどヒューマンエラー的に発生しうる不整合パターンを洗い出して一応検証処理書く
 	end
 end
 
 
 def self.exist?(user_id)
-	documentDB_client = DocumentDB.instance.client
-	collection = documentDB_client[:battle]
+	document = Battle.get_db_info(user_id)[:document]
 
-	battle_document = collection.find({"user_id":user_id})
-
-	if battle_document.count === 0
+	if document.count === 0
 		return false
 	end
 
