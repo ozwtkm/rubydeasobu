@@ -8,6 +8,7 @@ require_relative './basemodel'
 require_relative '../_util/documentDB'
 require_relative './quest'
 
+# mongoのことdocumentって言ってるところのネーミング募集
 
 class Battle < Base_model
 	attr_accessor :user_id, :player, :partner, :enemy, :tmp_battle_result, :scene, :finish_flg, :add_enemy_flg
@@ -70,8 +71,6 @@ end
 
 
 
-
-
 # 各関数はDB情報が欲しい時、直接SQLやmongoから取得するのではなく、こいつを叩くようにする。
 # そうすることで、常にself.check_db_consistencyが叩かれるので、
 # それぞれの関数で都度意識することなくDBの生合成を維持できる。
@@ -82,12 +81,11 @@ def self.get_db_info(user_id)
 	document = collection.find({"user_id":user_id})
 	sql = SQL.transaction("select * from battle where user_id = ?", user_id)
 
-	Battle.check_db_consistency(document, sql)
+	Battle.check_db_consistency(document, sql, user_id)
 
-	dbinfo = {
-		document: document.first,
-		sql: sql[0]
-	}
+	dbinfo = {}
+	sql.count === 0 ? dbinfo[:sql] = nil : dbinfo[:sql] = sql[0]
+	document.count === 0 ? dbinfo[:document] = nil : dbinfo[:document] = document.first
 
 	dbinfo
 end
@@ -97,7 +95,7 @@ end
 #＊mongoはあるがsqlがない　→ 新規作成時にエラーが起きたとわかる
 #c　→ ターン更新時にエラーが起きたとわかる
 #＊mongoはないがsqlがある　→ 削除時にエラーが起きたとわかる	　　
-def self.check_db_consistency(document, sql)
+def self.check_db_consistency(document, sql, user_id)
 	if document.count === 0
 		# ＊mongoはないがsqlがある　→ 削除時にエラーが起きた
 		if sql.count != 0
@@ -143,7 +141,7 @@ end
 def self.exist?(user_id)
 	document = Battle.get_db_info(user_id)[:document]
 
-	if document.count === 0
+	if document.nil?
 		return false
 	end
 
@@ -497,13 +495,8 @@ end
 
 
 def get_reward(gold: false, monster_exp: false, player_exp: false)
-	sql_transaction = SQL_transaction.instance.sql
-
 	if gold
-		statement = sql_transaction.prepare("update quest set obtain_money = obtain_money + ? where user_id = ?")
-		statement.execute(@enemy.money, @user_id)
-
-		statement.close()
+		SQL.transaction("update quest set obtain_money = obtain_money + ? where user_id = ?", [@enemy.money, @user_id])
 	end
 
 	# あとで
@@ -515,6 +508,8 @@ def get_reward(gold: false, monster_exp: false, player_exp: false)
 	if player_exp
 
 	end
+
+	SQL.close_statement()
 end
 
 
@@ -526,9 +521,8 @@ def save()
 	
 	collection.update_one({user_id: @user_id}, '$set' => {situation: @history})
 
-	statement = sql_transaction.prepare("update battle set scene = ? where user_id = ?")
-	statement.execute(@scene, @user_id)
-	statement.close()
+	SQL.transaction("update battle set scene = ? where user_id = ?", [@scene, @user_id])
+	SQL.close_statement()
 
 	Battle.debug_get_dbinfo("save実行直後")
 end
@@ -540,9 +534,8 @@ def close_battle()
 
 	collection.delete_one(user_id: @user_id)
 
-	sql_transaction = SQL_transaction.instance.sql
-	statement = sql_transaction.prepare("delete from battle where user_id = ?")
-	statement.execute(@user_id)
+	SQL.transaction("delete from battle where user_id = ?", @user_id)
+	SQL.close_statement()
 
 	Battle.debug_get_dbinfo("close_battle実行直後")
 end

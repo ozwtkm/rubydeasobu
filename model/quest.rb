@@ -59,6 +59,8 @@ KIND_STEP = 1
 KIND_GOAL = 2
 KIND_POT = 3
 
+INITIAL_OBTAIN_MONEY = 0
+
 def initialize(user_id,dangeon_info,team_info,current_x,current_y,current_z)
     @user_id = user_id
 
@@ -77,8 +79,6 @@ end
 def self.start(user_id, partner_id, party_id, dangeon_id)
     Quest.check_start_condition(user_id, partner_id, party_id, dangeon_id)
 
-    sql_transaction = SQL_transaction.instance.sql
-
     dangeon_info = {}
     dangeon_info["id"] = dangeon_id
     dangeon_info["map"] = Map.get(dangeon_id, INITIAL_Z)
@@ -87,10 +87,9 @@ def self.start(user_id, partner_id, party_id, dangeon_id)
     team_info["party"] = party_id
     team_info["partner"] = partner_id
 
-    statement = sql_transaction.prepare("insert into quest(user_id,dangeon_id,current_x,current_y,current_z,party_id,partner_monster,obtain_money) values(?,?,?,?,?,?,?,?)")
-    result = statement.execute(user_id, dangeon_id, INITIAL_X, INITIAL_Y, INITIAL_Z, party_id, partner_id, 0)
-
-    statement.close()
+    array_for_sql = [user_id, dangeon_id, INITIAL_X, INITIAL_Y, INITIAL_Z, party_id, partner_id, INITIAL_OBTAIN_MONEY]
+    SQL.transaction("insert into quest(user_id,dangeon_id,current_x,current_y,current_z,party_id,partner_monster,obtain_money) values(?,?,?,?,?,?,?,?)", array_for_sql)
+    SQL.close_statement
 
     quest = Quest.new(user_id, dangeon_info, team_info, INITIAL_X, INITIAL_Y, INITIAL_Z)
 
@@ -99,12 +98,7 @@ end
 
 
 def self.get(user_id)
-    sql_transaction = SQL_transaction.instance.sql
-	sql_master = SQL_master.instance.sql
-
-    statement = sql_transaction.prepare("select * from quest where user_id = ? limit 1")
-    result = statement.execute(user_id)
-
+    result = SQL.transaction("select * from quest where user_id = ? limit 1", user_id)
     Validator.validate_SQL_error(result.count, is_multi_line: false)
 
     x = result.first["current_x"]
@@ -119,7 +113,7 @@ def self.get(user_id)
     team_info["party"] = result.first["party_id"]
     team_info["partner"] = result.first["partner_monster"]
 
-    statement.close()
+    SQL.close_statement
     
     quest = Quest.new(user_id, dangeon_info, team_info, x, y, z)
 
@@ -128,11 +122,7 @@ end
 
 
 def self.check_start_condition(user_id, partner_id, party_id, dangeon_id)
-    sql_transaction = SQL_transaction.instance.sql
-	sql_master = SQL_master.instance.sql
-
-    statement = sql_transaction.prepare("select * from quest where user_id = ? limit 1")
-    result = statement.execute(user_id)
+    result = SQL.transaction("select * from quest where user_id = ? limit 1", user_id)
 
     if result.count >= 1
         raise "既に別クエスト実施中"
@@ -145,18 +135,13 @@ def self.check_start_condition(user_id, partner_id, party_id, dangeon_id)
     end
 
     # 追々はcondidate_dangeonみたいなテーブルで検証（進行するごとに増えてく
-    statement = sql_master.prepare("select * from dangeons where id = ? limit 1")
-    result = statement.execute(dangeon_id)
-
+    result = SQL.master("select * from dangeons where id = ? limit 1", dangeon_id)
     Validator.validate_SQL_error(result.count, is_multi_line: false)
    
-
-    statement = sql_transaction.prepare("select * from party where id = ? and user_id = ? limit 1")
-    result = statement.execute(party_id, user_id)
-
+    result = SQL.transaction("select * from party where id = ? and user_id = ? limit 1", [party_id, user_id])
     Validator.validate_SQL_error(result.count, is_multi_line: false)
 
-    statement.close()
+    SQL.close_statement
 end
 
 
@@ -349,11 +334,8 @@ end
 
 
 def handle_event()
-    sql_master = SQL_master.instance.sql
-    sql_transaction = SQL_transaction.instance.sql
-
-    statement = sql_master.prepare("select * from appearance_place where dangeon_id = ? and x = ? and y = ? and z = ? limit 1")
-    result = statement.execute(@dangeon_info["id"], @current_x, @current_y, @current_z)
+    array_for_sql = [@dangeon_info["id"], @current_x, @current_y, @current_z]
+    result = SQL.master("select * from appearance_place where dangeon_id = ? and x = ? and y = ? and z = ? limit 1", array_for_sql)
 
     if result.count === 0
         return
@@ -361,7 +343,6 @@ def handle_event()
 
     case result.first["type"]
     when TYPE_MONSTER
-
         quest_acquisition = SQL.transaction("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1", [@user_id, result.first()["id"]])
 
         if quest_acquisition.count >= 1 # イベント消化済みかの確認
@@ -375,6 +356,7 @@ def handle_event()
         
         player_monster = SQL.transaction("select * from party where id = ?", @team_info["party"])
         Validator.validate_SQL_error(player_monster.count, is_multi_line: false)
+
         player_monster_possession_id = player_monster[0]["possession_monster_id"]
         player_monster_correspondence = SQL.transaction("select * from user_monster where id = ?", player_monster_possession_id)
         Validator.validate_SQL_error(player_monster_correspondence.count, is_multi_line: false)
@@ -384,12 +366,8 @@ def handle_event()
         enemy_monster_id = @object.id
 
         Battle.start(@user_id, player_monster_id, partner_monster_id, enemy_monster_id)
-
-        SQL.close_statement()
     when TYPE_ITEM
-
-        statement2 = sql_transaction.prepare("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1")
-        result2 = statement2.execute(@user_id, result.first()["id"])
+        result2 = SQL.transaction("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1", [@user_id, result.first["id"]])
 
         if result2.count >= 1
             return
@@ -397,14 +375,9 @@ def handle_event()
 
         @situation = ITEM
         @object = Item.get_specific_item(result.first["appearance_id"])
-
-        statement2.close()
-
     when TYPE_EQUIPMENT
-
-        statement2 = sql_transaction.prepare("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1")
-        result2 = statement2.execute(@user_id, result.first()["id"])
-
+        result2 = SQL.transaction("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1", [@user_id, result.first["id"]])
+        
         if result2.count >= 1
             return
         end
@@ -419,24 +392,15 @@ def handle_event()
         when KIND_POT
             @situation = POT
         end
-
-        statement2.close()
-
     end
 
-    statement.close()
+    SQL.close_statement()
 end
 
 
 
 def finish()
-    # item処置。　itemのうちkindがmoneyになっているものはobtain_moneyへの変換を忘れずに。
-
-    sql_master = SQL_master.instance.sql
-    sql_transaction = SQL_transaction.instance.sql
-
-    statement = sql_transaction.prepare("select * from quest_acquisition where user_id = ? and status = ?")
-    result = statement.execute(@user_id, ACQUIRED)
+    resutl = SQL.transaction("select * from quest_acquisition where user_id = ? and status = ?", [@user_id, ACQUIRED])
 
     if result.count != 0
         item_place_ids = []
@@ -449,9 +413,8 @@ def finish()
             item_place_ids << row["appearance_id"]
         end
 
-        statement2 = sql_master.prepare("select * from appearance_place where id = " + statement_candidate)
-        result2 = statement2.execute(*item_place_ids)
-
+        result2 = SQL.master("select * from appearance_place where id = " + statement_candidate, item_place_ids)
+        
         # To do：　獲得アイテムのうち種類がmoneyのもの → obtain_money の変換。
 
         statement_values = "values(?,?,?)"
@@ -466,33 +429,17 @@ def finish()
             query_values << 1
         end
 
-        statement3 = sql_transaction.prepare("insert into user_item(user_id, item_id, quantity) " + statement_values + " on duplicate key update quantity = quantity + values(quantity)")
-        result3 = statement3.execute(*query_values)
-
-        statement2.close()
-        statement3.close()
-
+        SQL.transaction("insert into user_item(user_id, item_id, quantity) " + statement_values + " on duplicate key update quantity = quantity + values(quantity)", query_values)
     end
 
-    statement4 = sql_transaction.prepare("select * from quest where user_id = ? limit 1")
-    result4 = statement4.execute(@user_id)
-
-    statement5 = sql_transaction.prepare("update wallets set money = money + ? where user_id = ? limit 1")
-    statement5.execute(result4.first["obtain_money"], @user_id)
-
-    statement6 = sql_transaction.prepare("delete from quest where user_id = ? limit 1")
-    statement6.execute(@user_id)
-
-    statement7 = sql_transaction.prepare("delete from quest_acquisition where user_id = ?")
-    statement7.execute(@user_id)
+    tmp = SQL.transaction("select * from quest where user_id = ? limit 1", @user_id)
+    SQL.transaction("update wallets set money = money + ? where user_id = ? limit 1", [tmp.first["obtain_money"], @user_id])
+    SQL.transaction("delete from quest where user_id = ? limit 1", @user_id)
+    SQL.transaction("delete from quest_acquisition where user_id = ?", @user_id)
     
     @situation = FINISHED
 
-    statement.close()
-    statement4.close()
-    statement5.close()
-    statement6.close()
-    statement7.close()
+    SQL.close_statement
 end
 
 
@@ -522,12 +469,8 @@ def self.create_partner_candidate(user_id)
 		return partner_candidate_list
     end
 
-    sql_transaction = SQL_transaction.instance.sql
-
     # これは良くない気がするが、最大値を知らないと乱数でのwhere in時に取得され得ないレコードが発生しうる
-    statement = sql_transaction.prepare("select max(user_id) from partner_candidate")
-    result = statement.execute()
-
+    result = SQL.transaction("select max(user_id) from partner_candidate")
     max = result.first["max(user_id)"]
     
     partner_candidate_list = []
@@ -554,6 +497,7 @@ def self.create_partner_candidate(user_id)
     end
 
     Cache.instance.set(user_id.to_s + 'partner_candidate_list', partner_candidate_list)
+    SQL.close_statement
 
 	Log.log("cacheなしなのでpartner_candidate_listセットした")
 
@@ -562,8 +506,6 @@ end
 
 
 def self.get_partner_candidate(number_of_candidate, randoms_for_wherein)
-    sql_transaction = SQL_transaction.instance.sql
-
     query = "select * from partner_candidate where user_id in ("
     number_of_random = randoms_for_wherein.count
     candidate_array_for_return = []
@@ -575,15 +517,14 @@ def self.get_partner_candidate(number_of_candidate, randoms_for_wherein)
     query += ") limit "
     query += number_of_random.to_s
 
-    statement = sql_transaction.prepare(query)
-    result = statement.execute(*randoms_for_wherein)
+    result = SQL.transaction(query, randoms_for_wherein)
 
     result.each_with_index do |row, i|
         candidate_array_for_return << row["monster_id"] unless row["monster_id"].nil?
         break if i+1 === number_of_candidate
     end
 
-    statement.close()
+    SQL.close_statement
 
     candidate_array_for_return
 end
@@ -591,12 +532,8 @@ end
 
 
 def save()
-    sql_transaction = SQL_transaction.instance.sql
-
-    statement = sql_transaction.prepare("update quest set current_x = ?, current_y = ?, current_z = ? where user_id = ?")
-    statement.execute(@current_x, @current_y, @current_z, @user_id)
-
-    statement.close()
+    SQL.transaction("update quest set current_x = ?, current_y = ?, current_z = ? where user_id = ?",[@current_x, @current_y, @current_z, @user_id])
+    SQL.close_statement
 end
 
 

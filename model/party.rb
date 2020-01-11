@@ -68,11 +68,9 @@ end
 
 # ユーザ新規登録時のみ叩かれる
 def self.init(user_id, possession_monster_id)
-    sql_transaction = SQL_transaction.instance.sql
-
-    statement = sql_transaction.prepare("insert into party(user_id, possession_monster_id) values(?,?),(?,?),(?,?)")
-    result = statement.execute(user_id,possession_monster_id,user_id,possession_monster_id,user_id,possession_monster_id)
-    statement.close
+    array_for_sql = [user_id,possession_monster_id,user_id,possession_monster_id,user_id,possession_monster_id] #ほんとはちゃんと動的に作る
+    SQL.transaction("insert into party(user_id, possession_monster_id) values(?,?),(?,?),(?,?)", array_for_sql)
+    SQL.close_statement()
 end
 
 
@@ -87,13 +85,11 @@ def set(user_id, possession_monster_id)
     SQL.close_statement
 end
 
+
 # init時に3枠が確保され、insertは使わずupdateだけが使われる仕様
 def save()
-    sql_transaction = SQL_transaction.instance.sql
-
-    statement = sql_transaction.prepare("update party set possession_monster_id = ? where id = ?")
-    statement.execute(@possession_monster_id, @id)
-    statement.close()
+    SQL.transaction("update party set possession_monster_id = ? where id = ?", [@possession_monster_id, @id])
+    SQL.close_statement
 end
 
 
