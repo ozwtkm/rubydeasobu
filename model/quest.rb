@@ -400,7 +400,7 @@ end
 
 
 def finish()
-    resutl = SQL.transaction("select * from quest_acquisition where user_id = ? and status = ?", [@user_id, ACQUIRED])
+    result = SQL.transaction("select * from quest_acquisition where user_id = ? and status = ?", [@user_id, ACQUIRED])
 
     if result.count != 0
         item_place_ids = []
