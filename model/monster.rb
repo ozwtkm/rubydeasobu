@@ -8,7 +8,7 @@ require_relative './basemodel'
 require_relative '../exception/Error_shortage_of_material'
 
 class Monster < Base_model
-	INITIAL_MONSTER_ID = 5
+	INITIAL_MONSTER_ID = 5 # 初期配布モンスター。本当は定数まとめファイルみたいなのにいるべきではある
 
 	attr_reader :id, :name, :hp, :mp, :speed, :atk, :def, :exp, :money, :img_id, :rarity
 
