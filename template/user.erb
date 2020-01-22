@@ -1,18 +1,19 @@
 <%
 	result = {}
 
+	# 本当はエラー有無のif分岐がviewにいるのは間違ってて、
+	# エラーがあるときはコントローラがError用のtemplateを呼べよという話だと思うの
 	if !c[:e].nil? 
 		if c[:e].class == Error_multi_412
 			error_list = c[:e].exceptions
+			result = {:ErrorMessage => []}
 
-			result = error_list.map do |e|
-				{:ErrorMessage => e.message}
+			error_list.each do |e|
+				result[:ErrorMessage] << e.message
 			end
 		else
 			result = {:ErrorMessage => c[:e].message}
 		end
-
-
 	end
 
 	if !c[:user].nil?
