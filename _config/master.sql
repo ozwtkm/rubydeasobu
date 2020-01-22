@@ -16,14 +16,6 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Current Database: `master`
---
-
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `master` /*!40100 DEFAULT CHARACTER SET utf8 */;
-
-USE `master`;
-
---
 -- Table structure for table `admin_users`
 --
 
@@ -39,6 +31,16 @@ CREATE TABLE `admin_users` (
   UNIQUE KEY `unko` (`name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `admin_users`
+--
+
+LOCK TABLES `admin_users` WRITE;
+/*!40000 ALTER TABLE `admin_users` DISABLE KEYS */;
+INSERT INTO `admin_users` VALUES (1,'admin','43e5241686c134792fa4ieeeeeeeeei','fa86e1f7f588a034947faf69f7fe8a95cc1c95c4');
+/*!40000 ALTER TABLE `admin_users` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `appearance_place`
@@ -62,6 +64,16 @@ CREATE TABLE `appearance_place` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `appearance_place`
+--
+
+LOCK TABLES `appearance_place` WRITE;
+/*!40000 ALTER TABLE `appearance_place` DISABLE KEYS */;
+INSERT INTO `appearance_place` VALUES (1,1,1,1,1,1,14),(2,1,2,2,1,2,1),(3,1,0,2,1,3,1);
+/*!40000 ALTER TABLE `appearance_place` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `dangeons`
 --
 
@@ -74,6 +86,16 @@ CREATE TABLE `dangeons` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `dangeons`
+--
+
+LOCK TABLES `dangeons` WRITE;
+/*!40000 ALTER TABLE `dangeons` DISABLE KEYS */;
+INSERT INTO `dangeons` VALUES (1,'井上の洞窟');
+/*!40000 ALTER TABLE `dangeons` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `equipment`
@@ -92,6 +114,16 @@ CREATE TABLE `equipment` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `equipment`
+--
+
+LOCK TABLES `equipment` WRITE;
+/*!40000 ALTER TABLE `equipment` DISABLE KEYS */;
+INSERT INTO `equipment` VALUES (1,'ダンジョン出口',2,NULL);
+/*!40000 ALTER TABLE `equipment` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `gacha_probability`
 --
 
@@ -108,6 +140,16 @@ CREATE TABLE `gacha_probability` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `gacha_probability`
+--
+
+LOCK TABLES `gacha_probability` WRITE;
+/*!40000 ALTER TABLE `gacha_probability` DISABLE KEYS */;
+INSERT INTO `gacha_probability` VALUES (2,5,70000),(2,12,20000),(2,11,9000),(2,10,1000);
+/*!40000 ALTER TABLE `gacha_probability` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `gachas`
 --
 
@@ -120,6 +162,16 @@ CREATE TABLE `gachas` (
   PRIMARY KEY (`gacha_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `gachas`
+--
+
+LOCK TABLES `gachas` WRITE;
+/*!40000 ALTER TABLE `gachas` DISABLE KEYS */;
+INSERT INTO `gachas` VALUES (1,'monster'),(2,'当てろ！りょうやん！ガチャ');
+/*!40000 ALTER TABLE `gachas` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `gradeup_recipes`
@@ -143,6 +195,16 @@ CREATE TABLE `gradeup_recipes` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `gradeup_recipes`
+--
+
+LOCK TABLES `gradeup_recipes` WRITE;
+/*!40000 ALTER TABLE `gradeup_recipes` DISABLE KEYS */;
+INSERT INTO `gradeup_recipes` VALUES (1,'井上2でなみえる1',5,2,14),(2,'井上2でうんこ1',5,2,12);
+/*!40000 ALTER TABLE `gradeup_recipes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `imgs`
 --
 
@@ -155,6 +217,15 @@ CREATE TABLE `imgs` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `imgs`
+--
+
+LOCK TABLES `imgs` WRITE;
+/*!40000 ALTER TABLE `imgs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `imgs` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `items`
@@ -174,6 +245,16 @@ CREATE TABLE `items` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Dumping data for table `items`
+--
+
+LOCK TABLES `items` WRITE;
+/*!40000 ALTER TABLE `items` DISABLE KEYS */;
+INSERT INTO `items` VALUES (1,'薬草',2,10,100),(2,'100money',1,100,101);
+/*!40000 ALTER TABLE `items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `maps`
 --
 
@@ -190,6 +271,16 @@ CREATE TABLE `maps` (
   CONSTRAINT `maps_ibfk_1` FOREIGN KEY (`dangeon_id`) REFERENCES `dangeons` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `maps`
+--
+
+LOCK TABLES `maps` WRITE;
+/*!40000 ALTER TABLE `maps` DISABLE KEYS */;
+INSERT INTO `maps` VALUES (1,0,0,1,4),(1,0,0,19,12),(1,0,1,1,13),(1,0,1,19,1),(1,0,2,1,9),(1,1,0,19,10),(1,1,1,1,14),(1,1,2,1,11),(1,2,0,19,10),(1,2,1,1,6),(1,2,2,1,3),(1,3,0,19,2);
+/*!40000 ALTER TABLE `maps` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Table structure for table `monsters`
@@ -215,167 +306,14 @@ CREATE TABLE `monsters` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Current Database: `transaction`
+-- Dumping data for table `monsters`
 --
 
-CREATE DATABASE /*!32312 IF NOT EXISTS*/ `transaction` /*!40100 DEFAULT CHARACTER SET utf8 */;
-
-USE `transaction`;
-
---
--- Table structure for table `battle`
---
-
-DROP TABLE IF EXISTS `battle`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `battle` (
-  `user_id` int(10) unsigned NOT NULL,
-  `scene` int(10) unsigned NOT NULL,
-  UNIQUE KEY `user_id` (`user_id`),
-  CONSTRAINT `battle_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `partner_candidate`
---
-
-DROP TABLE IF EXISTS `partner_candidate`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `partner_candidate` (
-  `user_id` int(11) unsigned NOT NULL,
-  `monster_id` int(10) unsigned NOT NULL,
-  PRIMARY KEY (`user_id`),
-  CONSTRAINT `partner_candidate_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `party`
---
-
-DROP TABLE IF EXISTS `party`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `party` (
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `user_id` int(10) unsigned NOT NULL,
-  `possession_monster_id` int(10) unsigned NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `user_id` (`user_id`),
-  KEY `monster_id` (`possession_monster_id`),
-  CONSTRAINT `party_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
-  CONSTRAINT `party_ibfk_2` FOREIGN KEY (`possession_monster_id`) REFERENCES `user_monster` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `quest`
---
-
-DROP TABLE IF EXISTS `quest`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `quest` (
-  `user_id` int(11) unsigned NOT NULL,
-  `dangeon_id` int(10) unsigned NOT NULL,
-  `current_x` int(5) unsigned NOT NULL,
-  `current_y` int(5) unsigned NOT NULL,
-  `current_z` int(5) unsigned NOT NULL,
-  `party_id` int(5) unsigned NOT NULL,
-  `partner_monster` int(11) unsigned NOT NULL,
-  `obtain_money` int(10) unsigned NOT NULL,
-  KEY `user_id` (`user_id`),
-  KEY `party_id` (`party_id`),
-  CONSTRAINT `quest_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
-  CONSTRAINT `quest_ibfk_3` FOREIGN KEY (`party_id`) REFERENCES `party` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `quest_acquisition`
---
-
-DROP TABLE IF EXISTS `quest_acquisition`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `quest_acquisition` (
-  `user_id` int(11) unsigned NOT NULL,
-  `appearance_id` int(10) unsigned NOT NULL,
-  `status` int(1) unsigned NOT NULL,
-  UNIQUE KEY `unique` (`user_id`,`appearance_id`),
-  CONSTRAINT `quest_acquisition_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `user_item`
---
-
-DROP TABLE IF EXISTS `user_item`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `user_item` (
-  `user_id` int(10) unsigned NOT NULL,
-  `item_id` int(10) unsigned NOT NULL,
-  `quantity` int(10) unsigned NOT NULL,
-  UNIQUE KEY `user_id` (`user_id`,`item_id`),
-  CONSTRAINT `user_item_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `user_monster`
---
-
-DROP TABLE IF EXISTS `user_monster`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `user_monster` (
-  `user_id` int(11) unsigned NOT NULL,
-  `monster_id` int(10) unsigned NOT NULL,
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  PRIMARY KEY (`id`),
-  KEY `user_id` (`user_id`),
-  KEY `monster_id` (`monster_id`),
-  CONSTRAINT `user_monster_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=565 DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `users`
---
-
-DROP TABLE IF EXISTS `users`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `users` (
-  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `name` varchar(20) DEFAULT NULL,
-  `salt` varchar(255) DEFAULT NULL,
-  `passwd` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `unko` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=60 DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `wallets`
---
-
-DROP TABLE IF EXISTS `wallets`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `wallets` (
-  `user_id` int(11) unsigned NOT NULL,
-  `money` int(10) unsigned DEFAULT NULL,
-  `gem` int(10) unsigned DEFAULT NULL,
-  PRIMARY KEY (`user_id`),
-  CONSTRAINT `wallets_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
+LOCK TABLES `monsters` WRITE;
+/*!40000 ALTER TABLE `monsters` DISABLE KEYS */;
+INSERT INTO `monsters` VALUES (5,'inoue',2,1,2,0,3,1,0,1,700),(10,'りょうやん',75442,84325,66431,64323,24124,4,3,4,7),(11,'dragon',1000,1000,1000,1000,1000,3,2,4,7),(12,'aaaaaaaaaaa',100,100,100,100,100,2,1,4,7),(13,'ドノバン',1,1,1,1,999999,5,3,4,7),(14,'なみえる',50,6,4,1,33,6,1,4,7);
+/*!40000 ALTER TABLE `monsters` ENABLE KEYS */;
+UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -386,4 +324,4 @@ CREATE TABLE `wallets` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-12-03 13:19:10
+-- Dump completed on 2019-12-07  4:10:08
