@@ -27,7 +27,9 @@ def self.get(user_id)
     possession_parties = SQL.transaction("select * from party where user_id = ? limit ?", [user_id, number_of_party_per_user])
     # ex) [{"id"=>1, "user_id"=>2, "possession_monster_id"=>4}, {"id"=>6, "user_id"=>2, "possession_monster_id"=>9}, {"id"=>8, "user_id"=>2, "possession_monster_id"=>8}]
 
-	Validator.validate_SQL_error(possession_parties.count, is_multi_line: true)
+    if possession_parties.count != number_of_monster_per_party
+        raise "取得したパーティ件数がおかしい"
+    end
 
     tmp_user_monster_storage = {}
     possession_parties.each do |row|
