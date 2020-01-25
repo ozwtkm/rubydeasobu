@@ -16,7 +16,7 @@
 
 ## 動作確認
 以下で動作しています。
-会員登録等、自由に実施下さい。
+会員登録等、自由に実施下さい。  
 http://rqmul.wfm.jp/rsc/index.html
 
 
@@ -47,14 +47,13 @@ http://rqmul.wfm.jp/rsc/index.html
 
 
 ## アーキテクチャ
-- webサーバ → nginx
+- Webサーバ → nginx
 - チャットサーバ → websocket.rb
 - アプリケーションサーバ → server.rb
 - ドキュメント指向DBサーバ → MongoDB
 - RDBサーバ → MySQL
 - キャッシュサーバ → Memcache
 - CIサーバ → Jenkins
-- インフラ管理 → Docker
 
 
 ## ブランチの説明
@@ -69,4 +68,4 @@ http://rqmul.wfm.jp/rsc/index.html
 
 
 ## Docker image
-
+- Todo
