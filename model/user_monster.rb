@@ -17,17 +17,32 @@ class User_monster < Base_model
 def initialize(user_monster_info)
 	@id = user_monster_info["id"]
     @user_id = user_monster_info["user_id"]
-    @monster_id = user_monster_info["monster_id"]
+    @monster_model = user_monster_info["monster_model"]
 end
 
 
-# 特定のユーザが持ってるモンスターidが欲しい時に呼ぶ
-# なおあくまでidの対応だけが返るだけなので、
-# モンスター情報（atkとか）が欲しい時はMonsterモデルの方にある関数を呼ぶこと
-def self.get_possession_info(user_id, limit:10, offset:0)
+def self.get_possession_monsters(user_id, limit:10, offset:0)
+    possession_monster_list = []
+
+    user_monster_list = User_monster.get_possesion_info(user_id, limit:limit, offset:offset)
+
+    user_monster_info = {}
+    user_monster_list.each do |row|
+        user_monster_info["id"] = row["id"]
+        user_monster_info["user_id"] = row["user_id"]
+        user_monster_info["monster_model"] = Monster.get_specific_monster(row["monster_id"])
+
+        possession_monster_list << User_monster.new(user_monster_info)
+    end
+
+    possession_monster_list
+end
+
+
+def self.get_possesion_info(user_id, limit:10, offset:0)
     range = offset..(limit-1)
     array_for_identify_cached = Array.new(limit)
-    possession_info_list_for_return = []
+    user_monster_list = []
 
     # ＊取ってきたいrange内にキャッシュがあればそこは除いてSQL文を発行するようにしたい
     #  ＊range内にキャッシュがあるパターンは6種類あり、それぞれで発行すべきSQLが変わる
@@ -43,20 +58,12 @@ def self.get_possession_info(user_id, limit:10, offset:0)
         end
     end
 
-    # 上記6パターンに応じた処理の分岐をする（sql発行→cacheset→usermonsterモデルのリストを生成しpossession_info_list_for_returnを構築）
+    # 上記6パターンに応じた処理の分岐をする（sql発行→cacheset→usermonsterモデルのリストを生成しuser_monster_listを構築）
     if array_for_identify_cached ~~~~
     elsif ~~~
 
-    possession_info_list_for_return
+    user_monster_list
 end
-
-
-# ただ一件取ってくるだけ。self.get_possession_infoよりもプリミティブな関数
-# 小回り効かせたい時にどうぞ
-def self.get_spcific_user_monster_info(id)
-    
-end
-
 
 
 def self.add(user_id, monster_id)
