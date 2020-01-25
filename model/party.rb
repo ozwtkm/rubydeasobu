@@ -6,6 +6,7 @@ require_relative '../_util/sqltool'
 require_relative '../model/monster'
 require_relative './basemodel'
 require_relative './monster'
+require_relative './user_monster'
 
 
 class Party < Base_model
@@ -27,7 +28,7 @@ def self.get(user_id)
     possession_parties = SQL.transaction("select * from party where user_id = ? limit ?", [user_id, number_of_party_per_user])
     # ex) [{"id"=>1, "user_id"=>2, "possession_monster_id"=>4}, {"id"=>6, "user_id"=>2, "possession_monster_id"=>9}, {"id"=>8, "user_id"=>2, "possession_monster_id"=>8}]
 
-    if possession_parties.count != number_of_monster_per_party
+    if possession_parties.count != number_of_party_per_user
         raise "取得したパーティ件数がおかしい"
     end
 
@@ -38,11 +39,8 @@ def self.get(user_id)
         }
 
         # 一気にwhere in したいが、どのpartyがどのmonsterと紐づいてるのかは紐づいてないといけない
-        tmp_user_monster = SQL.transaction("select * from user_monster where id = ? limit 1", row["possession_monster_id"]) #{"user_id"=>2, "monster_id"=>12, "id"=>5}
-
-        Validator.validate_SQL_error(tmp_user_monster.count, is_multi_line: false)
-
-        tmp_user_monster_storage[row["id"]] = tmp_user_monster[0]
+        tmp_user_monster = User_monster.get_specific_user_monster_info(row["possession_monster_id"]) #{"user_id"=>2, "monster_id"=>12, "id"=>5}
+        tmp_user_monster_storage[row["id"]] = tmp_user_monster
     end
 
     tmp_user_monster_storage.each do |k, v|
@@ -68,6 +66,7 @@ def self.get(user_id)
 end
 
 
+
 # ユーザ新規登録時のみ叩かれる
 def self.init(user_id, possession_monster_id)
     array_for_sql = [user_id,possession_monster_id,user_id,possession_monster_id,user_id,possession_monster_id] #ほんとはちゃんと動的に作る
@@ -77,11 +76,9 @@ end
 
 
 def set(user_id, possession_monster_id)
-    result = SQL.transaction("select monster_id from user_monster where id = ? and user_id = ? limit 1", [possession_monster_id, user_id])
+    user_monster_info = User_monster.get_specific_user_monster_info(possession_monster_id, user_id)
 
-    Validator.validate_SQL_error(result.count, is_multi_line: false)
-
-    @monster_model = Monster.get_specific_monster(result[0]["monster_id"])
+    @monster_model = Monster.get_specific_monster(user_monster_info["monster_id"])
     @possession_monster_id = possession_monster_id
 
     SQL.close_statement
