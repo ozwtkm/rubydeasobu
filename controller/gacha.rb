@@ -19,8 +19,6 @@ def initialize(req, res)
 	@template = "gacha.erb"
 
 	super
-
-	validate_input() # これbaseclassに引っ越した方が良さそう
 end
 
 # オーバーライド。
@@ -48,6 +46,7 @@ def post_control()
 	@context[:monster] = Monster.get_master_monsters()[obtain_monster_id]
 end
 
+
 # モデルでも検証するべきだがここでも。
 def validate_gem_amount()
 	if @wallet.gem < 100 then
@@ -55,25 +54,11 @@ def validate_gem_amount()
 	end
 end
 
-def validate_input()
-	case @req.request_method
-	when "GET"
-	when "POST"
-		begin
-			@json = JSON.parse(@req.body)
-			
-			raise if @json.class != Array || @json.count != 1
-		rescue
-			raise "JSON形式(1要素の配列)でよろ"
-		end
+def validate_post_input()
+	raise "JSON形式(1要素の配列)でよろ" if @json.class != Array || @json.count != 1
 
-		@json.each { |x| Validator.validate_not_Naturalnumber(x) }
-	when "PUT"
-	when "DELETE"
-	end
+	@json.each { |x| Validator.validate_not_Naturalnumber(x) }
 end
-
-
 
 
 end

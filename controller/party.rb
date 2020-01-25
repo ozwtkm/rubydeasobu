@@ -15,8 +15,6 @@ def initialize(req,res)
     super
 
 	@parties = Party.get(@user.id)
-
-    validate_input() # あとでbaseclassに引っ越し
 end
 
 def get_control()
@@ -34,6 +32,8 @@ def delete_handler()
 end
 
 def put_control()
+	raise "それお前のpartyじゃない" if @parties[@json[0].to_i].nil? # validate_input()に含めると順番都合上@partiesがnilになってしまう
+
     party_id = @json[0].to_i
     new_possession_monster_id = @json[1].to_i
 
@@ -45,26 +45,10 @@ def put_control()
 end
 
 
+def validate_put_input()
+	raise "JSON形式(2要素の配列)でよろ" if @json.class != Array || @json.count != 2
 
-
-def validate_input()
-	case @req.request_method
-	when "GET"
-	when "POST"
-	when "PUT"
-		begin
-			@json = JSON.parse(@req.body)
-			
-			raise if @json.class != Array || @json.count != 2
-		rescue
-			raise "JSON形式(2要素の配列)でよろ"
-		end
-
-		@json.each { |x| Validator.validate_not_Naturalnumber(x) }
-
-		raise "それお前のpartyじゃない" if @parties[@json[0.to_i]].nil?
-	when "DELETE"
-	end
+	@json.each { |x| Validator.validate_not_Naturalnumber(x) }
 end
 
 

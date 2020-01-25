@@ -14,8 +14,6 @@ def initialize(req, res)
 	@template = "quest.erb"
 
 	super
-
-	validate_input() # これbaseclassに引っ越した方が良さそう
 end
 
 # クエストの開始
@@ -56,34 +54,17 @@ def delete_control()
 	@res.status = RESET_CONTENT
 end
 
+def validate_post_input()
+	raise "JSON形式(3要素の配列)でよろ" if @json.class != Array || @json.count != 3
 
-def validate_input()
-	case @req.request_method
-	when "GET"
-		# 何もしない
-	when "POST"
-		begin
-			@json = JSON.parse(@req.body)
-			
-			raise if @json.class != Array || @json.count != 3
-		rescue
-			raise "JSON形式(3要素の配列)でよろ"
-		end
-
-		@json.each { |x| Validator.validate_not_Naturalnumber(x) }
-	when "PUT"
-		begin
-			@json = JSON.parse(@req.body)
-			
-			raise if @json.class != Array || @json.count != 2
-		rescue
-			raise "JSON形式(2要素の配列)でよろ"
-		end
-
-		@json.each { |x| Validator.validate_not_Naturalnumber_and_not_0(x) }
-	when "DELETE"
-		# 何もしない
-	end
+	@json.each { |x| Validator.validate_not_Naturalnumber(x) }
 end
+
+def validate_put_input()
+	raise "JSON形式(2要素の配列)でよろ" if @json.class != Array || @json.count != 2
+
+	@json.each { |x| Validator.validate_not_Naturalnumber_and_not_0(x) }
+end
+
 
 end

@@ -13,9 +13,9 @@ def initialize(req, res)
 	
 	@battle = Battle.get(@user.id)
 	@context[:battle] = @battle
-
-	validate_input() # これbaseclassに引っ越した方が良さそう
 end
+
+
 
 # startするときはquestから叩かれるから、UIから叩かれるのはput（コマンド送って戦闘を進める）だけ
 def put_control()
@@ -29,23 +29,10 @@ def put_control()
 end
 
 
+def validate_put_input()
+	raise "JSON形式(2要素の配列)でよろ" if @json.class != Array || @json.count != 2
 
-def validate_input()
-	case @req.request_method
-	when "GET"
-	when "POST"
-	when "PUT"
-		begin
-			@json = JSON.parse(@req.body)
-			
-			raise if @json.class != Array || @json.count != 2
-		rescue
-			raise "JSON形式(2要素の配列)でよろ"
-		end
-
-		@json.each { |x| Validator.validate_not_Naturalnumber_and_not_0(x) }
-	when "DELETE"
-	end
+	@json.each { |x| Validator.validate_not_Naturalnumber_and_not_0(x) }
 end
 
 end
