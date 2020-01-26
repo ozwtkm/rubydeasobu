@@ -2,22 +2,19 @@
 	result = {}
 
 	if !c[:e].nil? 
-		result = {:ErrorMessage=>c[:e].message}
+		result[:ErrorMessage] = c[:e].message
     else
-        result = c[:parties].map do |k, v|
-            {
-                :party_id => v.id,
-                :possession_monster_id => v.possession_monster_id,
-                :monster_info => {
-                    :name => v.monster_model.name,
-                    :rarity=>v.monster_model.rarity,
-                    :hp=>v.monster_model.hp,
-                    :mp=>v.monster_model.mp,
-                    :speed=>v.monster_model.speed,
-                    :atk=>v.monster_model.atk,
-                    :def=>v.monster_model.def
-                }
-            }   
+        # 1partyのモンスターが1じゃ無くなったらvをeachする必要あり
+        c[:parties].each do |k, v|
+            result[v.id] = {
+                :name => v.monster_model.name,
+                :rarity=>v.monster_model.rarity,
+                :hp=>v.monster_model.hp,
+                :mp=>v.monster_model.mp,
+                :speed=>v.monster_model.speed,
+                :atk=>v.monster_model.atk,
+                :def=>v.monster_model.def
+            }
         end
-	end
+    end
 %><%= JSON.generate(result) %>

@@ -15,12 +15,12 @@ function append_parties_list(data){
     $('#parties_list_body').empty();
 
     $.each(data, function(index,val){
-        index++
+        index
         var content = "<tr>";
 
         content += "<td align='center'>" + index + "</td>";
 
-        $.each(val["monster_info"], function(index, val){
+        $.each(val, function(index, val){
             switch(index){
                 case "name":
                     content += "<td align='left'>" + val + "</td>";
@@ -46,7 +46,7 @@ function append_parties_list(data){
             }
         });
 
-        content += "<td id='party_id' class='nondisplayFrame'>" + val["party_id"] + "</td>";
+        content += "<td id='party_id' class='nondisplayFrame'>" + index + "</td>";
         content += "</tr>";
         $("#parties_list_body").append(content);
     });
@@ -130,8 +130,8 @@ function append_items_list(data){
 
 
 var do_update_party = function(){
-    var possession_monster_id = $("input#possession_monster_id")[0].value;
-    var party_id = $("input#party_id")[0].value;
+    var possession_monster_id = Number($("input#possession_monster_id")[0].value);
+    var party_id = Number($("input#party_id")[0].value);
     var array = [party_id, possession_monster_id];
 
     var json = JSON.stringify(array);

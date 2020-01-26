@@ -8,7 +8,7 @@ require_relative './basemodel'
 require_relative '../exception/Error_shortage_of_material'
 
 class Monster < Base_model
-	INITIAL_MONSTER_ID = 5
+	INITIAL_MONSTER_ID = 5 # 初期配布モンスター。本当は定数まとめファイルみたいなのにいるべきではある
 
 	attr_reader :id, :name, :hp, :mp, :speed, :atk, :def, :exp, :money, :img_id, :rarity
 
@@ -81,6 +81,10 @@ def self.get_specific_monster(id)
 	master_monster_list = Monster.get_master_monsters()
 
 	monster = master_monster_list[id]
+
+	if monster.nil?
+		raise "id#{id}からモンスター取ってこれない"
+	end
 
 	return monster
 end

@@ -20,7 +20,7 @@ def get_control()
 	offset = @URLquery[1]
 	limit = 10
 	
-	Validator.validate_not_Naturalnumber(offset)
+	Validator.validate_not_Naturalnumber_and_not_0(offset.to_i)
 
 	@context[:item] = Item.get_possession_items(@user.id, limit:limit, offset:offset.to_i)
 end

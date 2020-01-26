@@ -23,6 +23,8 @@ def initialize(req, res)
 		
 	# view時、テンプレートに渡すための変数(ハッシュ)の箱。
 	@context = {}
+
+	validate_input()
 end
 
 def get_handler()
@@ -91,6 +93,36 @@ def set_URLquery()
 	@req.path_info.each do |row|
 		@URLquery << row
 	end
+end
+
+def validate_input()
+	@json = JSON.parse(@req.body) unless @req.body.nil?
+	case @req.request_method
+	when "GET"
+		validate_get_input()
+	when "POST"
+		validate_post_input()
+	when "PUT"
+		validate_put_input()
+	when "DELETE"
+		validate_delete_input()
+	end
+end
+
+def validate_get_input()
+	# オーバーライドすること
+end
+
+def validate_post_input()
+	# オーバーライドすること
+end
+
+def validate_put_input()
+	# オーバーライドすること
+end
+
+def validate_delete_input()
+	# オーバーライドすること
 end
 
 

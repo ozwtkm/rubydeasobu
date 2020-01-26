@@ -2,8 +2,11 @@
 # -*- coding: utf-8 -*-
 require_relative '../_util/SQL_transaction'
 require_relative '../_util/SQL_master'
+require_relative '../_util/sqltool'
+require_relative '../model/monster'
 require_relative './basemodel'
 require_relative './monster'
+require_relative './user_monster'
 
 
 class Party < Base_model
@@ -12,108 +15,80 @@ class Party < Base_model
 
 def initialize(party_info)
     @id = party_info["id"]
-    @user_id = party_info["user_id"]
     @possession_monster_id = party_info["possession_monster_id"] #現仕様では1パーティにつき一体だけ
     @monster_model = party_info["monster_model"]
 end
 
-# 多分改良の余地がある。TO do
 def self.get(user_id)
-    sql_transaction = SQL_transaction.instance.sql
-    sql_master = SQL_master.instance.sql
+    parties_for_return = {} 
+    party_list_template = {} # parties_for_returnを作るための一時的な箱の役割。こいつを形作って最後にこいつがeachしてparties_for_returnを作る。
+    number_of_party_per_user = 3 # 仕様
+    number_of_monster_per_party = 1 # 仕様
 
-    statement1 = sql_transaction.prepare("select id, possession_monster_id from party where user_id = ? limit 3")
-    result1 = statement1.execute(user_id)
-    #仕様としてpartyの上限数は3としてる。
+    possession_parties = SQL.transaction("select * from party where user_id = ? limit ?", [user_id, number_of_party_per_user])
+    # ex) [{"id"=>1, "user_id"=>2, "possession_monster_id"=>4}, {"id"=>6, "user_id"=>2, "possession_monster_id"=>9}, {"id"=>8, "user_id"=>2, "possession_monster_id"=>8}]
 
-	Validator.validate_SQL_error(result1.count, is_multi_line: true)
-    
-    tmp_possession_monster_id = []
-    tmp_id = []
-    result1.each do |row|
-        tmp_possession_monster_id << row["possession_monster_id"]
-        tmp_id << row["id"]
+    if possession_parties.count != number_of_party_per_user
+        raise "取得したパーティ件数がおかしい"
     end
 
-    # 1回のSQLだと、「どのpartyがどのmonsterか」という対応が分からなくなるから苦肉のloop    
-    statement2 = sql_transaction.prepare("select monster_id from user_monster where id = ? limit 1")
-    tmp_monster_id = []
-    tmp_possession_monster_id.each do |row|
-        result2 = statement2.execute(row)
+    tmp_user_monster_storage = {}
+    possession_parties.each do |row|
+        party_list_template[row["id"]] = {
+            row["possession_monster_id"] => nil
+        }
 
-        Validator.validate_SQL_error(result2.count, is_multi_line: false)
-
-        tmp_monster_id << result2.first()["monster_id"]
+        # 一気にwhere in したいが、どのpartyがどのmonsterと紐づいてるのかは紐づいてないといけない
+        tmp_user_monster = User_monster.get_specific_user_monster_info(row["possession_monster_id"]) #{"user_id"=>2, "monster_id"=>12, "id"=>5}
+        tmp_user_monster_storage[row["id"]] = tmp_user_monster
     end
 
-    statement3 = sql_master.prepare("select * from monsters where id = ? limit 1")
-    monsters = []
-    tmp_monster_id.each do |row|
-        result3 = statement3.execute(row)
-
-        Validator.validate_SQL_error(result3.count, is_multi_line: false)
-
-        monsters << result3.first()
+    tmp_user_monster_storage.each do |k, v|
+        monstermodel = Monster.get_specific_monster(v["monster_id"].to_i)
+        tmp_user_monster_storage[k] = monstermodel
     end
 
-    parties = {}
-    party_info = {}
-    i = 0
-    monsters.each do |row|
-        party_info["monster_model"] = Monster.new(row)
-        party_info["id"] = tmp_id[i]
-        party_info["user_id"] = user_id
-        party_info["possession_monster_id"] = tmp_possession_monster_id[i]
+    party_info = {} # partymodelのinitializeの引数　の、箱
+    party_list_template.each do |party_id, party_info_hash|
+        party_info_hash.each do |possession_monster_id, monster_model|
+            party_info[party_id] = {}
+            party_info[party_id]["id"] = party_id
+            party_info[party_id]["possession_monster_id"] = possession_monster_id
+            party_info[party_id]["monster_model"] = tmp_user_monster_storage[party_id]
+        end
 
-        parties[tmp_id[i]] = Party.new(party_info)
-        i += 1
+        parties_for_return[party_id] = Party.new(party_info[party_id])
     end
 
-    statement1.close
-    statement2.close
-    statement3.close
+    SQL.close_statement()
 
-    return parties
+    return parties_for_return
 end
+
+
 
 # ユーザ新規登録時のみ叩かれる
 def self.init(user_id, possession_monster_id)
-    sql_transaction = SQL_transaction.instance.sql
-
-    statement = sql_transaction.prepare("insert into party(user_id, possession_monster_id) values(?,?),(?,?),(?,?)")
-    result = statement.execute(user_id,possession_monster_id,user_id,possession_monster_id,user_id,possession_monster_id)
-    statement.close
+    array_for_sql = [user_id,possession_monster_id,user_id,possession_monster_id,user_id,possession_monster_id] #ほんとはちゃんと動的に作る
+    SQL.transaction("insert into party(user_id, possession_monster_id) values(?,?),(?,?),(?,?)", array_for_sql)
+    SQL.close_statement()
 end
 
 
-def set(possession_monster_id)
-    sql_transaction = SQL_transaction.instance.sql
-    sql_master = SQL_master.instance.sql
+def set(user_id, possession_monster_id)
+    user_monster_info = User_monster.get_specific_user_monster_info(possession_monster_id, user_id)
 
-    statement1 = sql_transaction.prepare("select monster_id from user_monster where id = ? and user_id = ? limit 1")
-    result1 = statement1.execute(possession_monster_id, @user_id)
-
-    Validator.validate_SQL_error(result1.count, is_multi_line: false)
-
-    statement2 = sql_master.prepare("select * from monsters where id = ? limit 1")
-    result2 = statement2.execute(result1.first()["monster_id"])
-
-    Validator.validate_SQL_error(result2.count, is_multi_line: false)
-
-    @monster_model = Monster.new(result2.first())
+    @monster_model = Monster.get_specific_monster(user_monster_info["monster_id"])
     @possession_monster_id = possession_monster_id
 
-    statement1.close()
-    statement2.close()
+    SQL.close_statement
 end
+
 
 # init時に3枠が確保され、insertは使わずupdateだけが使われる仕様
 def save()
-    sql_transaction = SQL_transaction.instance.sql
-
-    statement = sql_transaction.prepare("update party set possession_monster_id = ? where id = ?")
-    statement.execute(@possession_monster_id, @id)
-    statement.close()
+    SQL.transaction("update party set possession_monster_id = ? where id = ?", [@possession_monster_id, @id])
+    SQL.close_statement
 end
 
 

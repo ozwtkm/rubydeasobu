@@ -1,8 +1,8 @@
 <%
 	result = {}
 
-	if !c[:e].nil? 
-		result = {:ErrorMessage=>c[:e].message}
+    if !c[:e].nil? 
+        result[:ErrorMessage] = c[:e].message
     else 
         c[:dangeons].each do |k,v|
             result[k] = v.name

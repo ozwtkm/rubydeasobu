@@ -22,31 +22,9 @@ def get_control()
 	offset = @URLquery[1]
 	limit = 10
 	
-	Validator.validate_not_Naturalnumber(offset)
+	Validator.validate_not_Naturalnumber_and_not_0(offset.to_i)
 
 	@context[:monsters] = Monster.get_possession_monsters(@user.id, limit:limit, offset:offset.to_i)
 end
-
-
-# todo
-def post_control()
-	
-end
-
-# todo
-def delete_handler()
-
-end
-
-# todo
-def put_handler()
-
-end
-
-# todo
-def control()
-
-end
-
 
 end

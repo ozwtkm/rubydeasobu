@@ -1,6 +1,7 @@
 #!/usr/bin/ruby -Ku 
 # -*- coding: utf-8 -*-
 require_relative '../exception/Error_unset'
+require_relative '../_config/const'
 
 class Environment
     @@dev = nil

@@ -15,25 +15,24 @@ def initialize(req, res)
 	@context[:battle] = @battle
 end
 
+
+
 # startするときはquestから叩かれるから、UIから叩かれるのはput（コマンド送って戦闘を進める）だけ
 def put_control()
 	#リクエストの想定　[1,1]　前者：コマンド　後者：コマンド詳細	
-	@json = JSON.parse(@req.body)
-	check_input_json()
+	command = @json[0].to_i
+	subcommand = @json[1].to_i
 
-	@command = @json[0].to_i
-	@subcommand = @json[1].to_i
-
-	@battle.advance(@command,@subcommand)
+	@battle.advance(command, subcommand)
 
 	@context[:battle] = @battle
 end
 
-def check_input_json()
-	if !@json.all?{|x| (0..9).to_a.include?(x)}
-		raise "0-9でよろ" 
-	end
-end
 
+def validate_put_input()
+	raise "JSON形式(2要素の配列)でよろ" if @json.class != Array || @json.count != 2
+
+	@json.each { |x| Validator.validate_not_Naturalnumber_and_not_0(x) }
+end
 
 end

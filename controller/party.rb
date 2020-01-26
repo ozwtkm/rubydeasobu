@@ -14,7 +14,7 @@ def initialize(req,res)
 
     super
 
-    @parties = Party.get(@user.id)
+	@parties = Party.get(@user.id)
 end
 
 def get_control()
@@ -32,16 +32,12 @@ def delete_handler()
 end
 
 def put_control()
-    @json = JSON.parse(@req.body)
-
-    @json.each do |row|
-        Validator.validate_not_Naturalnumber(row.to_s)
-    end
+	raise "それお前のpartyじゃない" if @parties[@json[0].to_i].nil? # validate_input()に含めると順番都合上@partiesがnilになってしまう
 
     party_id = @json[0].to_i
     new_possession_monster_id = @json[1].to_i
 
-    @parties[party_id].set(new_possession_monster_id)
+    @parties[party_id].set(@user.id, new_possession_monster_id)
     @parties[party_id].save()
 
     @res.status = CREATED
@@ -49,6 +45,11 @@ def put_control()
 end
 
 
+def validate_put_input()
+	raise "JSON形式(2要素の配列)でよろ" if @json.class != Array || @json.count != 2
+
+	@json.each { |x| Validator.validate_not_Naturalnumber(x) }
+end
 
 
 end

@@ -45,22 +45,10 @@ def post_control()
 		raise Error_multi_412.new(exceptions)
 	end
 	
-	user = regist()
+	user = User.add(@username, @passwd)
 
 	@context[:user] = user
 end
-
-
-def regist()
-	user = User.add_user(@username, @passwd)
-	
-	Wallet.init(user.id)
-	initial_monster = Monster.init(user.id)
-	Party.init(user.id, initial_monster)
-
-	return user
-end
-
 
 end
 

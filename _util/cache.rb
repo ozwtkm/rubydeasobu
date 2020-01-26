@@ -31,6 +31,10 @@ def set(key, obj)
 	@@client.add(key, cache)
 end
 
+def del(key)
+	@@client.delete(key)
+end
+
 def self.close
 	if defined?(@@client)
 		@@client.reset

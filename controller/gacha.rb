@@ -30,8 +30,6 @@ end
 
 
 def post_control()
-	@json = JSON.parse(@req.body)
-	check_input_json()
 	gacha_id = @json[0]
 
 	@wallet = Wallet.get_wallet(@user.id)
@@ -48,6 +46,7 @@ def post_control()
 	@context[:monster] = Monster.get_master_monsters()[obtain_monster_id]
 end
 
+
 # モデルでも検証するべきだがここでも。
 def validate_gem_amount()
 	if @wallet.gem < 100 then
@@ -55,11 +54,10 @@ def validate_gem_amount()
 	end
 end
 
-# utilに引っ越したい
-def check_input_json()
-	if !@json.all?{|x| (0..9).to_a.include?(x)}
-		raise "0-9でよろ" 
-	end
+def validate_post_input()
+	raise "JSON形式(1要素の配列)でよろ" if @json.class != Array || @json.count != 1
+
+	@json.each { |x| Validator.validate_not_Naturalnumber(x) }
 end
 
 
