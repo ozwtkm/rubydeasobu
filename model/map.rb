@@ -81,18 +81,42 @@ end
 
 
 def self.validate_appearance_place(map)
-	sql_master = SQL_master.instance.sql
-
-	statement = sql_master.prepare("select * from appearance_place where dangeon_id = ? and z = ?")
-	result  = statement.execute(map.dangeon_id, map.z)
-
-	Validator.validate_SQL_error(result.count, is_multi_line: true)
-
-	result.each do |row|
+	appearance_place = get_appearance_place(map.dangeon_id, map.z)
+	appearance_place.each do |row|
 		if map.rooms[row["y"]][row["x"]].nil?
 			raise row["x"].to_s + "　" + row["y"].to_s + "は島になってないとだめ"
 		end
 	end
+end
+
+
+def self.get_appearance_place(dangeon_id, z)
+	appearance_place_list = get_appearance_place_list
+
+	appearance_place = appearance_place_list.select {|maphash| maphash["dangeon_id"] === dangeon_id && maphash["z"] === z}
+
+	appearance_place
+end
+
+
+def self.get_appearance_place_list()
+	appearance_place_list = Cache.instance.get('appearance_place_list')
+
+	unless appearance_place_list.nil?
+		Log.log("cacheからappearance_place_listを取得した")
+	
+		return appearance_place_list
+	end
+
+	appearance_place_list = SQL.master("select * from appearance_place")
+	Validator.validate_SQL_error(appearance_place_list, is_multi_line: true)
+
+	Cache.instance.set('appearance_place_list',appearance_place_list)
+
+	SQL.close_statement
+
+	Log.log("appearance_place_list cacheセットした")
+	return appearance_place_list
 end
 
 def self.add_aisle(room,direction:)
