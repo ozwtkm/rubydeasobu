@@ -6,10 +6,6 @@ require_relative './_baseclass_require_login'
 require_relative '../model/quest'
 
 class Quest_controller < Base_require_login
-OK = 200
-CREATED = 201
-RESET_CONTENT = 205
-
 def initialize(req, res)
 	@template = "quest.erb"
 
