@@ -1,9 +1,11 @@
 #!/usr/bin/ruby -Ku
 # -*- coding: utf-8 -*-
 
+require_relative '../_util/sqltool'
 require_relative '../_util/SQL_master'
 require_relative '../_util/SQL_transaction'
 require_relative '../_util/cache'
+require_relative './user_monster'
 require_relative './basemodel'
 
 
@@ -62,6 +64,11 @@ def self.get_recipe(recipe_id)
 	return recipe
 end
 
+
+def run(user_id)
+	User_monster.delete(user_id, @material_id, @required_number) # required_numberを満たすかはmodel側で検証
+	User_monster.add(user_id, @obtain_id)
+end
 
 end
 
