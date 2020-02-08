@@ -463,7 +463,8 @@ end
 # フレンドが実装されたらフレンドリストから取得する様にする
 def self.create_partner_candidate(user_id)
     partner_candidate_list = Cache.instance.get(user_id.to_s + 'partner_candidate_list')
-	if !partner_candidate_list.nil?
+    if !partner_candidate_list.nil?
+        puts 1
 		Log.log("cacheありなのでキャッシュからpartner_candidate_list取得した")
 		return partner_candidate_list
     end
@@ -478,7 +479,10 @@ def self.create_partner_candidate(user_id)
     generated_random = [] # wherein済なものを省くための履歴
     randoms_for_wherein = [] # select文に渡す配列
 
-    loop do
+    max_try_number = 100
+
+    # loop doだと、ユーザ数が少ない時無限ループになる可能性がある
+    max_try_number.times do
         number_of_random.times do
             randoms_for_wherein << rand(max) + 1
         end
@@ -495,6 +499,8 @@ def self.create_partner_candidate(user_id)
 
         number_of_candidate -= partner_candidate_list.count
     end
+
+    raise "パートナー候補の数がちゃんとしてない" if partner_candidate_list.count != number_of_candidate
 
     Cache.instance.set(user_id.to_s + 'partner_candidate_list', partner_candidate_list)
     SQL.close_statement
