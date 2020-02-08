@@ -483,7 +483,8 @@ def self.create_partner_candidate(user_id)
             randoms_for_wherein << rand(max) + 1
         end
 
-        randoms_for_wherein -= generated_random.uniq!
+        generated_random.uniq! if generated_random.count != 0 #[].uniq! → nil
+        randoms_for_wherein -= generated_random
         generated_random += randoms_for_wherein.uniq!
 
         partner_candidate_list += get_partner_candidate(number_of_candidate, randoms_for_wherein)
@@ -505,14 +506,11 @@ end
 
 
 def self.get_partner_candidate(number_of_candidate, randoms_for_wherein)
-    query = "select * from partner_candidate where user_id in ("
     number_of_random = randoms_for_wherein.count
     candidate_array_for_return = []
 
-    number_of_random.times do |i|
-        i+1 === number_of_random ? query+="?" : query+="?,"
-    end
-
+    query = "select * from partner_candidate where user_id in ("
+    query += Array.new(number_of_random, "?").join(",")
     query += ") limit "
     query += number_of_random.to_s
 
