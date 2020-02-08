@@ -34,9 +34,7 @@ def self.get(user_id)
 
     tmp_user_monster_storage = {}
     possession_parties.each do |row|
-        party_list_template[row["id"]] = {
-            row["possession_monster_id"] => nil
-        }
+        party_list_template[row["id"]] = [row["possession_monster_id"]] #1パーティあたり1ひき
 
         # 一気にwhere in したいが、どのpartyがどのmonsterと紐づいてるのかは紐づいてないといけない
         tmp_user_monster = User_monster.get_specific_user_monster_info(row["possession_monster_id"]) #{"user_id"=>2, "monster_id"=>12, "id"=>5}
@@ -49,15 +47,15 @@ def self.get(user_id)
     end
 
     party_info = {} # partymodelのinitializeの引数　の、箱
-    party_list_template.each do |party_id, party_info_hash|
-        party_info_hash.each do |possession_monster_id, monster_model|
-            party_info[party_id] = {}
-            party_info[party_id]["id"] = party_id
-            party_info[party_id]["possession_monster_id"] = possession_monster_id
-            party_info[party_id]["monster_model"] = tmp_user_monster_storage[party_id]
+    party_list_template.each do |party_id, possession_monster_id_array|
+        # 1パーティ1ひきじゃなくなったらここは要改造
+        possession_monster_id_array.each do |possession_monster_id|
+            party_info["id"] = party_id
+            party_info["possession_monster_id"] = possession_monster_id
+            party_info["monster_model"] = tmp_user_monster_storage[party_id]
         end
 
-        parties_for_return[party_id] = Party.new(party_info[party_id])
+        parties_for_return[party_id] = Party.new(party_info)
     end
 
     SQL.close_statement()
