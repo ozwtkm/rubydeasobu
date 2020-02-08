@@ -226,12 +226,6 @@ end
 
 
 class Item_action_handler < Base_action_handler
-    # validate_timingで取得したitemplaceidを再利用したいためオーバーライドしてる
-    def handle_action(action_value)
-        item_place_id = validate_timing()
-        do_action(action_value, item_place_id)
-    end
-
     def validate_timing()
         result = SQL.master("select * from appearance_place where dangeon_id =? and x = ? and y = ? and z = ? limit 1",[@quest.dangeon_info["id"], @quest.current_x, @quest.current_y, @quest.current_z])
 
@@ -239,20 +233,18 @@ class Item_action_handler < Base_action_handler
             raise "そこアイテム無いよ"
         end
 
-        item_place_id = result[0]["id"]
+        @item_place_id = result[0]["id"]
 
-        result = SQL.transaction("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1", [@quest.user_id, item_place_id])
+        result = SQL.transaction("select * from quest_acquisition where user_id = ? and appearance_id = ? limit 1", [@quest.user_id, @item_place_id])
 
         if result.count >= 1
             raise "もう捨てたか取ったかしてるよ"
         end
 
         SQL.close_statement()
-
-        return item_place_id
     end
 
-    def do_action(action_value, item_place_id)
+    def do_action(action_value)
         case action_value
         when YES
             status = ACQUIRED
@@ -262,7 +254,7 @@ class Item_action_handler < Base_action_handler
             raise "何しようとしトンねん、、"
         end
 
-        SQL.transaction("insert into quest_acquisition(user_id,appearance_id,status) values(?,?,?)", [@quest.user_id, item_place_id, status])
+        SQL.transaction("insert into quest_acquisition(user_id,appearance_id,status) values(?,?,?)", [@quest.user_id, @item_place_id, status])
         SQL.close_statement()
     end
 end
