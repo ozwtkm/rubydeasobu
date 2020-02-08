@@ -299,7 +299,7 @@ def calculate_next_acter()
 	max_speed_acter = candidate.select{|row| row.speed === max_speed}
 
 	if max_speed_acter.count != 1
-		random = SecureRandom.random_number(max_speed_acter.count)
+		random = rand(max_speed_acter.count)
 		next_acter = max_speed_acter[random]
 	else
 		next_acter = max_speed_acter[0]
@@ -429,7 +429,7 @@ end
 
 # ランダムに味方一体を殴ってくるだけ。とりあえずは
 def enemy_act()
-	random = SecureRandom.random_number([@player,@partner].count)
+	random = rand([@player,@partner].count)
 	target = [@player,@partner][random]
 
 	damage = calculate_damage(attacker: @enemy, target: target, kind: NORMAL)
@@ -484,7 +484,7 @@ end
 
 # 仲間にしますか？の処理。とりあえず固定確率にしとく
 def handle_add_enemy()
-	random = SecureRandom.random_number(100) 
+	random = rand(100) 
 
 	if random < 0 # 一旦後回し
 		@add_enemy_flg = true

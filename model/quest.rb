@@ -443,6 +443,7 @@ def finish()
 end
 
 
+
 # deleteメソッドで呼ばれる用。
 def cancel()
     SQL.transaction("delete from quest where user_id = ?", @user_id)
@@ -462,8 +463,6 @@ end
 # フレンドが実装されたらフレンドリストから取得する様にする
 def self.create_partner_candidate(user_id)
     partner_candidate_list = Cache.instance.get(user_id.to_s + 'partner_candidate_list')
-    # コントローラで記号は弾かれてるのでinjectionはできない
-
 	if !partner_candidate_list.nil?
 		Log.log("cacheありなのでキャッシュからpartner_candidate_list取得した")
 		return partner_candidate_list
@@ -481,7 +480,7 @@ def self.create_partner_candidate(user_id)
 
     loop do
         number_of_random.times do
-            randoms_for_wherein << SecureRandom.random_number(max) + 1
+            randoms_for_wherein << rand(max) + 1
         end
 
         randoms_for_wherein -= generated_random

@@ -73,7 +73,7 @@ end
 # 　③①のrangeに照合（rand < range_max）していく。
 # 　　①は昇順sortedのため、最初にrangeに合致するmonsterを当選とすれば要件を満足する。
 def execute_gacha()
-	random = SecureRandom.random_number(99999)
+	random = rand(99999)
 
 	obtain_monster_id = nil
 	@probability_range.each do |key, val|
