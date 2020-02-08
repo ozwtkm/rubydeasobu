@@ -114,12 +114,23 @@ def self.check_db_consistency(document, sql, user_id)
 			raise "sqlがinsertできてなかったのでmongo側をロールバック"
 		end
 
+		if document.count > 1 # SQLの方はunique制約があるので複数存在し得ない
+			# ここに来る時点でバグいこと確定なので小賢しいことせずバトル自体リセットする
+			collection.delete_one(user_id: user_id)
+			SQL.transaction("delete from battle where user_id = ?", user_id)
+			SQL.close_statement
+
+			SQL_transaction.commit
+
+			raise "なぜかバトルが2つ以上存在してるというありえない状況だったのでバトルリセット"
+		end
+
 		# ＊mongoもsqlもあるが、mongoのターンの方が未来
 		if document.first["situation"].last["scene"] > sql[0]["scene"]
 			document.first["situation"].pop
 			collection.replace_one({"user_id":user_id}, document.first)
 	
-			raise "ターン更新時エラーになってたっぽいのでmogoをpoped"
+			raise "ターン更新時エラーになってたっぽいのでmongoをpoped"
 		end
 
 		# 「mongo→SQLの順に処理する」という決まりを徹底しておけばこのパターンは起こりえないため、本来は検証する必要はないが、
@@ -136,6 +147,7 @@ def self.check_db_consistency(document, sql, user_id)
 		end
 
 		# todo：仕様上はありえないけどヒューマンエラー的に発生しうる不整合パターンを洗い出して一応検証処理書く
+
 	end
 end
 
