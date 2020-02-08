@@ -483,8 +483,8 @@ def self.create_partner_candidate(user_id)
             randoms_for_wherein << rand(max) + 1
         end
 
-        randoms_for_wherein -= generated_random
-        generated_random += randoms_for_wherein
+        randoms_for_wherein -= generated_random.uniq!
+        generated_random += randoms_for_wherein.uniq!
 
         partner_candidate_list += get_partner_candidate(number_of_candidate, randoms_for_wherein)
 
