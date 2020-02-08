@@ -93,7 +93,7 @@ end
 
 #→新規「mongo→sql」、更新「mogno→sql」、削除「mongo→sql」という処理順番を守るようにすると、DBの状態で何が起きたかわかる
 #＊mongoはあるがsqlがない　→ 新規作成時にエラーが起きたとわかる
-#c　→ ターン更新時にエラーが起きたとわかる
+#＊mongoもsqlもある　→ ターン更新時にエラーが起きたとわかる
 #＊mongoはないがsqlがある　→ 削除時にエラーが起きたとわかる	　　
 def self.check_db_consistency(document, sql, user_id)
 	if document.count === 0
@@ -101,21 +101,21 @@ def self.check_db_consistency(document, sql, user_id)
 		if sql.count != 0
 			SQL.transaction("delete from battle where user_id = ?", user_id)
 			SQL.close_statement
+
+			SQL_transaction.commit
 	
 			raise "sql側を消し損なってたのでsql消しといたよ"
 		end
 	else
 		# ＊mongoはあるがsqlがない　→ 新規作成時にエラーが起きた
 		if sql.count === 0
-			SQL.close_statement
 			collection.delete_one({"user_id":user_id})
-	
+			
 			raise "sqlがinsertできてなかったのでmongo側をロールバック"
 		end
 
 		# ＊mongoもsqlもあるが、mongoのターンの方が未来
 		if document.first["situation"].last["scene"] > sql[0]["scene"]
-			SQL.close_statement
 			document.first["situation"].pop
 			collection.replace_one({"user_id":user_id}, document.first)
 	
@@ -129,6 +129,8 @@ def self.check_db_consistency(document, sql, user_id)
 			collection.delete_one(user_id: user_id)
 			SQL.transaction("delete from battle where user_id = ?", user_id)
 			SQL.close_statement
+
+			SQL_transaction.commit
 
 			raise "なぜかSQLが先行してるというありえない状況だったのでバトルリセット"
 		end
