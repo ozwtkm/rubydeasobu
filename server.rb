@@ -17,48 +17,13 @@ require_relative './_util/environment'
 require_relative './exception/Error_404'
 
 
-module Output
-	def self.console_and_file(defout)
-		class << defout
-			alias_method :write_org, :write
-			def write(str)
-				STDOUT.write(str)
-				self.write_org(str)
-			end
-		end
-	end
-end
-
-develop_or_production = ARGV[0]
-Environment.set(develop_or_production)
-
-address = Environment.webrick_address()
-documentroot = Environment.rootpath()
-port = Environment.webrick_port()
-path_log = Environment.path_log()
-
-f_access = File.open(path_log + 'server.log', 'a')
-Output.console_and_file(f_access)
-
-number_of_log_files = 5
-size_of_file = 1 * 1024 * 1024
-
-log_access = Logger.new(f_access, number_of_log_files, size_of_file)
-
-# httpサーバー
-s = HTTPServer.new(
-	:BindAddress => address, :DocumentRoot => documentroot, :Port => port,
-	:Logger => log_access,
-	:AccessLog => [
-		[log_access, WEBrick::AccessLog::COMMON_LOG_FORMAT],
-		[log_access, WEBrick::AccessLog::REFERER_LOG_FORMAT]
-	]
-)
-
 class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 	DUMMY_ITEMS = [nil] #配列長1の任意の配列
 	INTERNAL_SERVER_ERROR = 500
-	@@routes = Routes.get_routes
+
+	def self.set_routing
+		@@routes = Routes.get_routes
+	end
 
 	def service(req, res)
 		finishProc = Proc.new { |item, index, result|
@@ -148,16 +113,79 @@ class DispatchServlet < WEBrick::HTTPServlet::AbstractServlet
 	end
 end
 
-def shutdown(server, logfile)
-	logfile.close
-	server.shutdown
+
+
+class Ruby_quest_monsters_ultra_right
+	class << self
+
+	def start()
+		provision_for_gamestart()
+
+		trap(:INT){ shutdown(@@s, @@f_access) }
+		trap(:TERM){ shutdown(@@s, @@f_access) }
+
+		@@s.start
+	end
+
+
+	def set_output()
+		path_log = Environment.path_log()
+		@@f_access = File.open(path_log + 'server.log', 'a')
+
+		class << @@f_access
+			alias_method :write_org, :write
+			def write(str)
+				STDOUT.write(str)
+				self.write_org(str)
+			end
+		end
+	end
+
+
+	def provision_for_gamestart
+		develop_or_production = ARGV[0]
+		Environment.set(develop_or_production)
+		
+		address = Environment.webrick_address()
+		documentroot = Environment.rootpath()
+		port = Environment.webrick_port()
+		
+		set_output()
+		
+		number_of_log_files = 5
+		size_of_file = 1 * 1024 * 1024
+		
+		log_access = Logger.new(@@f_access, number_of_log_files, size_of_file)
+		
+		@@s = HTTPServer.new(
+			:BindAddress => address, :DocumentRoot => documentroot, :Port => port,
+			:Logger => log_access,
+			:AccessLog => [
+				[log_access, WEBrick::AccessLog::COMMON_LOG_FORMAT],
+				[log_access, WEBrick::AccessLog::REFERER_LOG_FORMAT]
+			]
+		)
+	
+		Log.set_log(@@f_access)
+	
+		DispatchServlet.set_routing
+		@@s.mount('/', DispatchServlet)
+	end
+
+
+	def shutdown(server, logfile)
+		logfile.close
+		server.shutdown
+	end
+
+	end
+	
 end
 
-Log.set_log(f_access)
-s.mount('/', DispatchServlet)
 
-trap(:INT){ shutdown(s, f_access) }
-trap(:TERM){ shutdown(s, f_access) }
 
-s.start
 
+# 単体テスト時などにrequire用にこのファイル使ったりもしたいのでゲーム起動は分離
+if __FILE__ == $PROGRAM_NAME
+	Ruby_quest_monsters_ultra_right.start()
+end
