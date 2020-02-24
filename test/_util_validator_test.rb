@@ -59,12 +59,9 @@ class Validate_nilTest < Base_unittest
     key = "hoge"
     value = nil
 
-    assert_raises(){
-        Validator.validate_nil(key, value)
-    }
-
     begin
         Validator.validate_nil(key, value)
+        raise
     rescue => e
         assert_equal(Error_input_nil, e.class)
         assert_equal("hogeがnilだよ", e.message)
@@ -74,37 +71,101 @@ end
 
 
 
-class Test_validate_SQL_error < Base_unittest
+class Validate_SQL_errorTest < Base_unittest
     def setup()
         #super
-      end
-      
-      def teardown()
+    end
+    
+    def teardown()
         #super
-      end
+    end
 
-      def test_validate_SQL_error_valid_data_multi_true()
-        is_multi_line = true
+
+    # 本来、record_countはいろんな形式を想定しなきゃいけないが、
+    # 仕様上Integerしか来ないことが保障されてるのでテストケースもその前提
+    def test_validate_SQL_error_valid_data_multi_true()
         record_count = 2
 
-        assert_nil(Validator.validate_SQL_error(record_count, is_multi_line: is_multi_line))
-      end
+        assert_nil(Validator.validate_SQL_error(record_count, is_multi_line: true))
+    end
 
-      def test_validate_SQL_error_valid_data_multi_false()
-        is_multi_line = false
+    def test_validate_SQL_error_valid_data_multi_false()
         record_count = 1
 
-        assert_nil(Validator.validate_SQL_error(record_count, is_multi_line: is_multi_line))
-      end
+        assert_nil(Validator.validate_SQL_error(record_count, is_multi_line: false))
+    end
 
-      def test_validate_SQL_error_invalid_data_multi_true()
-        is_multi_line = true
-        record_counts = [0, -2, 2.0, [2]]
-
-        record_counts.each do |record_count|
-            assert_raises(){
-                Validator.validate_SQL_error(record_count, is_multi_line: is_multi_line)
-            }
+    def test_validate_SQL_error_invalid_data_not_found()
+        record_count = 0 
+        
+        # is_multi_line: true 
+        begin
+            Validator.validate_SQL_error(record_count, is_multi_line: true)
+            raise
+        rescue => e
+            assert_equal(Error_not_found, e.class)
+            assert_equal("データちゃんと取ってこれなかった", e.message)
         end
-      end
+        
+        # is_multi_line: false
+        begin
+            Validator.validate_SQL_error(record_count, is_multi_line: true)
+            raise
+        rescue => e
+            assert_equal(Error_not_found, e.class)
+            assert_equal("データちゃんと取ってこれなかった", e.message)
+        end
+    end
+
+    def test_validate_SQL_error_invalid_data_over_count()
+        record_count = 2
+
+        begin
+            Validator.validate_SQL_error(record_count, is_multi_line: false)
+            raise
+        rescue => e
+            assert_equal(Error_over_count, e.class)
+            assert_equal("いっぱい取れちゃったんですがそれは", e.message)
+        end
+    end
 end
+
+
+
+
+class Validate_special_characterTest < Base_unittest
+    def setup()
+        #super
+    end
+    
+    def teardown()
+        #super
+    end
+
+    def test_validate_special_character_valid_value
+        key = "hoge"
+        value = "abcABC012_@"
+
+        assert_nil(Validator.validate_special_character(key, value))
+    end
+
+    # 本来はvalueにそもそも文字列以外がくることも想定すべき
+    def test_validate_special_character_invalid_value
+        key = "hoge"
+        values = [" a", "a ", "/a", "あ"]
+
+        values.each do |value|
+            begin
+                Validator.validate_special_character(key, value)
+                raise
+            rescue => e
+                assert_equal(Error_input_special_character, e.class)
+                assert_equal("hogeに特殊記号含めんな（/A[a-zA-Z0-9_@]+z/）", e.message)
+            end
+        end
+    end
+end
+
+
+
+
