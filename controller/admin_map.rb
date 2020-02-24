@@ -7,8 +7,6 @@ require_relative '../_util/graph_util'
 require_relative '../exception/Error_0or1'
 
 class Admin_map_controller < Base_require_admin
-	CREATED = 201
-
 def initialize(req, res)
 	@template = "admin_map.erb"
 	super
@@ -33,7 +31,7 @@ def post_control()
 end
 
 def check_aisle()
-	if !@aisles.all?{|x| [0,1].include?(x)}
+	if @aisles.any?{|x| ![0,1].include?(x)}
 		raise Error_0or1.new("壁の値")
 	end
 end

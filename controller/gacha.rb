@@ -40,7 +40,7 @@ def post_control()
 	obtain_monster_id = gacha.execute_gacha()
 	Monster.add_monster(@user.id, obtain_monster_id)
 
-	@wallet.sub_gem(100)
+	@wallet.sub_gem(GEM_REQUIRED_EXECUTE_GACHA)
 	@wallet.save()
 
 	@context[:monster] = Monster.get_master_monsters()[obtain_monster_id]

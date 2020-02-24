@@ -6,8 +6,6 @@ require_relative './_baseclass_require_login'
 require_relative '../_util/validator'
 
 class Party_controller < Base_require_login
-CREATED = 201
-
 # オーバーライド。
 def initialize(req,res)
 	@template = "party.erb"

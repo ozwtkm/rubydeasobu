@@ -25,7 +25,7 @@ class SQL
                 if result.count === 1
                     return [result.first] # 配列で返った方が統一的に扱えて嬉しい
                 elsif result.count > 1
-                    return result.map {|x| x}
+                    return result.to_a
                 end
             end
 
@@ -48,7 +48,7 @@ class SQL
                 if result.count === 1
                     return [result.first]
                 elsif result.count > 1
-                    return result.map {|x| x}
+                    return result.to_a
                 end
             end
 

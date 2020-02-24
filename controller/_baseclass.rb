@@ -8,6 +8,11 @@ require_relative '../_util/validator'
 require_relative '../exception/Error_multi_412'
 
 class Base
+# ステータスコード
+OK = 200
+CREATED = 201
+RESET_CONTENT = 205
+
 
 def initialize(req, res)
 	@req = req
