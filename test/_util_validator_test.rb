@@ -58,8 +58,34 @@ class Validate_nilTest < Base_unittest
   def test_validate_nil_invalid_value()
     key = "hoge"
     value = nil
+
+    begin
+        Validator.validate_nil(key, value)
+    rescue => e
+        assert_equal(Error_input_nil, e.class)
+        assert_equal("#{key}がnilだよ", e.message)
+    end
+
+
+
     assert_raises(Error_input_nil){
         Validator.validate_nil(key, value)
     }
   end
+end
+
+
+
+class Test_validate_SQL_error < Base_unittest
+    def setup()
+        #super
+      end
+      
+      def teardown()
+        #super
+      end
+
+      def test_validate_SQL_error_valid_data
+        
+      end
 end
