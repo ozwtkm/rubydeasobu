@@ -59,18 +59,16 @@ class Validate_nilTest < Base_unittest
     key = "hoge"
     value = nil
 
+    assert_raises(){
+        Validator.validate_nil(key, value)
+    }
+
     begin
         Validator.validate_nil(key, value)
     rescue => e
         assert_equal(Error_input_nil, e.class)
-        assert_equal("#{key}がnilだよ", e.message)
+        assert_equal("hogeがnilだよ", e.message)
     end
-
-
-
-    assert_raises(Error_input_nil){
-        Validator.validate_nil(key, value)
-    }
   end
 end
 
@@ -85,7 +83,28 @@ class Test_validate_SQL_error < Base_unittest
         #super
       end
 
-      def test_validate_SQL_error_valid_data
-        
+      def test_validate_SQL_error_valid_data_multi_true()
+        is_multi_line = true
+        record_count = 2
+
+        assert_nil(Validator.validate_SQL_error(record_count, is_multi_line: is_multi_line))
+      end
+
+      def test_validate_SQL_error_valid_data_multi_false()
+        is_multi_line = false
+        record_count = 1
+
+        assert_nil(Validator.validate_SQL_error(record_count, is_multi_line: is_multi_line))
+      end
+
+      def test_validate_SQL_error_invalid_data_multi_true()
+        is_multi_line = true
+        record_counts = [0, -2, 2.0, [2]]
+
+        record_counts.each do |record_count|
+            assert_raises(){
+                Validator.validate_SQL_error(record_count, is_multi_line: is_multi_line)
+            }
+        end
       end
 end
