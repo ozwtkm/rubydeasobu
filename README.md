@@ -1,9 +1,9 @@
 # Ruby Quest Monsters Ultra Light
 
 ## 概要
-「Ruby Quest Monsters Ultra Light」という**自作ソーシャルゲームのプログラム**、ならびに、そのアプリケーションを動作させる**自作フレームワーク**(MVC/諸々のライブラリ。簡易Railsをイメージ)です。
+「Ruby Quest Monsters Ultra Light」という**自作ソーシャルゲーム**のプログラム、ならびに、そのアプリケーションを動作させる**自作フレームワーク**(MVC/諸々のライブラリ。簡易Railsをイメージ)です。
 
-以下機能があります。(2020年2月現在。随時アップデート中)
+以下機能があります。(2020年3月現在。随時アップデート中)
 - 会員登録
 - ログイン
 - パーティ編集
@@ -53,7 +53,7 @@ http://rqmul.wfm.jp/rsc/index.html
 - ドキュメント指向DBサーバ → MongoDB
 - RDBサーバ → MySQL
 - キャッシュサーバ → Memcache
-- CIサーバ(gitへ定期ポーリングして自動ビルド、単体テスト) → Jenkins
+- CIサーバ(GitHubに定期ポーリングして自動ビルド、単体テスト) → Jenkins
 
 
 ## ブランチの説明
