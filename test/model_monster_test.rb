@@ -51,57 +51,40 @@ class Get_master_monstersTest < Base_unittest
     @sql.query("create database " + @tmp_databasename)
     
     @sql.query("create table " + @tmp_tablename + "(`name` varchar(20) DEFAULT NULL)") # 本当は他のカラムもちゃんとつける
-    @sql.query("insert into " + @tmp_tablename + " VALUES ('inoue'),('りょうやん'),('dragon'),('aaaaaaaaaaa'),('ドノバン'),('なみえる')")
   end
   
   def teardown()
     super
 
     @sql.query("drop database " + @tmp_databasename)
+    @sql.close
   end
 
   # result.eachのところは専用の関数にすべき（テストのしやすさ）、とか元々のコードに改善の余地がある気がする
   def test_return_value_not_exist_cache() # 面倒なのでnameだけで検証しているが、本当は他のカラムも含めて検証する
-    Cache.instance.stub(:get, nil) {
-      tmp_master_monster_list_for_verification = Monster.get_master_monsters()
+    @sql.query("insert into " + @tmp_tablename + " VALUES ('inoue')")
 
-      master_monster_list_for_verification = []
-      tmp_master_monster_list_for_verification.each do |monsterid, monstermodel|
-        master_monster_list_for_verification << monstermodel.name
-      end
-  
-      tmp_comparison = @sql.query("select * from " + @tmp_tablename)
-      comparison = tmp_comparison.map do |row|
-        row["name"]
-      end
-  
-      master_monster_list_for_verification.sort!
-      comparison.sort!
-  
-      assert_equal(comparison, master_monster_list_for_verification)
+    Cache.instance.stub(:get, nil) {
+      master_monster_list_for_verification = Monster.get_master_monsters().values.map {|monstermodel| monstermodel.name}
+      comparison = @sql.query("select * from " + @tmp_tablename).first["name"]
+
+      assert_includes(master_monster_list_for_verification, comparison)
     }
   end
 
 
   def test_return_value_exist_cache()
+    @sql.query("insert into " + @tmp_tablename + " VALUES ('inoue'), ('りょうやん')")
+
     Monster.get_master_monsters() #一回叩くと必ずcacheありの状態になる。「一回叩くと必ずcacheありの状態になる」がこの時点では保障されてないけど。。
 
-    tmp_master_monster_list_for_verification = Monster.get_master_monsters()
+    master_monster_list_for_verification = Monster.get_master_monsters().values.map {|monstermodel| monstermodel.name}
 
-    master_monster_list_for_verification = []
-    tmp_master_monster_list_for_verification.each do |monsterid, monstermodel|
-      master_monster_list_for_verification << monstermodel.name
-    end
-
-    tmp_comparison = @sql.query("select * from " + @tmp_tablename)
-    comparison = tmp_comparison.map do |row|
-      row["name"]
-    end
-
-    master_monster_list_for_verification.sort!
-    comparison.sort!
-
-    assert_equal(comparison, master_monster_list_for_verification)
+    comparison1 = @sql.query("select * from " + @tmp_tablename + " where name = 'inoue'").first["name"]
+    comparison2 = @sql.query("select * from " + @tmp_tablename + " where name = 'りょうやん'").first["name"]
+ 
+    assert_includes(master_monster_list_for_verification, comparison1)
+    assert_includes(master_monster_list_for_verification, comparison2)
   end
 
 end
