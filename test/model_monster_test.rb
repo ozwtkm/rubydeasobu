@@ -33,32 +33,82 @@ class Base_unittest < Minitest::Test
   end
 end
 
+
+
 class Get_master_monstersTest < Base_unittest
   def setup()
     super
+
+    socket = "/var/lib/mysql/mysql.sock"
+    host = "localhost"
+    username = "testwebrick"
+    password = "test"
+    unixtime= Time.now.to_i
+    @tmp_databasename = "UNITTEST_get_master_monsters" + unixtime.to_s
+    @tmp_tablename = @tmp_databasename + ".monsters"
+
+    @sql = Mysql2::Client.new(:socket => socket, :host => host, :username => username, :password => password, :encoding => 'utf8')
+    @sql.query("create database " + @tmp_databasename)
+    
+    @sql.query("create table " + @tmp_tablename + "(`name` varchar(20) DEFAULT NULL)") # 本当は他のカラムもちゃんとつける
+    @sql.query("insert into " + @tmp_tablename + " VALUES ('inoue'),('りょうやん'),('dragon'),('aaaaaaaaaaa'),('ドノバン'),('なみえる')")
   end
   
   def teardown()
     super
+
+    @sql.query("drop database " + @tmp_databasename)
   end
 
-  # cacheから取るときとselectする時がある、result.eachのところは専用の関数にすべき（テストのしやすさ）、
-  # 謎：テストしたい関数から呼んでる別の関数は全てstub化するべき？
-  # テストすべき観点のせんびき、枝切りの温度感がわからない
-  def test_return_value() # 帰ってくるリストはちゃんとしたリストモンスターリストなのか　（そもそもテストすべき項目？
-    master_monster_list_for_verification = Monster.get_master_monsters()
-    comparison = SQL.master("select * from monsters")
+  # result.eachのところは専用の関数にすべき（テストのしやすさ）、とか元々のコードに改善の余地がある気がする
+  def test_return_value_not_exist_cache() # 面倒なのでnameだけで検証しているが、本当は他のカラムも含めて検証する
+    Cache.instance.stub(:get, nil) {
+      tmp_master_monster_list_for_verification = Monster.get_master_monsters()
 
-    master_monster_list_for_verification.each do |monsterid, monstermodel|
-      assert_equal(monstermodel.atk, comparison.select{|x| x["id"]===monsterid}[0]["atk"])
-      # defとかは同様なので略
+      master_monster_list_for_verification = []
+      tmp_master_monster_list_for_verification.each do |monsterid, monstermodel|
+        master_monster_list_for_verification << monstermodel.name
+      end
+  
+      tmp_comparison = @sql.query("select * from " + @tmp_tablename)
+      comparison = tmp_comparison.map do |row|
+        row["name"]
+      end
+  
+      master_monster_list_for_verification.sort!
+      comparison.sort!
+  
+      assert_equal(comparison, master_monster_list_for_verification)
+    }
+  end
+
+
+  def test_return_value_exist_cache()
+    Monster.get_master_monsters() #一回叩くと必ずcacheありの状態になる。「一回叩くと必ずcacheありの状態になる」がこの時点では保障されてないけど。。
+
+    tmp_master_monster_list_for_verification = Monster.get_master_monsters()
+
+    master_monster_list_for_verification = []
+    tmp_master_monster_list_for_verification.each do |monsterid, monstermodel|
+      master_monster_list_for_verification << monstermodel.name
     end
+
+    tmp_comparison = @sql.query("select * from " + @tmp_tablename)
+    comparison = tmp_comparison.map do |row|
+      row["name"]
+    end
+
+    master_monster_list_for_verification.sort!
+    comparison.sort!
+
+    assert_equal(comparison, master_monster_list_for_verification)
   end
+
 end
 
 
 
-
+# totyuu
 class Get_specific_monsterTest < Base_unittest
   SAMPLE_MONSTER_ID = 5
 
