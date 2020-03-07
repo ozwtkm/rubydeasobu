@@ -67,10 +67,9 @@ class Get_master_monstersTest < Base_unittest
 
     unixtime= Time.now.to_i
 		@tmp_databasename = "UNITTEST_get_master_monsters" + unixtime.to_s
-    @tmp_tablename = "monsters"
-
+  
     tmp_sql_client_for_dbcreate.query("create database " + @tmp_databasename)
-    tmp_sql_client_for_dbcreate.query("create table " + @tmp_databasename + "." +@tmp_tablename + "(`name` varchar(20) DEFAULT NULL)") # 本当は他のカラムもちゃんとつける
+    tmp_sql_client_for_dbcreate.query("create table " + @tmp_databasename + ".monsters (`name` varchar(20) DEFAULT NULL)") # 本当は他のカラムもちゃんとつける
     tmp_sql_client_for_dbcreate.close
 
     SQL_master.set_tmp_database(@tmp_databasename)
@@ -94,26 +93,24 @@ class Get_master_monstersTest < Base_unittest
 
   # result.eachのところは専用の関数にすべき（テストのしやすさ）、とか元々のコードに改善の余地がある気がする
   def test_return_value_not_exist_cache() # 面倒なのでnameだけで検証しているが、本当は他のカラムも含めて検証する
-    @sql.query("insert into " + @tmp_tablename + " VALUES ('inoue')")
+    @sql.query("insert into monsters VALUES ('inoue')")
 
     Cache.instance.stub(:get, nil) {
       master_monster_list_for_verification = Monster.get_master_monsters().values.map {|monstermodel| monstermodel.name}
-      comparison = @sql.query("select * from " + @tmp_tablename).first["name"]
-
-      assert_includes(master_monster_list_for_verification, comparison)
+      assert_equal(master_monster_list_for_verification[0], "inoue")
     }
   end
 
 
   def test_return_value_exist_cache()
-    @sql.query("insert into " + @tmp_tablename + " VALUES ('inoue'), ('りょうやん')")
+    @sql.query("insert into monsters VALUES ('inoue'), ('りょうやん')")
 
     Monster.get_master_monsters() #一回叩くと必ずcacheありの状態になる。  「一回叩くと必ずcacheありの状態になる」がこの時点では保障されてないけど。。
 
     master_monster_list_for_verification = Monster.get_master_monsters().values.map {|monstermodel| monstermodel.name}
 
-    comparison1 = @sql.query("select * from " + @tmp_tablename + " where name = 'inoue'").first["name"]
-    comparison2 = @sql.query("select * from " + @tmp_tablename + " where name = 'りょうやん'").first["name"]
+    comparison1 = @sql.query("select * from " + "monsters" + " where name = 'inoue'").first["name"]
+    comparison2 = @sql.query("select * from " + "monsters" + " where name = 'りょうやん'").first["name"]
  
     comparison = [comparison1, comparison2]
 
