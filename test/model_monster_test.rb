@@ -83,8 +83,13 @@ class Get_master_monstersTest < Base_unittest
     super
   end
 
+
   def test_return_value_count_zero
-    skip
+    Cache.instance.stub(:get, nil) {
+      assert_raises(Error_not_found){
+        Monster.get_master_monsters()
+      }
+    }
   end
 
   # result.eachのところは専用の関数にすべき（テストのしやすさ）、とか元々のコードに改善の余地がある気がする
