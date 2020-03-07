@@ -97,7 +97,7 @@ class Get_master_monstersTest < Base_unittest
 
     Cache.instance.stub(:get, nil) {
       master_monster_list_for_verification = Monster.get_master_monsters().values.map {|monstermodel| monstermodel.name}
-      assert_equal(master_monster_list_for_verification[0], "inoue")
+      assert_equal("inoue", master_monster_list_for_verification[0])
     }
   end
 
@@ -108,13 +108,11 @@ class Get_master_monstersTest < Base_unittest
     Monster.get_master_monsters() #一回叩くと必ずcacheありの状態になる。  「一回叩くと必ずcacheありの状態になる」がこの時点では保障されてないけど。。
 
     master_monster_list_for_verification = Monster.get_master_monsters().values.map {|monstermodel| monstermodel.name}
+    master_monster_list_for_verification.sort!
 
-    comparison1 = @sql.query("select * from " + "monsters" + " where name = 'inoue'").first["name"]
-    comparison2 = @sql.query("select * from " + "monsters" + " where name = 'りょうやん'").first["name"]
- 
-    comparison = [comparison1, comparison2]
+    comparison = ["inoue", "りょうやん"]
 
-    assert_includes(master_monster_list_for_verification, *comparison)
+    assert_equal(comparison, master_monster_list_for_verification)
   end
 end
 
