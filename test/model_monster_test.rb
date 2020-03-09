@@ -35,58 +35,85 @@ end
 
 
 
+# モンキーパッチ
+class SQL_master
+  def initialize
+  
+  end
+
+  def self.set_tmp_database(databasename)
+    socket = "/var/lib/mysql/mysql.sock"
+		host = "localhost"
+		username = "testwebrick"
+    password = "test"
+    tmp_databasename = databasename 
+    @@sql_client = Mysql2::Client.new(:socket => socket, :host => host, :username => username, :password => password, :encoding => 'utf8', :database => tmp_databasename, :reconnect => true)
+  end
+end
+
+
 class Get_master_monstersTest < Base_unittest
   def setup()
     super
 
     socket = "/var/lib/mysql/mysql.sock"
-    host = "localhost"
-    username = "testwebrick"
+		host = "localhost"
+		username = "testwebrick"
     password = "test"
-    unixtime= Time.now.to_i
-    @tmp_databasename = "UNITTEST_get_master_monsters" + unixtime.to_s
-    @tmp_tablename = @tmp_databasename + ".monsters"
 
-    @sql = Mysql2::Client.new(:socket => socket, :host => host, :username => username, :password => password, :encoding => 'utf8')
-    @sql.query("create database " + @tmp_databasename)
-    
-    @sql.query("create table " + @tmp_tablename + "(`name` varchar(20) DEFAULT NULL)") # 本当は他のカラムもちゃんとつける
+    # ライブラリの仕様上、「DBやテーブルをつくる」と「DBやテーブルに対し操作する」は分けた方がわかりやすい。
+    # 詳しく書くには余白が狭すぎる。
+    tmp_sql_client_for_dbcreate = Mysql2::Client.new(:socket => socket, :host => host, :username => username, :password => password, :encoding => 'utf8')
+
+    unixtime= Time.now.to_i
+		@tmp_databasename = "UNITTEST_get_master_monsters" + unixtime.to_s
+  
+    tmp_sql_client_for_dbcreate.query("create database " + @tmp_databasename)
+    tmp_sql_client_for_dbcreate.query("create table " + @tmp_databasename + ".monsters (`name` varchar(20) DEFAULT NULL)") # 本当は他のカラムもちゃんとつける
+    tmp_sql_client_for_dbcreate.close
+
+    SQL_master.set_tmp_database(@tmp_databasename)
+    @sql = SQL_master.instance.sql
   end
   
   def teardown()
-    super
-
     @sql.query("drop database " + @tmp_databasename)
-    @sql.close
+    
+    super
+  end
+
+
+  def test_return_value_count_zero
+    Cache.instance.stub(:get, nil) {
+      assert_raises(Error_not_found){
+        Monster.get_master_monsters()
+      }
+    }
   end
 
   # result.eachのところは専用の関数にすべき（テストのしやすさ）、とか元々のコードに改善の余地がある気がする
   def test_return_value_not_exist_cache() # 面倒なのでnameだけで検証しているが、本当は他のカラムも含めて検証する
-    @sql.query("insert into " + @tmp_tablename + " VALUES ('inoue')")
+    @sql.query("insert into monsters VALUES ('inoue')")
 
     Cache.instance.stub(:get, nil) {
       master_monster_list_for_verification = Monster.get_master_monsters().values.map {|monstermodel| monstermodel.name}
-      comparison = @sql.query("select * from " + @tmp_tablename).first["name"]
-
-      assert_includes(master_monster_list_for_verification, comparison)
+      assert_equal("inoue", master_monster_list_for_verification[0])
     }
   end
 
 
   def test_return_value_exist_cache()
-    @sql.query("insert into " + @tmp_tablename + " VALUES ('inoue'), ('りょうやん')")
+    @sql.query("insert into monsters VALUES ('inoue'), ('りょうやん')")
 
-    Monster.get_master_monsters() #一回叩くと必ずcacheありの状態になる。「一回叩くと必ずcacheありの状態になる」がこの時点では保障されてないけど。。
+    Monster.get_master_monsters() #一回叩くと必ずcacheありの状態になる。  「一回叩くと必ずcacheありの状態になる」がこの時点では保障されてないけど。。
 
     master_monster_list_for_verification = Monster.get_master_monsters().values.map {|monstermodel| monstermodel.name}
+    master_monster_list_for_verification.sort!
 
-    comparison1 = @sql.query("select * from " + @tmp_tablename + " where name = 'inoue'").first["name"]
-    comparison2 = @sql.query("select * from " + @tmp_tablename + " where name = 'りょうやん'").first["name"]
- 
-    assert_includes(master_monster_list_for_verification, comparison1)
-    assert_includes(master_monster_list_for_verification, comparison2)
+    comparison = ["inoue", "りょうやん"]
+
+    assert_equal(comparison, master_monster_list_for_verification)
   end
-
 end
 
 
